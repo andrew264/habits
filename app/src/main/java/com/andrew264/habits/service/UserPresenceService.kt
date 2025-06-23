@@ -23,9 +23,9 @@ import com.andrew264.habits.R
 import com.andrew264.habits.receiver.SleepReceiver
 import com.andrew264.habits.state.UserPresenceState
 import com.google.android.gms.location.ActivityRecognition
-import com.google.android.gms.location.SleepSegmentRequest
-import com.google.android.gms.location.SleepSegmentEvent
 import com.google.android.gms.location.SleepClassifyEvent
+import com.google.android.gms.location.SleepSegmentEvent
+import com.google.android.gms.location.SleepSegmentRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -51,13 +51,17 @@ class UserPresenceService : Service() {
         const val ACTION_START_SERVICE_SLEEP_API = "com.andrew264.habits.action.START_SLEEP_API"
         const val ACTION_START_SERVICE_HEURISTICS = "com.andrew264.habits.action.START_HEURISTICS"
         const val ACTION_STOP_SERVICE = "com.andrew264.habits.action.STOP_PRESENCE_SERVICE"
-        const val ACTION_PROCESS_SLEEP_SEGMENT_EVENTS = "com.andrew264.habits.action.PROCESS_SLEEP_SEGMENT_EVENTS"
-        const val ACTION_PROCESS_SLEEP_CLASSIFY_EVENTS = "com.andrew264.habits.action.PROCESS_SLEEP_CLASSIFY_EVENTS"
+        const val ACTION_PROCESS_SLEEP_SEGMENT_EVENTS =
+            "com.andrew264.habits.action.PROCESS_SLEEP_SEGMENT_EVENTS"
+        const val ACTION_PROCESS_SLEEP_CLASSIFY_EVENTS =
+            "com.andrew264.habits.action.PROCESS_SLEEP_CLASSIFY_EVENTS"
 
         const val ACTION_SET_MANUAL_BEDTIME = "com.andrew264.habits.action.SET_MANUAL_BEDTIME"
         const val ACTION_CLEAR_MANUAL_BEDTIME = "com.andrew264.habits.action.CLEAR_MANUAL_BEDTIME"
-        const val ACTION_SET_MANUAL_WAKE_UP_TIME = "com.andrew264.habits.action.SET_MANUAL_WAKE_UP_TIME"
-        const val ACTION_CLEAR_MANUAL_WAKE_UP_TIME = "com.andrew264.habits.action.CLEAR_MANUAL_WAKE_UP_TIME"
+        const val ACTION_SET_MANUAL_WAKE_UP_TIME =
+            "com.andrew264.habits.action.SET_MANUAL_WAKE_UP_TIME"
+        const val ACTION_CLEAR_MANUAL_WAKE_UP_TIME =
+            "com.andrew264.habits.action.CLEAR_MANUAL_WAKE_UP_TIME"
 
 
         const val EXTRA_SLEEP_SEGMENTS = "com.andrew264.habits.extra.SLEEP_SEGMENTS"
@@ -106,7 +110,8 @@ class UserPresenceService : Service() {
 
     private val heuristicScreenReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            val isRelevantIntentForAnyMode = intent?.action == Intent.ACTION_SCREEN_ON || intent?.action == Intent.ACTION_USER_PRESENT
+            val isRelevantIntentForAnyMode =
+                intent?.action == Intent.ACTION_SCREEN_ON || intent?.action == Intent.ACTION_USER_PRESENT
             if (currentMode != OperatingMode.HEURISTICS_ACTIVE && !isRelevantIntentForAnyMode) {
                 return
             }
@@ -117,12 +122,14 @@ class UserPresenceService : Service() {
                     cancelHeuristicSleepTimer()
                     updateState(UserPresenceState.AWAKE, "Receiver:ScreenOn")
                 }
+
                 Intent.ACTION_SCREEN_OFF -> {
                     Log.d(TAG, "[Heuristic] Screen OFF (Processed if in Heuristics Mode)")
                     if (currentMode == OperatingMode.HEURISTICS_ACTIVE && isNightTime()) {
                         startHeuristicSleepTimer()
                     }
                 }
+
                 Intent.ACTION_USER_PRESENT -> {
                     Log.d(TAG, "[Heuristic/Shared] User PRESENT (unlocked)")
                     cancelHeuristicSleepTimer()
@@ -150,7 +157,10 @@ class UserPresenceService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.d(TAG, "Service onStartCommand with action: ${intent?.action}, Current Mode: $currentMode")
+        Log.d(
+            TAG,
+            "Service onStartCommand with action: ${intent?.action}, Current Mode: $currentMode"
+        )
         when (intent?.action) {
             ACTION_START_SERVICE_SLEEP_API -> {
                 if (currentMode != OperatingMode.SLEEP_API_ACTIVE) {
@@ -162,6 +172,7 @@ class UserPresenceService : Service() {
                     registerHeuristicScreenReceiver() // Keep screen on/off for immediate AWAKE state
                 }
             }
+
             ACTION_START_SERVICE_HEURISTICS -> {
                 if (currentMode != OperatingMode.HEURISTICS_ACTIVE) {
                     stopPreviousModeResources()
@@ -175,20 +186,29 @@ class UserPresenceService : Service() {
                     }
                 }
             }
+
             ACTION_PROCESS_SLEEP_SEGMENT_EVENTS -> {
                 if (currentMode == OperatingMode.SLEEP_API_ACTIVE) {
                     val events: ArrayList<SleepSegmentEvent>? =
-                        intent.getParcelableArrayListExtra(EXTRA_SLEEP_SEGMENTS, SleepSegmentEvent::class.java)
+                        intent.getParcelableArrayListExtra(
+                            EXTRA_SLEEP_SEGMENTS,
+                            SleepSegmentEvent::class.java
+                        )
                     events?.let { processSleepSegmentEvents(it) }
                 }
             }
+
             ACTION_PROCESS_SLEEP_CLASSIFY_EVENTS -> {
                 if (currentMode == OperatingMode.SLEEP_API_ACTIVE) {
                     val events: ArrayList<SleepClassifyEvent>? =
-                        intent.getParcelableArrayListExtra(EXTRA_SLEEP_CLASSIFY_EVENTS, SleepClassifyEvent::class.java)
+                        intent.getParcelableArrayListExtra(
+                            EXTRA_SLEEP_CLASSIFY_EVENTS,
+                            SleepClassifyEvent::class.java
+                        )
                     events?.let { processSleepClassifyEvents(it) }
                 }
             }
+
             ACTION_SET_MANUAL_BEDTIME -> {
                 val hour = intent.getIntExtra(EXTRA_MANUAL_BEDTIME_HOUR, -1)
                 val minute = intent.getIntExtra(EXTRA_MANUAL_BEDTIME_MINUTE, -1)
@@ -200,11 +220,13 @@ class UserPresenceService : Service() {
                     Log.w(TAG, "Invalid hour/minute for manual bedtime.")
                 }
             }
+
             ACTION_CLEAR_MANUAL_BEDTIME -> {
                 _manualBedtimeHour.value = null
                 _manualBedtimeMinute.value = null
                 Log.i(TAG, "Manual bedtime cleared.")
             }
+
             ACTION_SET_MANUAL_WAKE_UP_TIME -> {
                 val hour = intent.getIntExtra(EXTRA_MANUAL_WAKE_UP_HOUR, -1)
                 val minute = intent.getIntExtra(EXTRA_MANUAL_WAKE_UP_MINUTE, -1)
@@ -216,11 +238,13 @@ class UserPresenceService : Service() {
                     Log.w(TAG, "Invalid hour/minute for manual wake-up time.")
                 }
             }
+
             ACTION_CLEAR_MANUAL_WAKE_UP_TIME -> {
                 _manualWakeUpHour.value = null
                 _manualWakeUpMinute.value = null
                 Log.i(TAG, "Manual wake-up time cleared.")
             }
+
             ACTION_STOP_SERVICE -> {
                 Log.d(TAG, "ACTION_STOP_SERVICE received. Stopping service.")
                 stopPreviousModeResources()
@@ -242,10 +266,12 @@ class UserPresenceService : Service() {
                 unsubscribeFromSleepUpdates()
                 // Do not unregister heuristic receiver if shared
             }
+
             OperatingMode.HEURISTICS_ACTIVE -> {
                 cancelHeuristicSleepTimer()
                 // Do not unregister heuristic receiver if shared
             }
+
             OperatingMode.STOPPED -> {
                 // No active mode-specific resources to stop
             }
@@ -257,7 +283,8 @@ class UserPresenceService : Service() {
         val notificationIntent = Intent(this, MainActivity::class.java)
         val pendingIntentFlags =
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, pendingIntentFlags)
+        val pendingIntent =
+            PendingIntent.getActivity(this, 0, notificationIntent, pendingIntentFlags)
 
         val notification: Notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setContentTitle("Habit Tracker Presence")
@@ -301,7 +328,11 @@ class UserPresenceService : Service() {
     }
 
     private fun subscribeToSleepUpdates() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACTIVITY_RECOGNITION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
             Log.d(TAG, "Subscribing to Sleep API updates.")
             activityRecognitionClient.requestSleepSegmentUpdates(
                 getSleepPendingIntent(),
@@ -312,7 +343,10 @@ class UserPresenceService : Service() {
                 Log.e(TAG, "Failed to subscribe to Sleep API.", e)
             }
         } else {
-            Log.w(TAG, "ACTIVITY_RECOGNITION permission not granted. Cannot subscribe to Sleep API.")
+            Log.w(
+                TAG,
+                "ACTIVITY_RECOGNITION permission not granted. Cannot subscribe to Sleep API."
+            )
         }
     }
 
@@ -328,7 +362,10 @@ class UserPresenceService : Service() {
                     Log.e(TAG, "Failed to unsubscribe from Sleep API updates.", e)
                 }
         } else {
-            Log.d(TAG, "No active Sleep API subscription (PendingIntent is null), skipping un-subscription.")
+            Log.d(
+                TAG,
+                "No active Sleep API subscription (PendingIntent is null), skipping un-subscription."
+            )
         }
     }
 
@@ -338,13 +375,19 @@ class UserPresenceService : Service() {
 
         val latestEvent = events.maxByOrNull { it.endTimeMillis } ?: return
 
-        Log.d(TAG, "Latest SleepSegmentEvent: Start=${latestEvent.startTimeMillis}, End=${latestEvent.endTimeMillis}, Status=${latestEvent.status}, Duration=${latestEvent.segmentDurationMillis}ms")
+        Log.d(
+            TAG,
+            "Latest SleepSegmentEvent: Start=${latestEvent.startTimeMillis}, End=${latestEvent.endTimeMillis}, Status=${latestEvent.status}, Duration=${latestEvent.segmentDurationMillis}ms"
+        )
 
         val currentTime = System.currentTimeMillis()
         when (latestEvent.status) {
             SleepSegmentEvent.STATUS_SUCCESSFUL -> {
                 // If current time is within 15 minutes AFTER the segment end, consider user AWAKE.
-                if (currentTime > latestEvent.endTimeMillis && currentTime < latestEvent.endTimeMillis + TimeUnit.MINUTES.toMillis(15)) {
+                if (currentTime > latestEvent.endTimeMillis && currentTime < latestEvent.endTimeMillis + TimeUnit.MINUTES.toMillis(
+                        15
+                    )
+                ) {
                     updateState(UserPresenceState.AWAKE, "SleepAPI:SegmentEnd")
                 }
                 // If current time is INSIDE the detected sleep segment.
@@ -359,14 +402,21 @@ class UserPresenceService : Service() {
                     // This might happen if events are delayed or out of order.
                     // We might be AWAKE or UNKNOWN depending on prior state.
                     // For now, don't change state aggressively if we are before the segment.
-                    Log.d(TAG, "SleepSegment: Current time (${currentTime}) is before latest segment start (${latestEvent.startTimeMillis}). No immediate state change based on this event alone.")
+                    Log.d(
+                        TAG,
+                        "SleepSegment: Current time (${currentTime}) is before latest segment start (${latestEvent.startTimeMillis}). No immediate state change based on this event alone."
+                    )
                 }
             }
+
             SleepSegmentEvent.STATUS_MISSING_DATA, SleepSegmentEvent.STATUS_NOT_DETECTED -> {
                 // These statuses are not definitive. If we were SLEEPING, we might still be.
                 // If we were AWAKE, we are likely still AWAKE.
                 // Avoid changing state to UNKNOWN too readily from these.
-                Log.d(TAG, "Sleep API: Status ${latestEvent.status}. Not conclusive for state change.")
+                Log.d(
+                    TAG,
+                    "Sleep API: Status ${latestEvent.status}. Not conclusive for state change."
+                )
             }
         }
     }
@@ -389,7 +439,12 @@ class UserPresenceService : Service() {
             }
             // Register for all users if needed, or stick to current user context.
             // Using ContextCompat.RECEIVER_NOT_EXPORTED for security if only local.
-            ContextCompat.registerReceiver(this, heuristicScreenReceiver, intentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+            ContextCompat.registerReceiver(
+                this,
+                heuristicScreenReceiver,
+                intentFilter,
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
             isHeuristicReceiverRegistered = true
             Log.d(TAG, "Heuristic screen state receiver registered.")
         }
@@ -403,7 +458,10 @@ class UserPresenceService : Service() {
                 Log.d(TAG, "Heuristic screen state receiver unregistered.")
             } catch (e: IllegalArgumentException) {
                 // Receiver was not registered or already unregistered.
-                Log.w(TAG, "Heuristic receiver not registered or already unregistered: ${e.message}")
+                Log.w(
+                    TAG,
+                    "Heuristic receiver not registered or already unregistered: ${e.message}"
+                )
             }
         }
     }
@@ -415,10 +473,16 @@ class UserPresenceService : Service() {
             val powerManager = getSystemService(POWER_SERVICE) as PowerManager
             // Double check conditions: screen still off AND it's still considered night time
             if (!powerManager.isInteractive && isNightTime()) {
-                Log.d(TAG, "[Heuristic] Sleep timer fired, screen still off. Setting state to SLEEPING.")
+                Log.d(
+                    TAG,
+                    "[Heuristic] Sleep timer fired, screen still off. Setting state to SLEEPING."
+                )
                 updateState(UserPresenceState.SLEEPING, "Heuristic:TimerFired")
             } else {
-                Log.d(TAG, "[Heuristic] Sleep timer fired, but conditions not met for SLEEPING (screen on or not night time).")
+                Log.d(
+                    TAG,
+                    "[Heuristic] Sleep timer fired, but conditions not met for SLEEPING (screen on or not night time)."
+                )
             }
         }
         heuristicHandler.postDelayed(heuristicSleepRunnable!!, SCREEN_OFF_SLEEP_DELAY_MS)
@@ -463,7 +527,8 @@ class UserPresenceService : Service() {
                 }
             } else {
                 // Only bedtime is set, use a default sleep duration
-                val heuristicWindowEndMinutes = (userBedtimeInMinutes + DEFAULT_HEURISTIC_SLEEP_DURATION_HOURS * 60) % (24 * 60)
+                val heuristicWindowEndMinutes =
+                    (userBedtimeInMinutes + DEFAULT_HEURISTIC_SLEEP_DURATION_HOURS * 60) % (24 * 60)
 
                 return if (userBedtimeInMinutes <= heuristicWindowEndMinutes) {
                     currentTimeInMinutes >= userBedtimeInMinutes && currentTimeInMinutes < heuristicWindowEndMinutes
@@ -492,7 +557,10 @@ class UserPresenceService : Service() {
         _manualBedtimeMinute.value = null
         _manualWakeUpHour.value = null
         _manualWakeUpMinute.value = null
-        Log.d(TAG, "Service Destroyed. Final state: ${_userPresenceState.value}, Mode: $currentMode")
+        Log.d(
+            TAG,
+            "Service Destroyed. Final state: ${_userPresenceState.value}, Mode: $currentMode"
+        )
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

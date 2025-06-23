@@ -6,8 +6,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuOpen
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.WideNavigationRail
+import androidx.compose.material3.WideNavigationRailItem
+import androidx.compose.material3.WideNavigationRailValue
+import androidx.compose.material3.rememberWideNavigationRailState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -22,12 +32,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun ContainerScreen(
     onRequestPermissions: () -> Unit,
-    onOpenAppSettings: () -> Unit,
-    onSetBedtime: (hour: Int, minute: Int) -> Unit,
-    onClearBedtime: () -> Unit,
-    onSetWakeUpTime: (hour: Int, minute: Int) -> Unit,
-    onClearWakeUpTime: () -> Unit
-){
+    onOpenAppSettings: () -> Unit
+) {
     val navController = rememberNavController()
     val wideNavRailState = rememberWideNavigationRailState()
     val scope = rememberCoroutineScope()
@@ -75,7 +81,8 @@ fun ContainerScreen(
                 val currentDestination = navBackStackEntry?.destination
 
                 railItems.forEach { screen ->
-                    val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
+                    val selected =
+                        currentDestination?.hierarchy?.any { it.route == screen.route } == true
                     WideNavigationRailItem(
                         railExpanded = wideNavRailState.targetValue == WideNavigationRailValue.Expanded,
                         icon = {
@@ -106,11 +113,7 @@ fun ContainerScreen(
             ContainerGraph(
                 navController = navController,
                 onRequestPermissions = onRequestPermissions,
-                onOpenAppSettings = onOpenAppSettings,
-                onSetBedtime = onSetBedtime,
-                onClearBedtime = onClearBedtime,
-                onSetWakeUpTime = onSetWakeUpTime,
-                onClearWakeUpTime = onClearWakeUpTime
+                onOpenAppSettings = onOpenAppSettings
             )
         }
     }

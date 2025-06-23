@@ -8,10 +8,10 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.andrew264.habits.manager.UserPresenceController
 import com.andrew264.habits.presentation.ContainerScreen
 import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.util.PermissionHandler
-import com.andrew264.habits.manager.UserPresenceController
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -32,9 +32,10 @@ class MainActivity : ComponentActivity() {
 
         userPresenceController = UserPresenceController(applicationContext)
 
-        permissionHandler = PermissionHandler(this) { activityRecognitionGranted, notificationsGranted ->
-            handlePermissionResults(activityRecognitionGranted, notificationsGranted)
-        }
+        permissionHandler =
+            PermissionHandler(this) { activityRecognitionGranted, notificationsGranted ->
+                handlePermissionResults(activityRecognitionGranted, notificationsGranted)
+            }
 
         savedInstanceState?.let {
             initialPermissionCheckDone = it.getBoolean(KEY_INITIAL_PERMISSION_CHECK_DONE, false)
@@ -48,11 +49,7 @@ class MainActivity : ComponentActivity() {
             HabitsTheme {
                 ContainerScreen(
                     onRequestPermissions = { permissionHandler.requestRelevantPermissions() },
-                    onOpenAppSettings = { openAppSettings() },
-                    onSetBedtime = { hour, minute -> userPresenceController.setManualBedtime(hour, minute) },
-                    onClearBedtime = { userPresenceController.clearManualBedtime() },
-                    onSetWakeUpTime = { hour, minute -> userPresenceController.setManualWakeUpTime(hour, minute) },
-                    onClearWakeUpTime = { userPresenceController.clearManualWakeUpTime() }
+                    onOpenAppSettings = { openAppSettings() }
                 )
             }
         }
@@ -64,15 +61,23 @@ class MainActivity : ComponentActivity() {
     }
 
     // --- Permission Handling ---
-    private fun handlePermissionResults(activityRecognitionGranted: Boolean, notificationsGranted: Boolean) {
+    private fun handlePermissionResults(
+        activityRecognitionGranted: Boolean,
+        notificationsGranted: Boolean
+    ) {
         userPresenceController.handleInitialServiceStart(activityRecognitionGranted)
 
         if (activityRecognitionGranted) {
-            Toast.makeText(this, "Activity Recognition permission granted.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Activity Recognition permission granted.", Toast.LENGTH_SHORT)
+                .show()
         }
 
         if (!notificationsGranted) {
-            Toast.makeText(this, "Notification permission denied. Service notifications might not show.", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this,
+                "Notification permission denied. Service notifications might not show.",
+                Toast.LENGTH_LONG
+            ).show()
         }
         initialPermissionCheckDone = true
     }

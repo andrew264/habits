@@ -14,8 +14,10 @@ class PermissionHandler(
 ) {
     private val permissionLauncher: ActivityResultLauncher<Array<String>> =
         activity.registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            val activityRecognitionGranted = permissions[Manifest.permission.ACTIVITY_RECOGNITION] == true
-            val postNotificationsGranted = permissions[Manifest.permission.POST_NOTIFICATIONS] == true
+            val activityRecognitionGranted =
+                permissions[Manifest.permission.ACTIVITY_RECOGNITION] == true
+            val postNotificationsGranted =
+                permissions[Manifest.permission.POST_NOTIFICATIONS] == true
             onPermissionsHandled(activityRecognitionGranted, postNotificationsGranted)
         }
 
@@ -24,8 +26,14 @@ class PermissionHandler(
         val arPermission = Manifest.permission.ACTIVITY_RECOGNITION
         val pnPermission = Manifest.permission.POST_NOTIFICATIONS
 
-        val arCurrentlyGranted = ContextCompat.checkSelfPermission(activity, arPermission) == PackageManager.PERMISSION_GRANTED
-        val pnCurrentlyGranted = ContextCompat.checkSelfPermission(activity, pnPermission) == PackageManager.PERMISSION_GRANTED
+        val arCurrentlyGranted = ContextCompat.checkSelfPermission(
+            activity,
+            arPermission
+        ) == PackageManager.PERMISSION_GRANTED
+        val pnCurrentlyGranted = ContextCompat.checkSelfPermission(
+            activity,
+            pnPermission
+        ) == PackageManager.PERMISSION_GRANTED
 
         if (!arCurrentlyGranted) {
             permissionsToRequest.add(arPermission)
@@ -37,10 +45,18 @@ class PermissionHandler(
 
         if (permissionsToRequest.isNotEmpty()) {
             if (!arCurrentlyGranted && activity.shouldShowRequestPermissionRationale(arPermission)) {
-                Toast.makeText(activity, "Activity recognition is needed for accurate sleep detection. Heuristics will be used otherwise.", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    activity,
+                    "Activity recognition is needed for accurate sleep detection. Heuristics will be used otherwise.",
+                    Toast.LENGTH_LONG
+                ).show()
             }
             if (!pnCurrentlyGranted && activity.shouldShowRequestPermissionRationale(pnPermission)) {
-                Toast.makeText(activity, "Notifications permission is needed for the service to run reliably in the background.", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    activity,
+                    "Notifications permission is needed for the service to run reliably in the background.",
+                    Toast.LENGTH_LONG
+                ).show()
             }
             permissionLauncher.launch(permissionsToRequest.toTypedArray())
         } else {

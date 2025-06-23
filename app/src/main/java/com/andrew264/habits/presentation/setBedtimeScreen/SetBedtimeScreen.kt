@@ -1,14 +1,45 @@
-package com.andrew264.habits.presentation
+package com.andrew264.habits.presentation.setBedtimeScreen
 
 import android.text.format.DateFormat
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Bedtime
 import androidx.compose.material.icons.outlined.WbSunny
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimePickerDialog
+import androidx.compose.material3.TimePickerDialogDefaults
+import androidx.compose.material3.TimePickerDisplayMode
+import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -16,26 +47,25 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.andrew264.habits.service.UserPresenceService
 import com.andrew264.habits.ui.theme.HabitsTheme
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SetBedtimeScreen(
     modifier: Modifier = Modifier,
-    onSetBedtime: (hour: Int, minute: Int) -> Unit,
-    onClearBedtime: () -> Unit,
-    onSetWakeUpTime: (hour: Int, minute: Int) -> Unit,
-    onClearWakeUpTime: () -> Unit
+    viewModel: SetBedtimeViewModel = hiltViewModel()
 ) {
-    val currentBedtimeHour by UserPresenceService.manualBedtimeHour.collectAsState()
-    val currentBedtimeMinute by UserPresenceService.manualBedtimeMinute.collectAsState()
-    val currentWakeUpHour by UserPresenceService.manualWakeUpHour.collectAsState()
-    val currentWakeUpMinute by UserPresenceService.manualWakeUpMinute.collectAsState()
+    val currentBedtimeHour by viewModel.currentBedtimeHour.collectAsState()
+    val currentBedtimeMinute by viewModel.currentBedtimeMinute.collectAsState()
+    val currentWakeUpHour by viewModel.currentWakeUpHour.collectAsState()
+    val currentWakeUpMinute by viewModel.currentWakeUpMinute.collectAsState()
 
     var showBedtimePicker by remember { mutableStateOf(false) }
     var showWakeUpTimePicker by remember { mutableStateOf(false) }
@@ -53,6 +83,16 @@ fun SetBedtimeScreen(
         initialMinute = currentWakeUpMinute ?: 0,
         is24Hour = isSystem24Hour
     )
+
+    LaunchedEffect(currentBedtimeHour, currentBedtimeMinute) {
+        currentBedtimeHour?.let { bedtimePickerState.hour = it }
+        currentBedtimeMinute?.let { bedtimePickerState.minute = it }
+    }
+    LaunchedEffect(currentWakeUpHour, currentWakeUpMinute) {
+        currentWakeUpHour?.let { wakeUpTimePickerState.hour = it }
+        currentWakeUpMinute?.let { wakeUpTimePickerState.minute = it }
+    }
+
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -96,7 +136,7 @@ fun SetBedtimeScreen(
                 formatter = formatter,
                 onSetTimeClick = { showBedtimePicker = true },
                 onClearTimeClick = {
-                    onClearBedtime()
+                    viewModel.clearBedtime()
                     // Reset picker state to default
                     bedtimePickerState.hour = 22
                     bedtimePickerState.minute = 0
@@ -115,7 +155,7 @@ fun SetBedtimeScreen(
                 formatter = formatter,
                 onSetTimeClick = { showWakeUpTimePicker = true },
                 onClearTimeClick = {
-                    onClearWakeUpTime()
+                    viewModel.clearWakeUpTime()
                     // Reset picker state
                     wakeUpTimePickerState.hour = 6
                     wakeUpTimePickerState.minute = 0
@@ -140,14 +180,23 @@ fun SetBedtimeScreen(
                     confirmButton = {
                         TextButton(
                             onClick = {
-                                onSetBedtime(bedtimePickerState.hour, bedtimePickerState.minute)
+                                viewModel.setBedtime(
+                                    bedtimePickerState.hour,
+                                    bedtimePickerState.minute
+                                )
                                 showBedtimePicker = false
                                 val cal = Calendar.getInstance().apply {
                                     set(Calendar.HOUR_OF_DAY, bedtimePickerState.hour)
                                     set(Calendar.MINUTE, bedtimePickerState.minute)
                                 }
                                 scope.launch {
-                                    snackbarHostState.showSnackbar("Bedtime set to: ${formatter.format(cal.time)}")
+                                    snackbarHostState.showSnackbar(
+                                        "Bedtime set to: ${
+                                            formatter.format(
+                                                cal.time
+                                            )
+                                        }"
+                                    )
                                 }
                             }
                         ) { Text("OK") }
@@ -168,14 +217,23 @@ fun SetBedtimeScreen(
                     confirmButton = {
                         TextButton(
                             onClick = {
-                                onSetWakeUpTime(wakeUpTimePickerState.hour, wakeUpTimePickerState.minute)
+                                viewModel.setWakeUpTime(
+                                    wakeUpTimePickerState.hour,
+                                    wakeUpTimePickerState.minute
+                                )
                                 showWakeUpTimePicker = false
                                 val cal = Calendar.getInstance().apply {
                                     set(Calendar.HOUR_OF_DAY, wakeUpTimePickerState.hour)
                                     set(Calendar.MINUTE, wakeUpTimePickerState.minute)
                                 }
                                 scope.launch {
-                                    snackbarHostState.showSnackbar("Wake-up time set to: ${formatter.format(cal.time)}")
+                                    snackbarHostState.showSnackbar(
+                                        "Wake-up time set to: ${
+                                            formatter.format(
+                                                cal.time
+                                            )
+                                        }"
+                                    )
                                 }
                             }
                         ) { Text("OK") }
@@ -205,7 +263,11 @@ fun TimeSettingCard(
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(imageVector = icon, contentDescription = title, modifier = Modifier.size(32.dp))
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    modifier = Modifier.size(32.dp)
+                )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(text = title, style = MaterialTheme.typography.titleLarge)
             }
@@ -224,14 +286,18 @@ fun TimeSettingCard(
 
             Text(
                 text = displayTime,
-                style = if (timeIsSet) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineSmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                style = if (timeIsSet) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineSmall.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                ),
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
             if (!timeIsSet) {
                 Text(
                     text = defaultTimeInfo,
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp)
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(top = 4.dp)
                 )
             }
 
@@ -274,7 +340,6 @@ fun SleepDurationInfo(
             set(Calendar.MILLISECOND, 0)
         }
 
-        // Adjust wakeUpCalendar to the next day if wake up time is earlier than bedtime (e.g. bed 11PM, wake 7AM)
         if (wakeUpCalendar.before(bedtimeCalendar)) {
             wakeUpCalendar.add(Calendar.DAY_OF_YEAR, 1)
         }
@@ -285,13 +350,14 @@ fun SleepDurationInfo(
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(top = 8.dp).fillMaxWidth()
+            modifier = Modifier
+                .padding(top = 8.dp)
+                .fillMaxWidth()
         ) {
             Text(
                 "Estimated Sleep Window: ${hours}h ${minutes}m",
                 style = MaterialTheme.typography.titleMedium
             )
-            // Check if the original wake up time (without day adjustment) is "before" bedtime on the same day
             if (wakeUpHour * 60 + wakeUpMinute < bedtimeHour * 60 + bedtimeMinute) {
                 Text(
                     "(Sleep window crosses midnight)",
@@ -299,7 +365,7 @@ fun SleepDurationInfo(
                 )
             }
         }
-    } else if (bedtimeHour != null || wakeUpHour != null) { // Only one is set
+    } else if (bedtimeHour != null || wakeUpHour != null) {
         Text(
             "Set both bedtime and wake-up time to see the estimated sleep window.",
             style = MaterialTheme.typography.bodySmall,
@@ -307,14 +373,12 @@ fun SleepDurationInfo(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         )
     }
-    // If neither is set, don't show any message about duration.
 }
 
 
 @Preview(showBackground = true, heightDp = 900)
 @Composable
 fun SetBedtimeScreenPreview_BothSet() {
-    // Manually set UserPresenceService states for preview
     LaunchedEffect(Unit) {
         UserPresenceService._manualBedtimeHour.value = 22
         UserPresenceService._manualBedtimeMinute.value = 30
@@ -322,12 +386,7 @@ fun SetBedtimeScreenPreview_BothSet() {
         UserPresenceService._manualWakeUpMinute.value = 45
     }
     HabitsTheme {
-        SetBedtimeScreen(
-            onSetBedtime = { _, _ -> },
-            onClearBedtime = {},
-            onSetWakeUpTime = { _, _ -> },
-            onClearWakeUpTime = {}
-        )
+        SetBedtimeScreen()
     }
 }
 
@@ -341,12 +400,7 @@ fun SetBedtimeScreenPreview_NoneSet() {
         UserPresenceService._manualWakeUpMinute.value = null
     }
     HabitsTheme {
-        SetBedtimeScreen(
-            onSetBedtime = { _, _ -> },
-            onClearBedtime = {},
-            onSetWakeUpTime = { _, _ -> },
-            onClearWakeUpTime = {}
-        )
+        SetBedtimeScreen()
     }
 }
 
@@ -360,11 +414,6 @@ fun SetBedtimeScreenPreview_BedtimeSet() {
         UserPresenceService._manualWakeUpMinute.value = null
     }
     HabitsTheme {
-        SetBedtimeScreen(
-            onSetBedtime = { _, _ -> },
-            onClearBedtime = {},
-            onSetWakeUpTime = { _, _ -> },
-            onClearWakeUpTime = {}
-        )
+        SetBedtimeScreen()
     }
 }

@@ -14,12 +14,13 @@ import javax.inject.Singleton
 object AppModule {
     @Provides
     @Singleton
-    fun provideContext(application: Application): Context{
+    fun provideContext(application: Application): Context {
         return application
     }
+
     @Provides
     @Singleton
-    fun provideUserPresenceController(context: Context): UserPresenceController{
+    fun provideUserPresenceController(context: Context): UserPresenceController {
         return UserPresenceController(context)
     }
 

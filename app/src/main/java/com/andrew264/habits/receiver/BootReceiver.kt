@@ -32,7 +32,10 @@ class BootReceiver : BroadcastReceiver() {
 
             try {
                 context.startForegroundService(serviceIntent)
-                Log.i(TAG, "UserPresenceService start command sent with action: $preferredStartAction")
+                Log.i(
+                    TAG,
+                    "UserPresenceService start command sent with action: $preferredStartAction"
+                )
             } catch (e: Exception) {
                 Log.e(TAG, "Error starting UserPresenceService on boot: ${e.message}", e)
             }

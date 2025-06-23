@@ -8,7 +8,7 @@ import javax.inject.Inject
 @HiltViewModel
 class UserPresenceControlViewModel @Inject constructor(
     private val userPresenceControl: UserPresenceController
-): ViewModel() {
+) : ViewModel() {
     fun onStartWithSleepApi(): Boolean = userPresenceControl.startServiceWithSleepApi()
     fun onStartWithHeuristics() = userPresenceControl.startServiceWithHeuristics()
     fun onStopService() = userPresenceControl.stopService()

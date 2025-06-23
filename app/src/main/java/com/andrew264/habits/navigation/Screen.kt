@@ -21,12 +21,14 @@ sealed class Screen(
         selectedIcon = Icons.Filled.Home,
         unselectedIcon = Icons.Outlined.Home
     )
+
     object PermissionSettings : Screen(
         route = "permission_settings_screen",
         title = "Permissions",
         selectedIcon = Icons.Filled.Settings,
         unselectedIcon = Icons.Outlined.Settings
     )
+
     object SetSleepTime : Screen(
         route = "set_sleep_time_screen",
         title = "Set Bedtime",

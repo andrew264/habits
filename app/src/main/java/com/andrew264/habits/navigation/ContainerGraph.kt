@@ -12,25 +12,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.andrew264.habits.presentation.setBedtimeScreen.SetBedtimeScreen
 import com.andrew264.habits.presentation.userPresenceControl.UserPresenceControlScreen
-import com.andrew264.habits.presentation.SetBedtimeScreen
 
 
 @Composable
 fun ContainerGraph(
     navController: NavHostController,
     onRequestPermissions: () -> Unit,
-    onOpenAppSettings: () -> Unit,
-    onSetBedtime: (hour: Int, minute: Int) -> Unit,
-    onClearBedtime: () -> Unit,
-    onSetWakeUpTime: (hour: Int, minute: Int) -> Unit,
-    onClearWakeUpTime: () -> Unit
-){
+    onOpenAppSettings: () -> Unit
+) {
     NavHost(
         navController = navController,
         startDestination = Screen.Home.route,
         modifier = Modifier.fillMaxHeight()
-    ){
+    ) {
         composable(route = Screen.Home.route) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
@@ -50,12 +46,7 @@ fun ContainerGraph(
         }
 
         composable(route = Screen.SetSleepTime.route) {
-            SetBedtimeScreen(
-                onSetBedtime = onSetBedtime,
-                onClearBedtime = onClearBedtime,
-                onSetWakeUpTime = onSetWakeUpTime,
-                onClearWakeUpTime = onClearWakeUpTime
-            )
+            SetBedtimeScreen()
         }
 
         composable(route = "TEST") {

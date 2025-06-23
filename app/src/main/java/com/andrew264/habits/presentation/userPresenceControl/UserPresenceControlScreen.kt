@@ -1,8 +1,20 @@
 package com.andrew264.habits.presentation.userPresenceControl
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,6 +34,7 @@ import com.andrew264.habits.ui.theme.HabitsTheme
 @Composable
 fun UserPresenceControlScreen(
     modifier: Modifier = Modifier,
+    viewModel: UserPresenceControlViewModel = hiltViewModel(),
     onRequestPermissions: () -> Unit,
     onOpenAppSettings: () -> Unit
 ) {
@@ -29,8 +42,6 @@ fun UserPresenceControlScreen(
     val currentOperatingMode by UserPresenceService.currentOperatingMode.collectAsState()
 
     var preferredModeOnStart by remember { mutableStateOf(UserPresenceService.OperatingMode.HEURISTICS_ACTIVE) }
-
-    val viewModel = hiltViewModel<UserPresenceControlViewModel>()
 
     Column(
         modifier = modifier

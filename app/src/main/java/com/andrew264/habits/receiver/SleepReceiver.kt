@@ -24,7 +24,10 @@ class SleepReceiver : BroadcastReceiver() {
             // Forward to service for processing
             val serviceIntent = Intent(context, UserPresenceService::class.java).apply {
                 action = UserPresenceService.ACTION_PROCESS_SLEEP_SEGMENT_EVENTS
-                putParcelableArrayListExtra(UserPresenceService.EXTRA_SLEEP_SEGMENTS, ArrayList(sleepSegmentEvents))
+                putParcelableArrayListExtra(
+                    UserPresenceService.EXTRA_SLEEP_SEGMENTS,
+                    ArrayList(sleepSegmentEvents)
+                )
             }
             context.startService(serviceIntent) // Use startService, service will decide if it needs to be foreground
         }
@@ -36,7 +39,10 @@ class SleepReceiver : BroadcastReceiver() {
             // Forward to service for processing
             val serviceIntent = Intent(context, UserPresenceService::class.java).apply {
                 action = UserPresenceService.ACTION_PROCESS_SLEEP_CLASSIFY_EVENTS
-                putParcelableArrayListExtra(UserPresenceService.EXTRA_SLEEP_CLASSIFY_EVENTS, ArrayList(sleepClassifyEvents))
+                putParcelableArrayListExtra(
+                    UserPresenceService.EXTRA_SLEEP_CLASSIFY_EVENTS,
+                    ArrayList(sleepClassifyEvents)
+                )
             }
             context.startService(serviceIntent)
         }
