@@ -48,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.andrew264.habits.model.ManualSleepSchedule
 import com.andrew264.habits.service.UserPresenceService
 import com.andrew264.habits.ui.theme.HabitsTheme
 import kotlinx.coroutines.launch
@@ -380,10 +381,13 @@ fun SleepDurationInfo(
 @Composable
 fun SetBedtimeScreenPreview_BothSet() {
     LaunchedEffect(Unit) {
-        UserPresenceService._manualBedtimeHour.value = 22
-        UserPresenceService._manualBedtimeMinute.value = 30
-        UserPresenceService._manualWakeUpHour.value = 6
-        UserPresenceService._manualWakeUpMinute.value = 45
+        UserPresenceService._manualSleepSchedule.value =
+            ManualSleepSchedule(
+                bedtimeHour = 22,
+                bedtimeMinute = 30,
+                wakeUpHour = 6,
+                wakeUpMinute = 45
+            )
     }
     HabitsTheme {
         SetBedtimeScreen()
@@ -394,10 +398,8 @@ fun SetBedtimeScreenPreview_BothSet() {
 @Composable
 fun SetBedtimeScreenPreview_NoneSet() {
     LaunchedEffect(Unit) {
-        UserPresenceService._manualBedtimeHour.value = null
-        UserPresenceService._manualBedtimeMinute.value = null
-        UserPresenceService._manualWakeUpHour.value = null
-        UserPresenceService._manualWakeUpMinute.value = null
+        UserPresenceService._manualSleepSchedule.value =
+            ManualSleepSchedule()
     }
     HabitsTheme {
         SetBedtimeScreen()
@@ -408,10 +410,11 @@ fun SetBedtimeScreenPreview_NoneSet() {
 @Composable
 fun SetBedtimeScreenPreview_BedtimeSet() {
     LaunchedEffect(Unit) {
-        UserPresenceService._manualBedtimeHour.value = 23
-        UserPresenceService._manualBedtimeMinute.value = 0
-        UserPresenceService._manualWakeUpHour.value = null
-        UserPresenceService._manualWakeUpMinute.value = null
+        UserPresenceService._manualSleepSchedule.value =
+            ManualSleepSchedule(
+                bedtimeHour = 23,
+                bedtimeMinute = 0
+            )
     }
     HabitsTheme {
         SetBedtimeScreen()

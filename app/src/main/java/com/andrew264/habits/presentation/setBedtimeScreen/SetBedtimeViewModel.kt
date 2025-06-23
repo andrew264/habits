@@ -7,6 +7,7 @@ import com.andrew264.habits.service.UserPresenceService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
@@ -15,32 +16,36 @@ class SetBedtimeViewModel @Inject constructor(
     private val userPresenceController: UserPresenceController
 ) : ViewModel() {
 
-    val currentBedtimeHour: StateFlow<Int?> = UserPresenceService.manualBedtimeHour
+    val currentBedtimeHour: StateFlow<Int?> = UserPresenceService.manualSleepSchedule
+        .map { it.bedtimeHour }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
-            UserPresenceService.manualBedtimeHour.value
+            UserPresenceService.manualSleepSchedule.value.bedtimeHour
         )
 
-    val currentBedtimeMinute: StateFlow<Int?> = UserPresenceService.manualBedtimeMinute
+    val currentBedtimeMinute: StateFlow<Int?> = UserPresenceService.manualSleepSchedule
+        .map { it.bedtimeMinute }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
-            UserPresenceService.manualBedtimeMinute.value
+            UserPresenceService.manualSleepSchedule.value.bedtimeMinute
         )
 
-    val currentWakeUpHour: StateFlow<Int?> = UserPresenceService.manualWakeUpHour
+    val currentWakeUpHour: StateFlow<Int?> = UserPresenceService.manualSleepSchedule
+        .map { it.wakeUpHour }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
-            UserPresenceService.manualWakeUpHour.value
+            UserPresenceService.manualSleepSchedule.value.wakeUpHour
         )
 
-    val currentWakeUpMinute: StateFlow<Int?> = UserPresenceService.manualWakeUpMinute
+    val currentWakeUpMinute: StateFlow<Int?> = UserPresenceService.manualSleepSchedule
+        .map { it.wakeUpMinute }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
-            UserPresenceService.manualWakeUpMinute.value
+            UserPresenceService.manualSleepSchedule.value.wakeUpMinute
         )
 
     fun setBedtime(hour: Int, minute: Int) {

@@ -20,6 +20,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.andrew264.habits.MainActivity
 import com.andrew264.habits.R
+import com.andrew264.habits.model.ManualSleepSchedule
 import com.andrew264.habits.receiver.SleepReceiver
 import com.andrew264.habits.state.UserPresenceState
 import com.google.android.gms.location.ActivityRecognition
@@ -82,17 +83,9 @@ class UserPresenceService : Service() {
         private val _currentOperatingMode = MutableStateFlow(OperatingMode.STOPPED)
         val currentOperatingMode: StateFlow<OperatingMode> = _currentOperatingMode.asStateFlow()
 
-        internal val _manualBedtimeHour = MutableStateFlow<Int?>(null)
-        val manualBedtimeHour: StateFlow<Int?> = _manualBedtimeHour.asStateFlow()
-
-        internal val _manualBedtimeMinute = MutableStateFlow<Int?>(null)
-        val manualBedtimeMinute: StateFlow<Int?> = _manualBedtimeMinute.asStateFlow()
-
-        internal val _manualWakeUpHour = MutableStateFlow<Int?>(null)
-        val manualWakeUpHour: StateFlow<Int?> = _manualWakeUpHour.asStateFlow()
-
-        internal val _manualWakeUpMinute = MutableStateFlow<Int?>(null)
-        val manualWakeUpMinute: StateFlow<Int?> = _manualWakeUpMinute.asStateFlow()
+        internal val _manualSleepSchedule =
+            MutableStateFlow(ManualSleepSchedule())
+        val manualSleepSchedule: StateFlow<ManualSleepSchedule> = _manualSleepSchedule.asStateFlow()
 
 
         fun updateState(newState: UserPresenceState, source: String) {
@@ -213,8 +206,10 @@ class UserPresenceService : Service() {
                 val hour = intent.getIntExtra(EXTRA_MANUAL_BEDTIME_HOUR, -1)
                 val minute = intent.getIntExtra(EXTRA_MANUAL_BEDTIME_MINUTE, -1)
                 if (hour != -1 && minute != -1) {
-                    _manualBedtimeHour.value = hour
-                    _manualBedtimeMinute.value = minute
+                    _manualSleepSchedule.value = _manualSleepSchedule.value.copy(
+                        bedtimeHour = hour,
+                        bedtimeMinute = minute
+                    )
                     Log.i(TAG, "Manual bedtime set to: $hour:$minute")
                 } else {
                     Log.w(TAG, "Invalid hour/minute for manual bedtime.")
@@ -222,8 +217,10 @@ class UserPresenceService : Service() {
             }
 
             ACTION_CLEAR_MANUAL_BEDTIME -> {
-                _manualBedtimeHour.value = null
-                _manualBedtimeMinute.value = null
+                _manualSleepSchedule.value = _manualSleepSchedule.value.copy(
+                    bedtimeHour = null,
+                    bedtimeMinute = null
+                )
                 Log.i(TAG, "Manual bedtime cleared.")
             }
 
@@ -231,8 +228,10 @@ class UserPresenceService : Service() {
                 val hour = intent.getIntExtra(EXTRA_MANUAL_WAKE_UP_HOUR, -1)
                 val minute = intent.getIntExtra(EXTRA_MANUAL_WAKE_UP_MINUTE, -1)
                 if (hour != -1 && minute != -1) {
-                    _manualWakeUpHour.value = hour
-                    _manualWakeUpMinute.value = minute
+                    _manualSleepSchedule.value = _manualSleepSchedule.value.copy(
+                        wakeUpHour = hour,
+                        wakeUpMinute = minute
+                    )
                     Log.i(TAG, "Manual wake-up time set to: $hour:$minute")
                 } else {
                     Log.w(TAG, "Invalid hour/minute for manual wake-up time.")
@@ -240,8 +239,10 @@ class UserPresenceService : Service() {
             }
 
             ACTION_CLEAR_MANUAL_WAKE_UP_TIME -> {
-                _manualWakeUpHour.value = null
-                _manualWakeUpMinute.value = null
+                _manualSleepSchedule.value = _manualSleepSchedule.value.copy(
+                    wakeUpHour = null,
+                    wakeUpMinute = null
+                )
                 Log.i(TAG, "Manual wake-up time cleared.")
             }
 
@@ -506,27 +507,18 @@ class UserPresenceService : Service() {
         val currentMinute = calendar.get(Calendar.MINUTE)
         val currentTimeInMinutes = currentHour * 60 + currentMinute
 
-        val bedtimeH = _manualBedtimeHour.value
-        val bedtimeM = _manualBedtimeMinute.value
-        val wakeUpH = _manualWakeUpHour.value
-        val wakeUpM = _manualWakeUpMinute.value
+        val schedule = _manualSleepSchedule.value
+        val userBedtimeInMinutes = schedule.bedtimeInMinutesTotal
+        val userWakeUpTimeInMinutes = schedule.wakeUpInMinutesTotal
 
-        if (bedtimeH != null && bedtimeM != null) {
-            val userBedtimeInMinutes = bedtimeH * 60 + bedtimeM
-
-            if (wakeUpH != null && wakeUpM != null) {
-                // Both bedtime and wake-up time are set
-                val userWakeUpTimeInMinutes = wakeUpH * 60 + wakeUpM
-
+        if (userBedtimeInMinutes != null) {
+            if (userWakeUpTimeInMinutes != null) {
                 return if (userBedtimeInMinutes <= userWakeUpTimeInMinutes) {
-                    // Bedtime and wake-up are on the same "day" or wake-up is later (e.g., Bed 01:00, Wake 07:00)
                     currentTimeInMinutes >= userBedtimeInMinutes && currentTimeInMinutes < userWakeUpTimeInMinutes
                 } else {
-                    // Bedtime is PM, wake-up is AM (e.g., Bed 22:00, Wake 06:00) - crosses midnight
                     currentTimeInMinutes >= userBedtimeInMinutes || currentTimeInMinutes < userWakeUpTimeInMinutes
                 }
             } else {
-                // Only bedtime is set, use a default sleep duration
                 val heuristicWindowEndMinutes =
                     (userBedtimeInMinutes + DEFAULT_HEURISTIC_SLEEP_DURATION_HOURS * 60) % (24 * 60)
 
@@ -537,7 +529,6 @@ class UserPresenceService : Service() {
                 }
             }
         } else {
-            // No custom bedtime set, use default hardcoded window (e.g., 10 PM to 6 AM)
             return currentHour >= 22 || currentHour < 6
         }
     }
@@ -553,10 +544,8 @@ class UserPresenceService : Service() {
         _userPresenceState.value = UserPresenceState.UNKNOWN
         currentMode = OperatingMode.STOPPED
         _currentOperatingMode.value = currentMode
-        _manualBedtimeHour.value = null
-        _manualBedtimeMinute.value = null
-        _manualWakeUpHour.value = null
-        _manualWakeUpMinute.value = null
+        _manualSleepSchedule.value = ManualSleepSchedule() // Reset to default empty schedule
+
         Log.d(
             TAG,
             "Service Destroyed. Final state: ${_userPresenceState.value}, Mode: $currentMode"
