@@ -12,6 +12,9 @@ playServicesLocation = "21.3.0"
 navigationCompose = "2.9.0"
 materialIconsExtended = "1.7.8"
 material = "1.4.0-alpha16"
+hilt = "2.56.2"
+hiltNavigation = "1.2.0"
+ksp = "2.0.21-1.0.27"
 
 
 [libraries]
@@ -35,10 +38,20 @@ play-services-location = { group = "com.google.android.gms", name = "play-servic
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 
+#Hilt
+hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
+hilt-android-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
+androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hiltNavigation"}
+androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigation"}
+
 
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+
+# plugin stuff
+hilt-andriod = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 

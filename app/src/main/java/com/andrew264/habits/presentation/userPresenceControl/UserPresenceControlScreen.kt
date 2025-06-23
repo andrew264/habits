@@ -1,4 +1,4 @@
-package com.andrew264.habits.presentation
+package com.andrew264.habits.presentation.userPresenceControl
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.andrew264.habits.service.UserPresenceService
 import com.andrew264.habits.state.UserPresenceState
 import com.andrew264.habits.ui.theme.HabitsTheme
@@ -22,15 +23,14 @@ import com.andrew264.habits.ui.theme.HabitsTheme
 fun UserPresenceControlScreen(
     modifier: Modifier = Modifier,
     onRequestPermissions: () -> Unit,
-    onStartWithSleepApi: () -> Unit,
-    onStartWithHeuristics: () -> Unit,
-    onStopService: () -> Unit,
     onOpenAppSettings: () -> Unit
 ) {
     val presenceState by UserPresenceService.userPresenceState.collectAsState()
     val currentOperatingMode by UserPresenceService.currentOperatingMode.collectAsState()
 
     var preferredModeOnStart by remember { mutableStateOf(UserPresenceService.OperatingMode.HEURISTICS_ACTIVE) }
+
+    val viewModel = hiltViewModel<UserPresenceControlViewModel>()
 
     Column(
         modifier = modifier
@@ -64,7 +64,7 @@ fun UserPresenceControlScreen(
                 checked = currentOperatingMode == UserPresenceService.OperatingMode.SLEEP_API_ACTIVE,
                 onCheckedChange = { isChecked ->
                     if (isChecked) {
-                        onStartWithSleepApi()
+                        viewModel.onStartWithSleepApi()
                         preferredModeOnStart = UserPresenceService.OperatingMode.SLEEP_API_ACTIVE
                     }
                 },
@@ -77,7 +77,7 @@ fun UserPresenceControlScreen(
                 checked = currentOperatingMode == UserPresenceService.OperatingMode.HEURISTICS_ACTIVE,
                 onCheckedChange = { isChecked ->
                     if (isChecked) {
-                        onStartWithHeuristics()
+                        viewModel.onStartWithHeuristics()
                         preferredModeOnStart = UserPresenceService.OperatingMode.HEURISTICS_ACTIVE
                     }
                 },
@@ -101,12 +101,12 @@ fun UserPresenceControlScreen(
                 onCheckedChange = { isOn ->
                     if (isOn) {
                         if (preferredModeOnStart == UserPresenceService.OperatingMode.SLEEP_API_ACTIVE) {
-                            onStartWithSleepApi()
+                            viewModel.onStartWithSleepApi()
                         } else {
-                            onStartWithHeuristics()
+                            viewModel.onStartWithHeuristics()
                         }
                     } else {
-                        onStopService()
+                        viewModel.onStopService()
                     }
                 }
             )
@@ -136,9 +136,6 @@ fun UserPresenceControlScreenPreview() {
     HabitsTheme {
         UserPresenceControlScreen(
             onRequestPermissions = {},
-            onStartWithSleepApi = {},
-            onStartWithHeuristics = {},
-            onStopService = {},
             onOpenAppSettings = {}
         )
     }

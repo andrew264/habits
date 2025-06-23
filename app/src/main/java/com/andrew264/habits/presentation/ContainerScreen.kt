@@ -22,9 +22,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun ContainerScreen(
     onRequestPermissions: () -> Unit,
-    onStartWithSleepApi: () -> Unit,
-    onStartWithHeuristics: () -> Unit,
-    onStopService: () -> Unit,
     onOpenAppSettings: () -> Unit,
     onSetBedtime: (hour: Int, minute: Int) -> Unit,
     onClearBedtime: () -> Unit,
@@ -109,9 +106,6 @@ fun ContainerScreen(
             ContainerGraph(
                 navController = navController,
                 onRequestPermissions = onRequestPermissions,
-                onStartWithSleepApi = onStartWithSleepApi,
-                onStartWithHeuristics = onStartWithHeuristics,
-                onStopService = onStopService,
                 onOpenAppSettings = onOpenAppSettings,
                 onSetBedtime = onSetBedtime,
                 onClearBedtime = onClearBedtime,

@@ -1,7 +1,6 @@
 package com.andrew264.habits
 
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
@@ -9,12 +8,13 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.core.content.ContextCompat
 import com.andrew264.habits.presentation.ContainerScreen
 import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.util.PermissionHandler
 import com.andrew264.habits.manager.UserPresenceController
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private lateinit var permissionHandler: PermissionHandler
@@ -48,16 +48,6 @@ class MainActivity : ComponentActivity() {
             HabitsTheme {
                 ContainerScreen(
                     onRequestPermissions = { permissionHandler.requestRelevantPermissions() },
-                    onStartWithSleepApi = {
-                        if (ContextCompat.checkSelfPermission(this@MainActivity, android.Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED) {
-                            userPresenceController.startServiceWithSleepApi()
-                        } else {
-                            Toast.makeText(this@MainActivity, "Activity Recognition permission not granted. Please grant permission first or use Heuristics.", Toast.LENGTH_LONG).show()
-                            permissionHandler.requestRelevantPermissions()
-                        }
-                    },
-                    onStartWithHeuristics = { userPresenceController.startServiceWithHeuristics() },
-                    onStopService = { userPresenceController.stopService() },
                     onOpenAppSettings = { openAppSettings() },
                     onSetBedtime = { hour, minute -> userPresenceController.setManualBedtime(hour, minute) },
                     onClearBedtime = { userPresenceController.clearManualBedtime() },
