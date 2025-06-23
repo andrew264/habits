@@ -13,12 +13,16 @@ import com.andrew264.habits.presentation.ContainerScreen
 import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.util.PermissionHandler
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private lateinit var permissionHandler: PermissionHandler
-    private lateinit var userPresenceController: UserPresenceController
+
+    @Inject
+    lateinit var userPresenceController: UserPresenceController
+
     private var initialPermissionCheckDone = false
 
     companion object {
@@ -29,8 +33,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-        userPresenceController = UserPresenceController(applicationContext)
 
         permissionHandler =
             PermissionHandler(this) { activityRecognitionGranted, notificationsGranted ->
