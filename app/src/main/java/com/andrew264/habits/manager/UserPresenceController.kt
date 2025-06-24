@@ -14,7 +14,7 @@ class UserPresenceController(private val context: Context) {
     }
 
     fun handleInitialServiceStart(activityRecognitionGranted: Boolean) {
-        startService()
+        Log.d(TAG, "handleInitialServiceStart called. ActivityRecognitionGranted: $activityRecognitionGranted. Service will start based on persisted state.")
     }
 
     fun startService() {
@@ -23,16 +23,16 @@ class UserPresenceController(private val context: Context) {
         }
         try {
             ContextCompat.startForegroundService(context, serviceIntent)
-            Toast.makeText(context, "Presence monitoring service started.", Toast.LENGTH_SHORT)
+            Toast.makeText(context, "Presence monitoring service start requested.", Toast.LENGTH_SHORT)
                 .show()
             Log.d(
                 TAG,
                 "Service start command sent. Action: ${UserPresenceService.ACTION_START_SERVICE}"
             )
         } catch (e: Exception) {
-            Toast.makeText(context, "Error starting service: ${e.message}", Toast.LENGTH_LONG)
+            Toast.makeText(context, "Error requesting service start: ${e.message}", Toast.LENGTH_LONG)
                 .show()
-            Log.e(TAG, "Error starting service", e)
+            Log.e(TAG, "Error requesting service start", e)
         }
     }
 
@@ -42,18 +42,17 @@ class UserPresenceController(private val context: Context) {
         }
         try {
             context.startService(serviceIntent)
-            Toast.makeText(context, "Presence monitoring service stopped.", Toast.LENGTH_SHORT)
+            Toast.makeText(context, "Presence monitoring service stop requested.", Toast.LENGTH_SHORT)
                 .show()
             Log.d(TAG, "Service stop command sent.")
         } catch (e: Exception) {
-            Toast.makeText(context, "Error stopping service: ${e.message}", Toast.LENGTH_LONG)
+            Toast.makeText(context, "Error requesting service stop: ${e.message}", Toast.LENGTH_LONG)
                 .show()
-            Log.e(TAG, "Error stopping service", e)
+            Log.e(TAG, "Error requesting service stop", e)
         }
     }
 
-    // --- Manual Schedule methods remain unchanged ---
-
+    // These methods now just send intents. The service will handle persisting the change.
     fun setManualBedtime(hour: Int, minute: Int) {
         val serviceIntent = Intent(context, UserPresenceService::class.java).apply {
             action = UserPresenceService.ACTION_SET_MANUAL_BEDTIME
@@ -67,11 +66,11 @@ class UserPresenceController(private val context: Context) {
                 "Manual bedtime ($hour:$minute) command sent.",
                 Toast.LENGTH_SHORT
             ).show()
-            Log.d(TAG, "Manual bedtime set to $hour:$minute")
+            Log.d(TAG, "Manual bedtime set command sent to $hour:$minute")
         } catch (e: Exception) {
-            Toast.makeText(context, "Error setting manual bedtime: ${e.message}", Toast.LENGTH_LONG)
+            Toast.makeText(context, "Error sending set manual bedtime: ${e.message}", Toast.LENGTH_LONG)
                 .show()
-            Log.e(TAG, "Error setting manual bedtime", e)
+            Log.e(TAG, "Error sending set manual bedtime", e)
         }
     }
 
@@ -82,14 +81,14 @@ class UserPresenceController(private val context: Context) {
         try {
             context.startService(serviceIntent)
             Toast.makeText(context, "Clear manual bedtime command sent.", Toast.LENGTH_SHORT).show()
-            Log.d(TAG, "Manual bedtime cleared")
+            Log.d(TAG, "Clear manual bedtime command sent")
         } catch (e: Exception) {
             Toast.makeText(
                 context,
-                "Error clearing manual bedtime: ${e.message}",
+                "Error sending clear manual bedtime: ${e.message}",
                 Toast.LENGTH_LONG
             ).show()
-            Log.e(TAG, "Error clearing manual bedtime", e)
+            Log.e(TAG, "Error sending clear manual bedtime", e)
         }
     }
 
@@ -106,14 +105,14 @@ class UserPresenceController(private val context: Context) {
                 "Manual wake-up time ($hour:$minute) command sent.",
                 Toast.LENGTH_SHORT
             ).show()
-            Log.d(TAG, "Manual wake-up time set to $hour:$minute")
+            Log.d(TAG, "Manual wake-up time set command sent to $hour:$minute")
         } catch (e: Exception) {
             Toast.makeText(
                 context,
-                "Error setting manual wake-up time: ${e.message}",
+                "Error sending set manual wake-up time: ${e.message}",
                 Toast.LENGTH_LONG
             ).show()
-            Log.e(TAG, "Error setting manual wake-up time", e)
+            Log.e(TAG, "Error sending set manual wake-up time", e)
         }
     }
 
@@ -125,14 +124,14 @@ class UserPresenceController(private val context: Context) {
             context.startService(serviceIntent)
             Toast.makeText(context, "Clear manual wake-up time command sent.", Toast.LENGTH_SHORT)
                 .show()
-            Log.d(TAG, "Manual wake-up time cleared")
+            Log.d(TAG, "Clear manual wake-up time command sent")
         } catch (e: Exception) {
             Toast.makeText(
                 context,
-                "Error clearing manual wake-up time: ${e.message}",
+                "Error sending clear manual wake-up time: ${e.message}",
                 Toast.LENGTH_LONG
             ).show()
-            Log.e(TAG, "Error clearing manual wake-up time", e)
+            Log.e(TAG, "Error sending clear manual wake-up time", e)
         }
     }
 }

@@ -51,6 +51,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.andrew264.habits.model.ManualSleepSchedule
 import com.andrew264.habits.service.UserPresenceService
 import com.andrew264.habits.ui.theme.HabitsTheme
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -75,12 +77,12 @@ fun SetBedtimeScreen(
     val isSystem24Hour = remember(context) { DateFormat.is24HourFormat(context) }
 
     val bedtimePickerState = rememberTimePickerState(
-        initialHour = currentBedtimeHour ?: 22, // Default to 10 PM
+        initialHour = currentBedtimeHour ?: 22,
         initialMinute = currentBedtimeMinute ?: 0,
         is24Hour = isSystem24Hour
     )
     val wakeUpTimePickerState = rememberTimePickerState(
-        initialHour = currentWakeUpHour ?: 6, // Default to 6 AM
+        initialHour = currentWakeUpHour ?: 6,
         initialMinute = currentWakeUpMinute ?: 0,
         is24Hour = isSystem24Hour
     )
@@ -94,11 +96,10 @@ fun SetBedtimeScreen(
         currentWakeUpMinute?.let { wakeUpTimePickerState.minute = it }
     }
 
-
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    val formatter = remember {
+    val formatter = remember(isSystem24Hour) {
         if (isSystem24Hour) SimpleDateFormat("HH:mm", Locale.getDefault())
         else SimpleDateFormat("hh:mm a", Locale.getDefault())
     }
@@ -122,7 +123,7 @@ fun SetBedtimeScreen(
                 textAlign = TextAlign.Center
             )
             Text(
-                text = "This schedule helps the 'Heuristics' mode estimate your sleep if the screen is off during these times.",
+                text = "This schedule helps estimate your sleep. It's also used by the Sleep API integration.",
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -138,9 +139,7 @@ fun SetBedtimeScreen(
                 onSetTimeClick = { showBedtimePicker = true },
                 onClearTimeClick = {
                     viewModel.clearBedtime()
-                    // Reset picker state to default
-                    bedtimePickerState.hour = 22
-                    bedtimePickerState.minute = 0
+                    // Picker state will update via LaunchedEffect when currentBedtimeHour/Minute become null
                     scope.launch {
                         snackbarHostState.showSnackbar("Custom bedtime cleared.")
                     }
@@ -157,9 +156,7 @@ fun SetBedtimeScreen(
                 onSetTimeClick = { showWakeUpTimePicker = true },
                 onClearTimeClick = {
                     viewModel.clearWakeUpTime()
-                    // Reset picker state
-                    wakeUpTimePickerState.hour = 6
-                    wakeUpTimePickerState.minute = 0
+                    // Picker state will update via LaunchedEffect
                     scope.launch {
                         snackbarHostState.showSnackbar("Custom wake-up time cleared.")
                     }
@@ -173,7 +170,6 @@ fun SetBedtimeScreen(
                 wakeUpMinute = currentWakeUpMinute
             )
 
-            // Bedtime Picker Dialog
             if (showBedtimePicker) {
                 TimePickerDialog(
                     title = { TimePickerDialogDefaults.Title(displayMode = TimePickerDisplayMode.Picker) },
@@ -192,11 +188,7 @@ fun SetBedtimeScreen(
                                 }
                                 scope.launch {
                                     snackbarHostState.showSnackbar(
-                                        "Bedtime set to: ${
-                                            formatter.format(
-                                                cal.time
-                                            )
-                                        }"
+                                        "Bedtime set to: ${formatter.format(cal.time)}"
                                     )
                                 }
                             }
@@ -210,7 +202,6 @@ fun SetBedtimeScreen(
                 }
             }
 
-            // Wake-up Time Picker Dialog
             if (showWakeUpTimePicker) {
                 TimePickerDialog(
                     title = { TimePickerDialogDefaults.Title(displayMode = TimePickerDisplayMode.Picker) },
@@ -229,11 +220,7 @@ fun SetBedtimeScreen(
                                 }
                                 scope.launch {
                                     snackbarHostState.showSnackbar(
-                                        "Wake-up time set to: ${
-                                            formatter.format(
-                                                cal.time
-                                            )
-                                        }"
+                                        "Wake-up time set to: ${formatter.format(cal.time)}"
                                     )
                                 }
                             }
@@ -359,6 +346,8 @@ fun SleepDurationInfo(
                 "Estimated Sleep Window: ${hours}h ${minutes}m",
                 style = MaterialTheme.typography.titleMedium
             )
+            // Check if wake up time (in minutes from midnight) is less than bedtime (in minutes from midnight)
+            // This indicates crossing midnight for the sleep period.
             if (wakeUpHour * 60 + wakeUpMinute < bedtimeHour * 60 + bedtimeMinute) {
                 Text(
                     "(Sleep window crosses midnight)",
@@ -366,7 +355,8 @@ fun SleepDurationInfo(
                 )
             }
         }
-    } else if (bedtimeHour != null || wakeUpHour != null) {
+    } else if (bedtimeHour != null || bedtimeMinute != null || wakeUpHour != null || wakeUpMinute != null) {
+        // Condition changed to show this message if *any* part of the schedule is set but not all
         Text(
             "Set both bedtime and wake-up time to see the estimated sleep window.",
             style = MaterialTheme.typography.bodySmall,
@@ -376,18 +366,25 @@ fun SleepDurationInfo(
     }
 }
 
-
+// For Previews: This directly updates the companion object's MutableStateFlow.
+// This is a hack for previewing and not a recommended pattern for general state management.
+// In a real test setup, you'd inject a fake repository or ViewModel.
 @Preview(showBackground = true, heightDp = 900)
 @Composable
 fun SetBedtimeScreenPreview_BothSet() {
     LaunchedEffect(Unit) {
-        UserPresenceService._manualSleepSchedule.value =
+        // Accessing the internal _manualSleepScheduleFlow via its public getter and then trying to update
+        // its underlying mutable state flow. This relies on UserPresenceService.manualSleepSchedule
+        // being a StateFlow backed by a MutableStateFlow in its companion object.
+        val internalFlow = UserPresenceService.manualSleepSchedule as? MutableStateFlow<ManualSleepSchedule>
+        internalFlow?.update {
             ManualSleepSchedule(
                 bedtimeHour = 22,
                 bedtimeMinute = 30,
                 wakeUpHour = 6,
                 wakeUpMinute = 45
             )
+        }
     }
     HabitsTheme {
         SetBedtimeScreen()
@@ -398,8 +395,8 @@ fun SetBedtimeScreenPreview_BothSet() {
 @Composable
 fun SetBedtimeScreenPreview_NoneSet() {
     LaunchedEffect(Unit) {
-        UserPresenceService._manualSleepSchedule.value =
-            ManualSleepSchedule()
+        val internalFlow = UserPresenceService.manualSleepSchedule as? MutableStateFlow<ManualSleepSchedule>
+        internalFlow?.update { ManualSleepSchedule() }
     }
     HabitsTheme {
         SetBedtimeScreen()
@@ -410,11 +407,13 @@ fun SetBedtimeScreenPreview_NoneSet() {
 @Composable
 fun SetBedtimeScreenPreview_BedtimeSet() {
     LaunchedEffect(Unit) {
-        UserPresenceService._manualSleepSchedule.value =
+        val internalFlow = UserPresenceService.manualSleepSchedule as? MutableStateFlow<ManualSleepSchedule>
+        internalFlow?.update {
             ManualSleepSchedule(
                 bedtimeHour = 23,
                 bedtimeMinute = 0
             )
+        }
     }
     HabitsTheme {
         SetBedtimeScreen()

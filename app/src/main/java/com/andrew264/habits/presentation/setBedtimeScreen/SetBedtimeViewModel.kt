@@ -2,65 +2,82 @@ package com.andrew264.habits.presentation.setBedtimeScreen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.andrew264.habits.manager.UserPresenceController
-import com.andrew264.habits.service.UserPresenceService
+import com.andrew264.habits.data.repository.SettingsRepository
+import com.andrew264.habits.model.ManualSleepSchedule
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class SetBedtimeViewModel @Inject constructor(
-    private val userPresenceController: UserPresenceController
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
-    val currentBedtimeHour: StateFlow<Int?> = UserPresenceService.manualSleepSchedule
+    private val manualScheduleState: StateFlow<ManualSleepSchedule> = settingsRepository.settingsFlow
+        .map { persistentSettings -> persistentSettings.manualSleepSchedule }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = ManualSleepSchedule()
+        )
+
+    val currentBedtimeHour: StateFlow<Int?> = manualScheduleState
         .map { it.bedtimeHour }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
-            UserPresenceService.manualSleepSchedule.value.bedtimeHour
+            manualScheduleState.value.bedtimeHour
         )
 
-    val currentBedtimeMinute: StateFlow<Int?> = UserPresenceService.manualSleepSchedule
+    val currentBedtimeMinute: StateFlow<Int?> = manualScheduleState
         .map { it.bedtimeMinute }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
-            UserPresenceService.manualSleepSchedule.value.bedtimeMinute
+            manualScheduleState.value.bedtimeMinute
         )
 
-    val currentWakeUpHour: StateFlow<Int?> = UserPresenceService.manualSleepSchedule
+    val currentWakeUpHour: StateFlow<Int?> = manualScheduleState
         .map { it.wakeUpHour }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
-            UserPresenceService.manualSleepSchedule.value.wakeUpHour
+            manualScheduleState.value.wakeUpHour
         )
 
-    val currentWakeUpMinute: StateFlow<Int?> = UserPresenceService.manualSleepSchedule
+    val currentWakeUpMinute: StateFlow<Int?> = manualScheduleState
         .map { it.wakeUpMinute }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
-            UserPresenceService.manualSleepSchedule.value.wakeUpMinute
+            manualScheduleState.value.wakeUpMinute
         )
 
     fun setBedtime(hour: Int, minute: Int) {
-        userPresenceController.setManualBedtime(hour, minute)
+        viewModelScope.launch {
+            settingsRepository.updateManualBedtime(hour, minute)
+        }
     }
 
     fun clearBedtime() {
-        userPresenceController.clearManualBedtime()
+        viewModelScope.launch {
+            settingsRepository.updateManualBedtime(null, null)
+        }
     }
 
     fun setWakeUpTime(hour: Int, minute: Int) {
-        userPresenceController.setManualWakeUpTime(hour, minute)
+        viewModelScope.launch {
+            settingsRepository.updateManualWakeUpTime(hour, minute)
+        }
     }
 
     fun clearWakeUpTime() {
-        userPresenceController.clearManualWakeUpTime()
+        viewModelScope.launch {
+            settingsRepository.updateManualWakeUpTime(null, null)
+        }
     }
 }

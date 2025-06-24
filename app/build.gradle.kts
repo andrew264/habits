@@ -67,6 +67,7 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.adaptive)
     implementation(libs.androidx.material.icons.core)
+    implementation(libs.androidx.datastore.preferences)
 
     // Hilt
     implementation (libs.hilt.android)

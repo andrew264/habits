@@ -7,8 +7,14 @@ import javax.inject.Inject
 
 @HiltViewModel
 class UserPresenceControlViewModel @Inject constructor(
-    private val userPresenceControl: UserPresenceController
+    private val userPresenceController: UserPresenceController
 ) : ViewModel() {
-    fun onStartService() = userPresenceControl.startService()
-    fun onStopService() = userPresenceControl.stopService()
+
+    fun onStartService() {
+        userPresenceController.startService()
+    }
+
+    fun onStopService() {
+        userPresenceController.stopService()
+    }
 }
