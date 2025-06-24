@@ -1,9 +1,7 @@
 package com.andrew264.habits.manager
 
-import android.Manifest
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.util.Log
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -16,69 +14,25 @@ class UserPresenceController(private val context: Context) {
     }
 
     fun handleInitialServiceStart(activityRecognitionGranted: Boolean) {
-        if (activityRecognitionGranted) {
-            startServiceWithMode(
-                UserPresenceService.ACTION_START_SERVICE_SLEEP_API,
-                "Initial (AR granted)"
-            )
-        } else {
-            Toast.makeText(
-                context,
-                "Activity Recognition permission denied for initial start. Falling back to heuristics.",
-                Toast.LENGTH_LONG
-            ).show()
-            startServiceWithMode(
-                UserPresenceService.ACTION_START_SERVICE_HEURISTICS,
-                "Initial (AR denied, fallback)"
-            )
-        }
+        startService()
     }
 
-    fun startServiceWithSleepApi(): Boolean {
-        if (ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACTIVITY_RECOGNITION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            startServiceWithMode(
-                UserPresenceService.ACTION_START_SERVICE_SLEEP_API,
-                "User requested Sleep API"
-            )
-            return true
-        } else {
-            Log.w(
-                TAG,
-                "Attempted to start with Sleep API, but Activity Recognition permission not granted."
-            )
-            return false
-        }
-    }
-
-    fun startServiceWithHeuristics() {
-        startServiceWithMode(
-            UserPresenceService.ACTION_START_SERVICE_HEURISTICS,
-            "User requested Heuristics"
-        )
-    }
-
-    private fun startServiceWithMode(action: String, reason: String) {
+    fun startService() {
         val serviceIntent = Intent(context, UserPresenceService::class.java).apply {
-            this.action = action
+            action = UserPresenceService.ACTION_START_SERVICE
         }
         try {
             ContextCompat.startForegroundService(context, serviceIntent)
-            val modeName =
-                if (action == UserPresenceService.ACTION_START_SERVICE_SLEEP_API) "Sleep API" else "Heuristics"
-            Toast.makeText(
-                context,
-                "Service command sent: $modeName mode. ($reason)",
-                Toast.LENGTH_SHORT
-            ).show()
-            Log.d(TAG, "Service start command sent. Action: $action, Reason: $reason")
+            Toast.makeText(context, "Presence monitoring service started.", Toast.LENGTH_SHORT)
+                .show()
+            Log.d(
+                TAG,
+                "Service start command sent. Action: ${UserPresenceService.ACTION_START_SERVICE}"
+            )
         } catch (e: Exception) {
             Toast.makeText(context, "Error starting service: ${e.message}", Toast.LENGTH_LONG)
                 .show()
-            Log.e(TAG, "Error starting service with action $action", e)
+            Log.e(TAG, "Error starting service", e)
         }
     }
 
@@ -87,9 +41,8 @@ class UserPresenceController(private val context: Context) {
             action = UserPresenceService.ACTION_STOP_SERVICE
         }
         try {
-            // Use startService for stop, as the service will handle stopping foreground if needed.
             context.startService(serviceIntent)
-            Toast.makeText(context, "User Presence Service Stop command sent.", Toast.LENGTH_SHORT)
+            Toast.makeText(context, "Presence monitoring service stopped.", Toast.LENGTH_SHORT)
                 .show()
             Log.d(TAG, "Service stop command sent.")
         } catch (e: Exception) {
@@ -98,6 +51,8 @@ class UserPresenceController(private val context: Context) {
             Log.e(TAG, "Error stopping service", e)
         }
     }
+
+    // --- Manual Schedule methods remain unchanged ---
 
     fun setManualBedtime(hour: Int, minute: Int) {
         val serviceIntent = Intent(context, UserPresenceService::class.java).apply {

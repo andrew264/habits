@@ -9,7 +9,6 @@ import javax.inject.Inject
 class UserPresenceControlViewModel @Inject constructor(
     private val userPresenceControl: UserPresenceController
 ) : ViewModel() {
-    fun onStartWithSleepApi(): Boolean = userPresenceControl.startServiceWithSleepApi()
-    fun onStartWithHeuristics() = userPresenceControl.startServiceWithHeuristics()
+    fun onStartService() = userPresenceControl.startService()
     fun onStopService() = userPresenceControl.stopService()
 }
