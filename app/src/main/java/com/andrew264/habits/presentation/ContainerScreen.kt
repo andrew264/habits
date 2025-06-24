@@ -1,20 +1,34 @@
 package com.andrew264.habits.presentation
 
+import android.app.Activity
+import androidx.activity.compose.LocalActivity
+import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuOpen
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalWideNavigationRail
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.WideNavigationRail
 import androidx.compose.material3.WideNavigationRailItem
+import androidx.compose.material3.WideNavigationRailState
 import androidx.compose.material3.WideNavigationRailValue
 import androidx.compose.material3.rememberWideNavigationRailState
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -22,13 +36,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.andrew264.habits.navigation.ContainerGraph
 import com.andrew264.habits.navigation.railItems
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalMaterial3ExpressiveApi::class,
+    ExperimentalMaterial3WindowSizeClassApi::class
+)
 @Composable
 fun ContainerScreen(
     onRequestPermissions: () -> Unit,
@@ -38,82 +58,143 @@ fun ContainerScreen(
     val wideNavRailState = rememberWideNavigationRailState()
     val scope = rememberCoroutineScope()
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-    ) { scaffoldInternalPadding ->
+    val isCompact =
+        calculateWindowSizeClass(activity = LocalActivity.current as Activity).widthSizeClass == WindowWidthSizeClass.Compact
 
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(scaffoldInternalPadding)
-        ) {
-            WideNavigationRail(
-                state = wideNavRailState,
-                header = {
-                    IconButton(
-                        onClick = {
-                            scope.launch {
-                                if (wideNavRailState.targetValue == WideNavigationRailValue.Expanded) {
-                                    wideNavRailState.collapse()
-                                } else {
-                                    wideNavRailState.expand()
-                                }
-                            }
-                        },
-                        modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (wideNavRailState.targetValue == WideNavigationRailValue.Expanded) {
-                                Icons.AutoMirrored.Filled.MenuOpen
-                            } else {
-                                Icons.Filled.Menu
-                            },
-                            contentDescription = if (wideNavRailState.targetValue == WideNavigationRailValue.Expanded) {
-                                "Collapse rail"
-                            } else {
-                                "Expand rail"
-                            }
-                        )
-                    }
-                }
-            ) {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
+    Row(Modifier.fillMaxSize()) {
+        AppNavigationRail(
+            navController = navController,
+            state = wideNavRailState,
+            isCompact = isCompact,
+            scope = scope
+        )
 
-                railItems.forEach { screen ->
-                    val selected =
-                        currentDestination?.hierarchy?.any { it.route == screen.route } == true
-                    WideNavigationRailItem(
-                        railExpanded = wideNavRailState.targetValue == WideNavigationRailValue.Expanded,
-                        icon = {
-                            Icon(
-                                imageVector = if (selected) {
-                                    screen.selectedIcon
-                                } else {
-                                    screen.unselectedIcon
-                                },
-                                contentDescription = screen.title
-                            )
-                        },
-                        label = { Text(screen.title) },
-                        selected = selected,
-                        onClick = {
-                            navController.navigate(screen.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
+        Scaffold(
+            topBar = {
+                if (isCompact) {
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentRoute = navBackStackEntry?.destination?.route
+                    val currentScreen = railItems.find { it.route == currentRoute }
+
+                    TopAppBar(
+                        title = { Text(currentScreen?.title ?: "Habits") },
+                        navigationIcon = {
+                            IconButton(onClick = { scope.launch { wideNavRailState.expand() } }) {
+                                Icon(
+                                    Icons.Default.Menu,
+                                    contentDescription = "Open Navigation"
+                                )
                             }
                         }
                     )
                 }
             }
+        ) { innerPadding ->
+            Box(Modifier.padding(innerPadding)) {
+                ContainerGraph(
+                    navController = navController,
+                    onRequestPermissions = onRequestPermissions,
+                    onOpenAppSettings = onOpenAppSettings
+                )
+            }
+        }
+    }
+}
 
-            ContainerGraph(
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun AppNavigationRail(
+    navController: NavHostController,
+    state: WideNavigationRailState,
+    isCompact: Boolean,
+    scope: CoroutineScope
+) {
+    if (isCompact) {
+        ModalWideNavigationRail(
+            state = state,
+            hideOnCollapse = true
+        ) {
+            AppNavigationRailContent(
                 navController = navController,
-                onRequestPermissions = onRequestPermissions,
-                onOpenAppSettings = onOpenAppSettings
+                railState = state,
+                isRailExpanded = true,
+                isCompact = true,
+                scope = scope
+            )
+        }
+    } else {
+        WideNavigationRail(
+            state = state,
+            header = {
+                val expanded = state.targetValue == WideNavigationRailValue.Expanded
+                IconButton(
+                    onClick = { scope.launch { if (expanded) state.collapse() else state.expand() } },
+                    modifier = Modifier.padding(start = 24.dp)
+                ) {
+                    Crossfade(targetState = expanded, label = "MenuIconCrossfade") { isExpanded ->
+                        if (isExpanded) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.MenuOpen,
+                                contentDescription = "Collapse rail"
+                            )
+                        } else {
+                            Icon(Icons.Filled.Menu, contentDescription = "Expand rail")
+                        }
+                    }
+                }
+            }
+        ) {
+            val expanded = state.targetValue == WideNavigationRailValue.Expanded
+            AppNavigationRailContent(
+                navController = navController,
+                railState = state,
+                isRailExpanded = expanded,
+                isCompact = false,
+                scope = scope
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun AppNavigationRailContent(
+    navController: NavHostController,
+    railState: WideNavigationRailState,
+    isRailExpanded: Boolean,
+    isCompact: Boolean,
+    scope: CoroutineScope
+) {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
+
+    Column(Modifier.verticalScroll(rememberScrollState())) {
+        railItems.forEach { screen ->
+            val selected =
+                currentDestination?.hierarchy?.any { it.route == screen.route } == true
+            WideNavigationRailItem(
+                railExpanded = isRailExpanded,
+                icon = {
+                    Icon(
+                        if (selected) screen.selectedIcon else screen.unselectedIcon,
+                        contentDescription = screen.title
+                    )
+                },
+                label = { Text(screen.title) },
+                selected = selected,
+                onClick = {
+                    navController.navigate(screen.route) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                    if (isCompact) {
+                        scope.launch { railState.collapse() }
+                    }
+                }
             )
         }
     }
