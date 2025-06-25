@@ -5,6 +5,7 @@ plugins {
 
     alias(libs.plugins.hilt.andriod)
     alias(libs.plugins.google.devtools.ksp)
+    alias(libs.plugins.andridx.room)
 }
 
 android {
@@ -40,6 +41,10 @@ android {
     buildFeatures {
         compose = true
     }
+
+    room {
+        schemaDirectory("$projectDir/schemas")
+    }
 }
 
 dependencies {
@@ -74,5 +79,11 @@ dependencies {
     ksp (libs.hilt.android.compiler)
     ksp (libs.androidx.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+
+    // Room
+    implementation (libs.androidx.room.ktx)
+    implementation(libs.androidx.room.runtime)
+    annotationProcessor(libs.androidx.room.compiler)
+    ksp(libs.androidx.room.compiler)
 
 }

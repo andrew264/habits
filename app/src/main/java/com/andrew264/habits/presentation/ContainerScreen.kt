@@ -3,29 +3,13 @@ package com.andrew264.habits.presentation
 import android.app.Activity
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuOpen
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalWideNavigationRail
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.WideNavigationRail
-import androidx.compose.material3.WideNavigationRailItem
-import androidx.compose.material3.WideNavigationRailState
-import androidx.compose.material3.WideNavigationRailValue
-import androidx.compose.material3.rememberWideNavigationRailState
+import androidx.compose.material3.*
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
@@ -134,10 +118,7 @@ private fun AppNavigationRail(
                 ) {
                     Crossfade(targetState = expanded, label = "MenuIconCrossfade") { isExpanded ->
                         if (isExpanded) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.MenuOpen,
-                                contentDescription = "Collapse rail"
-                            )
+                            Icon(Icons.AutoMirrored.Filled.MenuOpen, contentDescription = "Collapse rail")
                         } else {
                             Icon(Icons.Filled.Menu, contentDescription = "Expand rail")
                         }

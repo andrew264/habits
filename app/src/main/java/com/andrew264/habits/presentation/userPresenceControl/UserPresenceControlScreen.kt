@@ -1,16 +1,7 @@
 package com.andrew264.habits.presentation.userPresenceControl
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -53,7 +44,6 @@ fun UserPresenceControlScreen(
             color = when (presenceState) {
                 UserPresenceState.AWAKE -> MaterialTheme.colorScheme.primary
                 UserPresenceState.SLEEPING -> MaterialTheme.colorScheme.secondary
-                UserPresenceState.WINDING_DOWN -> MaterialTheme.colorScheme.tertiary
                 UserPresenceState.UNKNOWN -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             }
         )
@@ -79,7 +69,7 @@ fun UserPresenceControlScreen(
         }
 
         Text(
-            text = "The service uses the Sleep API.",
+            text = "The service uses the Sleep API and time-based heuristics.",
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Left,
             modifier = Modifier.padding(horizontal = 4.dp)

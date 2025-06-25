@@ -30,7 +30,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
             }
         }
         .map { preferences ->
-            val isServiceActive = preferences[DataStoreKeys.IS_SERVICE_ACTIVE] ?: false
+            val isServiceActive = preferences[DataStoreKeys.IS_SERVICE_ACTIVE] == true
             val manualBedtimeHour = preferences[DataStoreKeys.MANUAL_BEDTIME_HOUR]
             val manualBedtimeMinute = preferences[DataStoreKeys.MANUAL_BEDTIME_MINUTE]
             val manualWakeUpHour = preferences[DataStoreKeys.MANUAL_WAKE_UP_HOUR]
@@ -51,7 +51,10 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         }
     }
 
-    suspend fun updateManualBedtime(hour: Int?, minute: Int?) {
+    suspend fun updateManualBedtime(
+        hour: Int?,
+        minute: Int?
+    ) {
         context.dataStore.edit { settings ->
             if (hour != null && minute != null) {
                 settings[DataStoreKeys.MANUAL_BEDTIME_HOUR] = hour
@@ -63,7 +66,10 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         }
     }
 
-    suspend fun updateManualWakeUpTime(hour: Int?, minute: Int?) {
+    suspend fun updateManualWakeUpTime(
+        hour: Int?,
+        minute: Int?
+    ) {
         context.dataStore.edit { settings ->
             if (hour != null && minute != null) {
                 settings[DataStoreKeys.MANUAL_WAKE_UP_HOUR] = hour

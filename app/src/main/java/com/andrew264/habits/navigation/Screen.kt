@@ -29,9 +29,9 @@ sealed class Screen(
         unselectedIcon = Icons.Outlined.Settings
     )
 
-    object SetSleepTime : Screen(
-        route = "set_sleep_time_screen",
-        title = "Set Bedtime",
+    object Bedtime : Screen(
+        route = "bedtime_screen",
+        title = "Bedtime",
         selectedIcon = Icons.Filled.Alarm,
         unselectedIcon = Icons.Outlined.Alarm
     )
@@ -40,5 +40,5 @@ sealed class Screen(
 val railItems = listOf(
     Screen.Home,
     Screen.PermissionSettings,
-    Screen.SetSleepTime
+    Screen.Bedtime
 )

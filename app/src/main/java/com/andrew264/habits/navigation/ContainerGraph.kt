@@ -12,7 +12,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.andrew264.habits.presentation.setBedtimeScreen.SetBedtimeScreen
+import com.andrew264.habits.presentation.bedtime.BedtimeScreen
 import com.andrew264.habits.presentation.userPresenceControl.UserPresenceControlScreen
 
 
@@ -45,8 +45,8 @@ fun ContainerGraph(
             )
         }
 
-        composable(route = Screen.SetSleepTime.route) {
-            SetBedtimeScreen()
+        composable(route = Screen.Bedtime.route) {
+            BedtimeScreen()
         }
 
         composable(route = "TEST") {
