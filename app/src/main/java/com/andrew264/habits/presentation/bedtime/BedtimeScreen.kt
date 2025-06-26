@@ -25,20 +25,18 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.andrew264.habits.state.UserPresenceState
-import com.andrew264.habits.ui.theme.HabitsTheme
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun BedtimeScreen(
     modifier: Modifier = Modifier,
@@ -126,13 +124,23 @@ fun BedtimeScreen(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        TimelineRange.entries.forEach { range ->
-                            FilterChip(
-                                onClick = { viewModel.setTimelineRange(range) },
-                                label = { Text(range.label) },
-                                selected = selectedTimelineRange == range,
-                                modifier = Modifier.padding(horizontal = 4.dp)
-                            )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+                        ) {
+                            val ranges = TimelineRange.entries
+                            ranges.forEachIndexed { index, range ->
+                                ElevatedToggleButton(
+                                    checked = selectedTimelineRange == range,
+                                    onCheckedChange = { viewModel.setTimelineRange(range) },
+                                    shapes = when (index) {
+                                        0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                                        ranges.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                        else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                                    },
+                                ) {
+                                    Text(range.label)
+                                }
+                            }
                         }
                     }
 
@@ -437,6 +445,7 @@ fun UserPresenceState.toColor(): Color {
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun TimeSettingCard(
     title: String,
@@ -509,6 +518,7 @@ fun TimeSettingCard(
                     if (timeIsSet) {
                         OutlinedButton(
                             onClick = onClearTimeClick,
+                            shapes = ButtonDefaults.shapes(ButtonDefaults.squareShape),
                             modifier = Modifier.height(40.dp)
                         ) {
                             Text("Clear")
@@ -516,6 +526,7 @@ fun TimeSettingCard(
                     }
                     Button(
                         onClick = onSetTimeClick,
+                        shapes = ButtonDefaults.shapes(ButtonDefaults.squareShape),
                         modifier = Modifier.height(40.dp)
                     ) {
                         Text(if (timeIsSet) "Change" else "Set")
@@ -602,57 +613,6 @@ fun SleepDurationInfo(
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(16.dp)
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true, widthDp = 360)
-@Composable
-fun UserPresenceTimelinePreview_Day() {
-    val now = System.currentTimeMillis()
-    val segments = listOf(
-        TimelineSegment(now - TimeUnit.HOURS.toMillis(24), now - TimeUnit.HOURS.toMillis(16), UserPresenceState.SLEEPING, TimeUnit.HOURS.toMillis(8)),
-        TimelineSegment(now - TimeUnit.HOURS.toMillis(16), now - TimeUnit.HOURS.toMillis(8), UserPresenceState.AWAKE, TimeUnit.HOURS.toMillis(8)),
-        TimelineSegment(now - TimeUnit.HOURS.toMillis(8), now - TimeUnit.HOURS.toMillis(4), UserPresenceState.UNKNOWN, TimeUnit.HOURS.toMillis(4)),
-        TimelineSegment(now - TimeUnit.HOURS.toMillis(4), now, UserPresenceState.AWAKE, TimeUnit.HOURS.toMillis(4))
-    )
-    HabitsTheme {
-        Surface {
-            UserPresenceTimeline(
-                segments = segments,
-                totalDurationMillis = TimeUnit.DAYS.toMillis(1),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp)
-                    .padding(16.dp)
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true, widthDp = 360)
-@Composable
-fun UserPresenceTimelinePreview_Week() {
-    val now = System.currentTimeMillis()
-    val segments = mutableListOf<TimelineSegment>()
-    var currentTime = now - TimeUnit.DAYS.toMillis(7)
-    (0 until 7).forEach { i ->
-        segments.add(TimelineSegment(currentTime, currentTime + TimeUnit.HOURS.toMillis(8), UserPresenceState.SLEEPING, TimeUnit.HOURS.toMillis(8)))
-        currentTime += TimeUnit.HOURS.toMillis(8)
-        segments.add(TimelineSegment(currentTime, currentTime + TimeUnit.HOURS.toMillis(16), UserPresenceState.AWAKE, TimeUnit.HOURS.toMillis(16)))
-        currentTime += TimeUnit.HOURS.toMillis(16)
-    }
-
-    HabitsTheme {
-        Surface {
-            UserPresenceTimeline(
-                segments = segments,
-                totalDurationMillis = TimeUnit.DAYS.toMillis(7),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp)
-                    .padding(16.dp)
             )
         }
     }

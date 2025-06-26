@@ -16,6 +16,7 @@ import com.andrew264.habits.service.UserPresenceService
 import com.andrew264.habits.state.UserPresenceState
 import com.andrew264.habits.ui.theme.HabitsTheme
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun UserPresenceControlScreen(
     modifier: Modifier = Modifier,

@@ -299,7 +299,7 @@ class UserPresenceService : Service() {
         val contentText = "$baseText Active. State: $currentPresenceText"
 
         return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle("Habit Tracker Presence")
+            .setContentTitle("Habit Tracker")
             .setContentText(contentText)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(pendingIntent)
@@ -314,90 +314,76 @@ class UserPresenceService : Service() {
         data: Any? = null
     ) {
         val oldState = _userPresenceStateFlow.value
-        var newStateCandidate = oldState
-        var reasonForChange = "No Change (Source: $source, Old State: $oldState)"
+        var newState = oldState
+        var reason = "No change"
 
-        Log.d(TAG, "Evaluating state. Source: $source, Old State: $oldState, Is Night Time: ${isNightTime()}, Manual Schedule: $currentManualSleepSchedule")
+        Log.d(TAG, "Evaluating state. Source: $source, Old State: $oldState, Is Night Time: ${isNightTime()}")
 
-        // Priority 1: AWAKE conditions
-        if (source == EvaluationSource.SCREEN_ON || source == EvaluationSource.USER_PRESENT) {
-            newStateCandidate = UserPresenceState.AWAKE
-            reasonForChange = "Device Interaction (Source: $source)"
-        } else if (source == EvaluationSource.SLEEP_API_SEGMENT && data is SleepSegmentEvent) {
-            val event = data
-            if (event.status == SleepSegmentEvent.STATUS_SUCCESSFUL) {
-                val now = System.currentTimeMillis()
-                // Check if sleep segment just ended (within last 15 mins)
-                if (now > event.startTimeMillis && now > event.endTimeMillis && now < event.endTimeMillis + TimeUnit.MINUTES.toMillis(15)) {
-                    newStateCandidate = UserPresenceState.AWAKE
-                    reasonForChange = "Sleep API Segment Just Ended"
+        when (source) {
+            EvaluationSource.SLEEP_API_SEGMENT -> {
+                if (data is SleepSegmentEvent && data.status == SleepSegmentEvent.STATUS_SUCCESSFUL) {
+                    val now = System.currentTimeMillis()
+
+                    // Currently in sleep segment
+                    if (now >= data.startTimeMillis && now <= data.endTimeMillis) {
+                        newState = UserPresenceState.SLEEPING
+                        reason = "Sleep API: In sleep segment"
+                    }
+                    // Just woke up (within 15 minutes of segment end)
+                    else if (now > data.endTimeMillis && now < data.endTimeMillis + TimeUnit.MINUTES.toMillis(15)) {
+                        newState = UserPresenceState.AWAKE
+                        reason = "Sleep API: Just woke up from sleep segment"
+                    }
+                }
+            }
+
+            EvaluationSource.SLEEP_API_CLASSIFY -> {
+                if (data is SleepClassifyEvent && data.confidence >= 75 && (data.light <= 1 || data.motion <= 1)) {
+                    newState = UserPresenceState.SLEEPING
+                    reason = "Sleep API: High confidence sleep classification"
+                }
+            }
+
+            EvaluationSource.SCREEN_ON, EvaluationSource.USER_PRESENT -> {
+                // Only use screen interactions if we don't have Sleep API data or it's daytime
+                if (!isSleepApiAvailable || !isNightTime()) {
+                    newState = UserPresenceState.AWAKE
+                    reason = "Device interaction during daytime or no Sleep API"
+                }
+            }
+
+            EvaluationSource.SCREEN_OFF -> {
+                // Only evaluate heuristics if no Sleep API available
+                if (!isSleepApiAvailable) {
+                    if (isNightTime()) {
+                        newState = UserPresenceState.SLEEPING
+                        reason = "Heuristic: Night time and screen off"
+                    } else {
+                        newState = UserPresenceState.AWAKE
+                        reason = "Heuristic: Daytime"
+                    }
                 }
             }
         }
 
-        // If newState is AWAKE from above, this is the highest priority.
-        if (newStateCandidate == UserPresenceState.AWAKE) {
-            if (oldState != UserPresenceState.AWAKE) {
-                updateUserPresenceStateInternal(newStateCandidate, reasonForChange, userPresenceHistoryRepository, serviceScope)
-                updateNotificationContentOnly()
-            } else {
-                Log.d(TAG, "State confirmed AWAKE by $source. No change from $oldState. Notification content may update if text changed.")
-                updateNotificationContentOnly()
-            }
-            return
-        }
-
-        // Priority 2: SLEEPING conditions from Sleep API (if not determined to be AWAKE)
-        if (source == EvaluationSource.SLEEP_API_SEGMENT && data is SleepSegmentEvent) {
-            val event = data
-            if (event.status == SleepSegmentEvent.STATUS_SUCCESSFUL) {
-                val now = System.currentTimeMillis()
-                // Check if currently in a sleep segment
-                if (now >= event.startTimeMillis && now <= event.endTimeMillis) {
-                    newStateCandidate = UserPresenceState.SLEEPING
-                    reasonForChange = "Sleep API In Segment"
-                }
-            }
-        }
-        // Consider SleepClassifyEvent for high-confidence sleep if needed, though Segment is usually primary
-        else if (source == EvaluationSource.SLEEP_API_CLASSIFY && data is SleepClassifyEvent) {
-            val event = data
-            if (event.confidence >= 75 && (event.light <= 1 || event.motion <= 1)) {
-                newStateCandidate = UserPresenceState.SLEEPING
-                reasonForChange = "Sleep API Classify High Confidence Sleep (Confidence: ${event.confidence})"
+        // Override rule: If it's night time, we should be sleeping (unless Sleep API explicitly says we just woke up)
+        if (isNightTime() && newState != UserPresenceState.AWAKE &&
+            !reason.contains("Just woke up")) {
+            newState = UserPresenceState.SLEEPING
+            if (!reason.contains("Sleep API")) {
+                reason = "Night time override: Should be sleeping"
             }
         }
 
-        // If newState is SLEEPING from API, this is a strong signal.
-        if (newStateCandidate == UserPresenceState.SLEEPING && (reasonForChange.startsWith("Sleep API In Segment") || reasonForChange.startsWith("Sleep API Classify High Confidence Sleep"))) {
-            if (oldState != UserPresenceState.SLEEPING) {
-                updateUserPresenceStateInternal(newStateCandidate, reasonForChange, userPresenceHistoryRepository, serviceScope)
-                updateNotificationContentOnly()
-            } else {
-                Log.d(TAG, "State confirmed SLEEPING by Sleep API. No change from $oldState.")
-                updateNotificationContentOnly()
-            }
-            return
-        }
-
-        // Priority 3: Heuristic SLEEPING by bedtime schedule
-        if (!isNightTime()) { // It's daytime
-            if (oldState == UserPresenceState.SLEEPING && source == EvaluationSource.SCREEN_OFF) {
-                newStateCandidate = UserPresenceState.AWAKE
-                reasonForChange = "Heuristic: Daytime and screen off, was previously sleeping"
-            }
-        }
-
-        // Final update based on determined newStateCandidate
-        if (newStateCandidate != oldState) {
-            updateUserPresenceStateInternal(newStateCandidate, reasonForChange, userPresenceHistoryRepository, serviceScope)
-            updateNotificationContentOnly()
+        // Update state if changed
+        if (newState != oldState) {
+            updateUserPresenceStateInternal(newState, reason, userPresenceHistoryRepository, serviceScope)
+            Log.i(TAG, "State changed: $oldState -> $newState ($reason)")
         } else {
-            updateNotificationContentOnly()
-            if (source != EvaluationSource.SCREEN_OFF) {
-                Log.d(TAG, "Evaluation ended. No change from $oldState. Source: $source, Final determined reason for no change: $reasonForChange")
-            }
+            Log.d(TAG, "State unchanged: $oldState ($reason)")
         }
+
+        updateNotificationContentOnly()
     }
 
     private fun isNightTime(): Boolean {

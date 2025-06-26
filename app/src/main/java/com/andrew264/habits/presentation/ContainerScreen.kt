@@ -63,7 +63,9 @@ fun ContainerScreen(
                     TopAppBar(
                         title = { Text(currentScreen?.title ?: "Habits") },
                         navigationIcon = {
-                            IconButton(onClick = { scope.launch { wideNavRailState.expand() } }) {
+                            IconButton(
+                                onClick = { scope.launch { wideNavRailState.expand() } }
+                            ) {
                                 Icon(
                                     Icons.Default.Menu,
                                     contentDescription = "Open Navigation"
