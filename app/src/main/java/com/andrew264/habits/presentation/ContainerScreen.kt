@@ -64,7 +64,8 @@ fun ContainerScreen(
                         title = { Text(currentScreen?.title ?: "Habits") },
                         navigationIcon = {
                             IconButton(
-                                onClick = { scope.launch { wideNavRailState.expand() } }
+                                onClick = { scope.launch { wideNavRailState.expand() } },
+                                shapes = IconButtonDefaults.shapes()
                             ) {
                                 Icon(
                                     Icons.Default.Menu,
@@ -116,7 +117,8 @@ private fun AppNavigationRail(
                 val expanded = state.targetValue == WideNavigationRailValue.Expanded
                 IconButton(
                     onClick = { scope.launch { if (expanded) state.collapse() else state.expand() } },
-                    modifier = Modifier.padding(start = 24.dp)
+                    modifier = Modifier.padding(start = 24.dp),
+                    shapes = IconButtonDefaults.shapes()
                 ) {
                     Crossfade(targetState = expanded, label = "MenuIconCrossfade") { isExpanded ->
                         if (isExpanded) {

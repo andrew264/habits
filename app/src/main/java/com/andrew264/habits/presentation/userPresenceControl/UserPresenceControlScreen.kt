@@ -80,14 +80,16 @@ fun UserPresenceControlScreen(
 
         Button(
             onClick = onRequestPermissions,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            shapes = ButtonDefaults.shapes()
         ) {
             Text("Request Permissions")
         }
 
         Button(
             onClick = onOpenAppSettings,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            shapes = ButtonDefaults.shapes()
         ) {
             Text("Open App Settings")
         }

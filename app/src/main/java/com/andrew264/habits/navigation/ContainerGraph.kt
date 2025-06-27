@@ -13,6 +13,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.andrew264.habits.presentation.bedtime.BedtimeScreen
+import com.andrew264.habits.presentation.schedule.ScheduleEditorScreen
 import com.andrew264.habits.presentation.userPresenceControl.UserPresenceControlScreen
 
 
@@ -30,10 +31,10 @@ fun ContainerGraph(
         composable(route = Screen.Home.route) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    "Hello World from Home Screen!",
+                    "Hello World from Home Screen!\n\nClick me to open schedule editor.",
                     textAlign = TextAlign.Center,
                     modifier = Modifier.clickable {
-                        // navController.navigate(Screen.PermissionSettings.route)
+                        navController.navigate("schedule_editor")
                     }
                 )
             }
@@ -47,6 +48,10 @@ fun ContainerGraph(
 
         composable(route = Screen.Bedtime.route) {
             BedtimeScreen()
+        }
+
+        composable(route = "schedule_editor") {
+            ScheduleEditorScreen(onNavigateUp = { navController.navigateUp() })
         }
 
         composable(route = "TEST") {

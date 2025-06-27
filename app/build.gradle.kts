@@ -73,6 +73,7 @@ dependencies {
     implementation(libs.androidx.adaptive)
     implementation(libs.androidx.material.icons.core)
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.kotlinx.serialization.json)
 
     // Hilt
     implementation (libs.hilt.android)

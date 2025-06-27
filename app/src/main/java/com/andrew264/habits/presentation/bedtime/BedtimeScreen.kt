@@ -257,11 +257,15 @@ fun BedtimeScreen(
                                         "Bedtime set to: ${formatter.format(cal.time)}"
                                     )
                                 }
-                            }
+                            },
+                            shapes = ButtonDefaults.shapes()
                         ) { Text("OK") }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showBedtimePicker = false }) { Text("Cancel") }
+                        TextButton(
+                            onClick = { showBedtimePicker = false },
+                            shapes = ButtonDefaults.shapes()
+                        ) { Text("Cancel") }
                     }
                 ) {
                     TimePicker(state = bedtimePickerState)
@@ -295,11 +299,15 @@ fun BedtimeScreen(
                                         "Wake-up time set to: ${formatter.format(cal.time)}"
                                     )
                                 }
-                            }
+                            },
+                            shapes = ButtonDefaults.shapes()
                         ) { Text("OK") }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showWakeUpTimePicker = false }) { Text("Cancel") }
+                        TextButton(
+                            onClick = { showWakeUpTimePicker = false },
+                            shapes = ButtonDefaults.shapes()
+                        ) { Text("Cancel") }
                     }
                 ) {
                     TimePicker(state = wakeUpTimePickerState)
@@ -518,7 +526,7 @@ fun TimeSettingCard(
                     if (timeIsSet) {
                         OutlinedButton(
                             onClick = onClearTimeClick,
-                            shapes = ButtonDefaults.shapes(ButtonDefaults.squareShape),
+                            shapes = ButtonDefaults.shapes(),
                             modifier = Modifier.height(40.dp)
                         ) {
                             Text("Clear")
@@ -526,7 +534,7 @@ fun TimeSettingCard(
                     }
                     Button(
                         onClick = onSetTimeClick,
-                        shapes = ButtonDefaults.shapes(ButtonDefaults.squareShape),
+                        shapes = ButtonDefaults.shapes(),
                         modifier = Modifier.height(40.dp)
                     ) {
                         Text(if (timeIsSet) "Change" else "Set")
