@@ -12,12 +12,6 @@ fun HabitsTheme(
     supportsDynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-
-    val darkColorScheme = darkColorScheme(
-        primary = Purple80,
-        secondary = PurpleGrey80,
-        tertiary = Pink80
-    )
     val colorScheme =
         when {
             supportsDynamicColor && isDarkTheme -> {
@@ -28,7 +22,7 @@ fun HabitsTheme(
                 dynamicLightColorScheme(LocalContext.current)
             }
 
-            isDarkTheme -> darkColorScheme
+            isDarkTheme -> darkColorScheme()
             else -> expressiveLightColorScheme()
         }
 

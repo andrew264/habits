@@ -3,11 +3,9 @@ package com.andrew264.habits.presentation.schedule
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -26,7 +24,7 @@ fun GroupedView(
 ) {
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         items(schedule.groups, key = { it.id }) { group ->
@@ -37,7 +35,7 @@ fun GroupedView(
             ) {
                 Column(
                     modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // Header Section
                     Row(
@@ -65,51 +63,6 @@ fun GroupedView(
                         }
                     }
 
-                    // Stats Row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Card(
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(12.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    text = "${group.days.size}",
-                                    style = MaterialTheme.typography.titleLarge,
-                                )
-                                Text(
-                                    text = "Days",
-                                    style = MaterialTheme.typography.bodySmall,
-                                )
-                            }
-                        }
-
-                        Card(
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(12.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    text = "${group.timeRanges.size}",
-                                    style = MaterialTheme.typography.titleLarge,
-                                )
-                                Text(
-                                    text = "Times",
-                                    style = MaterialTheme.typography.bodySmall,
-                                )
-                            }
-                        }
-                    }
-
                     // Day Selector
                     DaySelector(
                         selectedDays = group.days,
@@ -119,24 +72,13 @@ fun GroupedView(
                     // Time Ranges Section
                     if (group.timeRanges.isNotEmpty()) {
                         Column(
+                            modifier = Modifier.padding(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.AccessTime,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Text(
-                                    text = "Time Ranges",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Medium,
-                                )
-                            }
-
+                            Text(
+                                text = "Time Ranges",
+                                fontWeight = FontWeight.Medium,
+                            )
                             group.timeRanges.forEach { timeRange ->
                                 TimeRangeRow(
                                     timeRange = timeRange,
@@ -167,34 +109,6 @@ fun GroupedView(
                         Spacer(Modifier.width(8.dp))
                         Text("Add Time Range")
                     }
-                }
-            }
-        }
-
-        // Add Group Button
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Button(
-                    onClick = { viewModel.addGroup() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    contentPadding = PaddingValues(16.dp),
-                    shapes = ButtonDefaults.shapes()
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    Text(
-                        text = "Create New Group",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
                 }
             }
         }

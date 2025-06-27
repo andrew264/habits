@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -57,6 +58,20 @@ fun ScheduleEditorScreen(
                     )
                 }
             )
+        },
+        floatingActionButton = {
+            if (viewMode == ScheduleViewMode.GROUPED) {
+                SmallExtendedFloatingActionButton(
+                    onClick = { viewModel.addGroup() },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Create New Group"
+                        )
+                    },
+                    text = { Text(text = "Create New Group") }
+                )
+            }
         },
         contentWindowInsets = WindowInsets(0.dp),
         topBar = {
@@ -119,53 +134,40 @@ fun ScheduleEditorScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // View Mode Selector
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "View Mode",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Medium,
-                    )
+                val options = ScheduleViewMode.entries
 
-                    val options = ScheduleViewMode.entries
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+                FlowRow(
+                    Modifier
+                        .padding(horizontal = 8.dp)
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    options.forEachIndexed { index, mode ->
+                        ToggleButton(
+                            checked = viewMode == mode,
+                            onCheckedChange = { viewModel.setViewMode(mode) },
+                            shapes = when (index) {
+                                0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                                options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                            },
                         ) {
-                            options.forEachIndexed { index, mode ->
-                                ToggleButton(
-                                    checked = viewMode == mode,
-                                    onCheckedChange = { viewModel.setViewMode(mode) },
-                                    shapes = when (index) {
-                                        0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                                        options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                                        else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                                    },
-                                ) {
-                                    Text(
-                                        text = when (mode) {
-                                            ScheduleViewMode.GROUPED -> "📋 Grouped"
-                                            ScheduleViewMode.PER_DAY -> "📅 Per Day"
-                                        },
-                                        fontWeight = if (mode == viewMode) FontWeight.Bold else FontWeight.Normal
-                                    )
-                                }
-                            }
+                            Text(
+                                text = when (mode) {
+                                    ScheduleViewMode.GROUPED -> "📋 Grouped"
+                                    ScheduleViewMode.PER_DAY -> "📅 Per Day"
+                                },
+                                fontWeight = if (mode == viewMode) FontWeight.Bold else FontWeight.Normal
+                            )
                         }
                     }
                 }
+
             }
 
             // Content with smooth transitions

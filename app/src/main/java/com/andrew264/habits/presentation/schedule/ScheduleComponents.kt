@@ -21,53 +21,49 @@ import java.util.Locale
 fun DaySelector(
     selectedDays: Set<DayOfWeek>,
     onDayClick: (DayOfWeek) -> Unit,
-    modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
+    Column(
+        modifier = Modifier.padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        Text(
+            text = "Days",
+            fontWeight = FontWeight.Medium
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = "Active Days",
-                fontWeight = FontWeight.Medium
-            )
+            DayOfWeek.entries.forEach { day ->
+                val selected = day in selectedDays
+                val dayName = day.name.take(1).replaceFirstChar { it.titlecase(Locale.getDefault()) }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                DayOfWeek.entries.forEach { day ->
-                    val selected = day in selectedDays
-                    val dayName = day.name.take(3).lowercase()
-                        .replaceFirstChar { it.titlecase(Locale.getDefault()) }
+                val buttonColors = if (selected) {
+                    ButtonDefaults.textButtonColors(
+                        containerColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                } else {
+                    ButtonDefaults.textButtonColors()
+                }
 
-                    val buttonColors = if (selected) {
-                        ButtonDefaults.textButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    } else {
-                        ButtonDefaults.textButtonColors()
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp),
-                        contentAlignment = Alignment.Center
+                Box(
+                    modifier = Modifier
+                        .size(40.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    OutlinedButton(
+                        onClick = { onDayClick(day) },
+                        modifier = Modifier.fillMaxSize(),
+                        shapes = ButtonDefaults.shapes(),
+                        colors = buttonColors
                     ) {
-                        TextButton(
-                            onClick = { onDayClick(day) },
-                            modifier = Modifier.fillMaxSize(),
-                            shapes = ButtonDefaults.shapes(),
-                            colors = buttonColors
-                        ) {
-                            Text(
-                                text = dayName
-                            )
-                        }
+                        Text(
+                            text = dayName,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = MaterialTheme.typography.titleMediumEmphasized.fontSize
+                        )
                     }
                 }
             }
