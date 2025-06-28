@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,9 +22,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.andrew264.habits.model.schedule.Schedule
+import com.andrew264.habits.util.ScheduleAnalyzer
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -161,15 +164,56 @@ private fun ScheduleListItem(
             }
         }
     ) {
+        val analyzer = remember(schedule.groups) { ScheduleAnalyzer(schedule.groups) }
+        val summary = remember(analyzer) { analyzer.createSummary() }
+        val coverage = remember(analyzer) { analyzer.calculateCoverage() }
+
         Card(
             onClick = onEdit,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(
-                text = schedule.name,
-                modifier = Modifier.padding(20.dp),
-                style = MaterialTheme.typography.titleMedium
-            )
+            Column(
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = schedule.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                val summaryText = if (summary.isNotBlank() && summary != "No schedule set.") {
+                    summary
+                } else {
+                    "This schedule is empty. Edit to add times."
+                }
+                Text(
+                    text = summaryText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 20.sp
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Schedule,
+                        contentDescription = "Total hours",
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = String.format("%.1f hours/week", coverage.totalHours),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(Modifier.width(16.dp))
+                }
+            }
         }
     }
 }
