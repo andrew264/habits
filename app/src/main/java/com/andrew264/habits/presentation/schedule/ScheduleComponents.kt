@@ -1,6 +1,6 @@
 package com.andrew264.habits.presentation.schedule
 
-import android.widget.Toast
+import android.text.format.DateFormat
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -22,6 +22,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.TimeRange
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -82,6 +84,7 @@ fun DaySelector(
     }
 }
 
+// TimeRangeRow is bugged af; when multiple rows of time ranges are present for a single group/day, changing one affects everything nearby. need to look into this and find where the short comings exist
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun TimeRangeRow(
@@ -93,24 +96,29 @@ fun TimeRangeRow(
     var showFromPicker by remember { mutableStateOf(false) }
     var showToPicker by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val is24Hour = DateFormat.is24HourFormat(context)
 
-    val fromTimeState = rememberTimePickerState(
-        initialHour = timeRange.fromMinuteOfDay / 60,
-        initialMinute = timeRange.fromMinuteOfDay % 60,
-        is24Hour = true
-    )
-    val toTimeState = rememberTimePickerState(
-        initialHour = timeRange.toMinuteOfDay / 60,
-        initialMinute = timeRange.toMinuteOfDay % 60,
-        is24Hour = true
-    )
+    val fromTimeState = rememberTimePickerState(is24Hour = is24Hour)
+    LaunchedEffect(key1 = timeRange.fromMinuteOfDay) {
+        fromTimeState.hour = timeRange.fromMinuteOfDay / 60
+        fromTimeState.minute = timeRange.fromMinuteOfDay % 60
+    }
+
+    val toTimeState = rememberTimePickerState(is24Hour = is24Hour)
+    LaunchedEffect(key1 = timeRange.toMinuteOfDay) {
+        toTimeState.hour = timeRange.toMinuteOfDay / 60
+        toTimeState.minute = timeRange.toMinuteOfDay % 60
+    }
+
+    val isOvernight = timeRange.toMinuteOfDay < timeRange.fromMinuteOfDay
 
     Card(
         modifier = modifier.fillMaxWidth(),
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -132,7 +140,7 @@ fun TimeRangeRow(
                         shapes = ButtonDefaults.shapes()
                     ) {
                         Text(
-                            text = formatTime(timeRange.fromMinuteOfDay),
+                            text = formatTime(minuteOfDay = timeRange.fromMinuteOfDay),
                         )
                     }
 
@@ -145,7 +153,17 @@ fun TimeRangeRow(
                         shapes = ButtonDefaults.shapes()
                     ) {
                         Text(
-                            text = formatTime(timeRange.toMinuteOfDay),
+                            text = formatTime(minuteOfDay = timeRange.toMinuteOfDay),
+                        )
+                    }
+
+                    if (isOvernight) {
+                        Text(
+                            text = "+1d",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.tertiary,
+                            modifier = Modifier.padding(start = 2.dp)
                         )
                     }
                 }
@@ -171,12 +189,8 @@ fun TimeRangeRow(
                 TextButton(
                     onClick = {
                         val newMinuteOfDay = fromTimeState.hour * 60 + fromTimeState.minute
-                        if (newMinuteOfDay >= timeRange.toMinuteOfDay) {
-                            Toast.makeText(context, "Start time must be before end time.", Toast.LENGTH_SHORT).show()
-                        } else {
-                            onUpdate(timeRange.copy(fromMinuteOfDay = newMinuteOfDay))
-                            showFromPicker = false
-                        }
+                        onUpdate(timeRange.copy(fromMinuteOfDay = newMinuteOfDay))
+                        showFromPicker = false
                     },
                     shapes = ButtonDefaults.shapes()
                 ) { Text("Confirm") }
@@ -199,12 +213,8 @@ fun TimeRangeRow(
                 TextButton(
                     onClick = {
                         val newMinuteOfDay = toTimeState.hour * 60 + toTimeState.minute
-                        if (newMinuteOfDay <= timeRange.fromMinuteOfDay) {
-                            Toast.makeText(context, "End time must be after start time.", Toast.LENGTH_SHORT).show()
-                        } else {
-                            onUpdate(timeRange.copy(toMinuteOfDay = newMinuteOfDay))
-                            showToPicker = false
-                        }
+                        onUpdate(timeRange.copy(toMinuteOfDay = newMinuteOfDay))
+                        showToPicker = false
                     },
                     shapes = ButtonDefaults.shapes()
                 ) { Text("Confirm") }
@@ -222,8 +232,12 @@ fun TimeRangeRow(
     }
 }
 
-fun formatTime(minuteOfDay: Int): String {
-    val hours = minuteOfDay / 60
-    val minutes = minuteOfDay % 60
-    return String.format(Locale.US, "%02d:%02d", hours, minutes)
+@Composable
+private fun formatTime(minuteOfDay: Int): String {
+    val context = LocalContext.current
+    val is24Hour = DateFormat.is24HourFormat(context)
+    val time = LocalTime.of(minuteOfDay / 60, minuteOfDay % 60)
+    val pattern = if (is24Hour) "HH:mm" else "h:mm a"
+    val formatter = DateTimeFormatter.ofPattern(pattern, Locale.getDefault())
+    return time.format(formatter)
 }

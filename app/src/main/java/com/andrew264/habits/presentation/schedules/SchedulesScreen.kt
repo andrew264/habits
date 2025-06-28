@@ -29,6 +29,7 @@ import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.util.ScheduleAnalyzer
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -206,7 +207,7 @@ private fun ScheduleListItem(
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        text = String.format("%.1f hours/week", coverage.totalHours),
+                        text = "${String.format(Locale.getDefault(), "%.1f", coverage.totalHours)} hours/week (${String.format(Locale.getDefault(), "%.1f", coverage.coveragePercentage)}%)",
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

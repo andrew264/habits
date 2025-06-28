@@ -184,7 +184,7 @@ class ScheduleAnalyzer(groups: List<ScheduleGroup>) {
 
     /**
      * Creates a human-readable summary of the schedule.
-     * Example: "Mon-Fri: 9:00 AM - 5:00 PM\nSat: 10:00 AM - 2:00 PM"
+     * Example: "Mon-Fri: 9:00 AM - 5:00 PM\nSat: 10:00 AM - 2:00 PM (+1d)"
      * @return A string summarizing the schedule.
      */
     fun createSummary(): String {
@@ -205,8 +205,9 @@ class ScheduleAnalyzer(groups: List<ScheduleGroup>) {
             .sortedBy { it.value.first().ordinal } // Sort by the first day (e.g., Mon-Fri before Sat)
             .joinToString("\n") { (ranges, days) ->
                 val daysSummary = formatDayGroup(days)
-                val timeSummary = ranges.joinToString(", ") {
-                    "${formatTime(it.fromMinuteOfDay)} - ${formatTime(it.toMinuteOfDay)}"
+                val timeSummary = ranges.joinToString(", ") { range ->
+                    val overnightIndicator = if (range.toMinuteOfDay < range.fromMinuteOfDay) " (+1d)" else ""
+                    "${formatTime(range.fromMinuteOfDay)} - ${formatTime(range.toMinuteOfDay)}$overnightIndicator"
                 }
                 "$daysSummary: $timeSummary"
             }

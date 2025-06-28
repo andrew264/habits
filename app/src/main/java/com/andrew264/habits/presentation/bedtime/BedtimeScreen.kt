@@ -238,7 +238,7 @@ fun ScheduleInfoCard(
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(
-                    text = String.format("%.1f hours/week", scheduleInfo.coverage.totalHours),
+                    text = "${String.format(Locale.getDefault(), "%.1f", scheduleInfo.coverage.totalHours)} hours/week (${String.format(Locale.getDefault(), "%.1f", scheduleInfo.coverage.coveragePercentage)}%)",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
