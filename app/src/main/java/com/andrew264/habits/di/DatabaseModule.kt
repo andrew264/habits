@@ -23,7 +23,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             AppDatabase.DATABASE_NAME
         )
-            .fallbackToDestructiveMigration(true) // Allow Room to recreate the DB on schema change
+            .fallbackToDestructiveMigration(false)
             .build()
     }
 

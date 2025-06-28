@@ -58,22 +58,26 @@ fun ContainerScreen(
                 if (isCompact) {
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentRoute = navBackStackEntry?.destination?.route
-                    val currentScreen = railItems.find { it.route == currentRoute }
+                    val isScheduleEditorScreen = currentRoute?.startsWith("schedule_editor") == true
 
-                    TopAppBar(
-                        title = { Text(currentScreen?.title ?: "Habits") },
-                        navigationIcon = {
-                            IconButton(
-                                onClick = { scope.launch { wideNavRailState.expand() } },
-                                shapes = IconButtonDefaults.shapes()
-                            ) {
-                                Icon(
-                                    Icons.Default.Menu,
-                                    contentDescription = "Open Navigation"
-                                )
+                    if (!isScheduleEditorScreen) {
+                        val currentScreen = railItems.find { it.route == currentRoute }
+
+                        TopAppBar(
+                            title = { Text(currentScreen?.title ?: "Habits") },
+                            navigationIcon = {
+                                IconButton(
+                                    onClick = { scope.launch { wideNavRailState.expand() } },
+                                    shapes = IconButtonDefaults.shapes()
+                                ) {
+                                    Icon(
+                                        Icons.Default.Menu,
+                                        contentDescription = "Open Navigation"
+                                    )
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         ) { innerPadding ->
@@ -156,8 +160,7 @@ private fun AppNavigationRailContent(
 
     Column(Modifier.verticalScroll(rememberScrollState())) {
         railItems.forEach { screen ->
-            val selected =
-                currentDestination?.hierarchy?.any { it.route == screen.route } == true
+            val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
             WideNavigationRailItem(
                 railExpanded = isRailExpanded,
                 icon = {

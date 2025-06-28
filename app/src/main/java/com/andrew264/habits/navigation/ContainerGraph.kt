@@ -10,10 +10,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.andrew264.habits.presentation.bedtime.BedtimeScreen
 import com.andrew264.habits.presentation.schedule.ScheduleEditorScreen
+import com.andrew264.habits.presentation.schedules.SchedulesScreen
 import com.andrew264.habits.presentation.userPresenceControl.UserPresenceControlScreen
 
 
@@ -31,13 +34,16 @@ fun ContainerGraph(
         composable(route = Screen.Home.route) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    "Hello World from Home Screen!\n\nClick me to open schedule editor.",
+                    "Hello World from Home Screen!",
                     textAlign = TextAlign.Center,
                     modifier = Modifier.clickable {
-                        navController.navigate("schedule_editor")
+//                        navController.navigate(Screen.Schedules.route)
                     }
                 )
             }
+        }
+        composable(route = Screen.Schedules.route) {
+            SchedulesScreen(navController = navController)
         }
         composable(route = Screen.PermissionSettings.route) {
             UserPresenceControlScreen(
@@ -50,7 +56,14 @@ fun ContainerGraph(
             BedtimeScreen()
         }
 
-        composable(route = "schedule_editor") {
+        composable(
+            route = "schedule_editor?scheduleId={scheduleId}",
+            arguments = listOf(navArgument("scheduleId") {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            })
+        ) {
             ScheduleEditorScreen(onNavigateUp = { navController.navigateUp() })
         }
 

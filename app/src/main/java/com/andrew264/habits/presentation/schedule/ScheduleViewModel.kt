@@ -1,5 +1,6 @@
 package com.andrew264.habits.presentation.schedule
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andrew264.habits.data.repository.ScheduleRepository
@@ -25,9 +26,12 @@ sealed interface ScheduleUiEvent {
 
 @HiltViewModel
 class ScheduleViewModel @Inject constructor(
-    private val scheduleRepository: ScheduleRepository
-    // private val savedStateHandle: SavedStateHandle // To get scheduleId from navigation
+    private val scheduleRepository: ScheduleRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    private val scheduleId: String? = savedStateHandle["scheduleId"]
+    val isNewSchedule: Boolean = scheduleId == null
 
     private val _schedule = MutableStateFlow<Schedule?>(null)
     val schedule: StateFlow<Schedule?> = _schedule.asStateFlow()
@@ -39,9 +43,8 @@ class ScheduleViewModel @Inject constructor(
     val uiEvents = _uiEvents.asSharedFlow()
 
     val perDayRepresentation: StateFlow<Map<DayOfWeek, List<TimeRange>>> = schedule
+        .filterNotNull()
         .map { currentSchedule ->
-            if (currentSchedule == null) return@map emptyMap()
-
             DayOfWeek.entries.associateWith { day ->
                 currentSchedule.groups
                     .filter { group -> day in group.days }
@@ -55,20 +58,24 @@ class ScheduleViewModel @Inject constructor(
             initialValue = emptyMap()
         )
 
-    fun loadSchedule(id: String?) {
+    init {
+        loadSchedule()
+    }
+
+    private fun loadSchedule() {
         viewModelScope.launch {
-            if (id == null) {
+            if (scheduleId == null) {
                 _schedule.value = createNewSchedule()
             } else {
-                scheduleRepository.getSchedule(id).collect {
-                    _schedule.value = it ?: createNewSchedule(id)
+                scheduleRepository.getSchedule(scheduleId).collect {
+                    _schedule.value = it ?: createNewSchedule(scheduleId)
                 }
             }
         }
     }
 
     private fun createNewSchedule(id: String = UUID.randomUUID().toString()): Schedule {
-        return Schedule(id = id, name = "New Schedule", groups = emptyList())
+        return Schedule(id = id, name = "", groups = emptyList())
     }
 
     // --- General Actions ---
@@ -83,6 +90,12 @@ class ScheduleViewModel @Inject constructor(
 
     fun saveSchedule() {
         val currentSchedule = _schedule.value ?: return
+        if (currentSchedule.name.isBlank()) {
+            viewModelScope.launch {
+                _uiEvents.emit(ScheduleUiEvent.ShowSnackbar("Schedule name cannot be empty."))
+            }
+            return
+        }
         viewModelScope.launch {
             scheduleRepository.saveSchedule(currentSchedule)
             _uiEvents.emit(ScheduleUiEvent.ShowSnackbar("Schedule saved!"))
@@ -153,7 +166,7 @@ class ScheduleViewModel @Inject constructor(
             currentSchedule?.copy(
                 groups = currentSchedule.groups.map { group ->
                     if (group.id == groupId) {
-                        group.copy(timeRanges = group.timeRanges + timeRange)
+                        group.copy(timeRanges = (group.timeRanges + timeRange).sortedBy { it.fromMinuteOfDay })
                     } else {
                         group
                     }
@@ -316,7 +329,7 @@ class ScheduleViewModel @Inject constructor(
                         } else {
                             group
                         }
-                    }
+                    }.filterNot { it.timeRanges.isEmpty() && it.days.isEmpty() }
                 )
             }
 
@@ -345,7 +358,8 @@ class ScheduleViewModel @Inject constructor(
             val newGroupsList = currentSchedule.groups
                 .filterNot { it.id == sourceGroup.id } + updatedOriginalGroup + newGroupForDay
 
-            currentSchedule.copy(groups = newGroupsList)
+            // Clean up any groups that might now be empty
+            currentSchedule.copy(groups = newGroupsList.filterNot { it.days.isEmpty() && it.timeRanges.isEmpty() })
         }
     }
 }

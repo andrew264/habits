@@ -22,12 +22,8 @@ fun ScheduleEditorScreen(
     viewModel: ScheduleViewModel = hiltViewModel(),
     onNavigateUp: () -> Unit
 ) {
-    // A real implementation would get the scheduleId from nav args
-    LaunchedEffect(key1 = true) {
-        viewModel.loadSchedule(null) // Load a new schedule for now
-    }
-
     val schedule by viewModel.schedule.collectAsState()
+    val isNewSchedule = viewModel.isNewSchedule
     val viewMode by viewModel.viewMode.collectAsState()
     val perDayRepresentation by viewModel.perDayRepresentation.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -69,7 +65,7 @@ fun ScheduleEditorScreen(
                             contentDescription = "Create New Group"
                         )
                     },
-                    text = { Text(text = "Create New Group") }
+                    text = { Text(text = "New Group") }
                 )
             }
         },
@@ -77,25 +73,10 @@ fun ScheduleEditorScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        schedule?.let {
-                            OutlinedTextField(
-                                value = it.name,
-                                onValueChange = { newName -> viewModel.updateScheduleName(newName) },
-                                placeholder = {
-                                    Text("Enter schedule name")
-                                },
-                                shape = RoundedCornerShape(8.dp),
-                                singleLine = true,
-                                textStyle = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Medium
-                                )
-                            )
-                        }
-                    }
+                    Text(
+                        text = if (isNewSchedule) "Create New Schedule" else "Update: ${schedule?.name.orEmpty()}",
+                        fontWeight = FontWeight.Medium
+                    )
                 },
                 navigationIcon = {
                     IconButton(
@@ -126,6 +107,7 @@ fun ScheduleEditorScreen(
                         )
                     }
                 },
+                windowInsets = WindowInsets(0.dp)
             )
         }
     ) { paddingValues ->
@@ -134,41 +116,54 @@ fun ScheduleEditorScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                val options = ScheduleViewMode.entries
-
-                FlowRow(
-                    Modifier
-                        .padding(horizontal = 8.dp)
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
+            schedule?.let {
+                // Main content area
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    options.forEachIndexed { index, mode ->
-                        ToggleButton(
-                            checked = viewMode == mode,
-                            onCheckedChange = { viewModel.setViewMode(mode) },
-                            shapes = when (index) {
-                                0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                                options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                                else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                            },
-                        ) {
-                            Text(
-                                text = when (mode) {
-                                    ScheduleViewMode.GROUPED -> "📋 Grouped"
-                                    ScheduleViewMode.PER_DAY -> "📅 Per Day"
+                    // Schedule Name Editor
+                    OutlinedTextField(
+                        value = it.name,
+                        onValueChange = { newName -> viewModel.updateScheduleName(newName) },
+                        label = { Text("Schedule Name") },
+                        placeholder = { Text("Enter schedule name") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+
+                    // View Mode Toggles
+                    val options = ScheduleViewMode.entries
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        options.forEachIndexed { index, mode ->
+                            ToggleButton(
+                                checked = viewMode == mode,
+                                onCheckedChange = { viewModel.setViewMode(mode) },
+                                shapes = when (index) {
+                                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                                    options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
                                 },
-                                fontWeight = if (mode == viewMode) FontWeight.Bold else FontWeight.Normal
-                            )
+                            ) {
+                                Text(
+                                    text = when (mode) {
+                                        ScheduleViewMode.GROUPED -> "📋 Grouped"
+                                        ScheduleViewMode.PER_DAY -> "📅 Per Day"
+                                    },
+                                    fontWeight = if (mode == viewMode) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
                         }
                     }
                 }
+            } ?: LoadingState()
 
-            }
 
             // Content with smooth transitions
             Box(
@@ -187,7 +182,7 @@ fun ScheduleEditorScreen(
                                     viewModel = viewModel,
                                     modifier = Modifier.fillMaxSize()
                                 )
-                            } ?: LoadingState()
+                            }
                         }
 
                         ScheduleViewMode.PER_DAY -> {
@@ -197,7 +192,6 @@ fun ScheduleEditorScreen(
                                 modifier = Modifier.fillMaxSize()
                             )
                         }
-
                     }
                 }
             }

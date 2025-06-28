@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "c762dfa01c63e1b8c18dcf429549232b",
+    "identityHash": "628c838a213d06ee2790d91c07a54fce",
     "entities": [
       {
         "tableName": "user_presence_history",
@@ -33,11 +33,203 @@
             "id"
           ]
         }
+      },
+      {
+        "tableName": "schedules",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`schedule_id` TEXT NOT NULL, `name` TEXT NOT NULL, PRIMARY KEY(`schedule_id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "schedule_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "schedule_id"
+          ]
+        }
+      },
+      {
+        "tableName": "schedule_groups",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`group_id` TEXT NOT NULL, `schedule_id_fk` TEXT NOT NULL, `name` TEXT NOT NULL, PRIMARY KEY(`group_id`), FOREIGN KEY(`schedule_id_fk`) REFERENCES `schedules`(`schedule_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "group_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "scheduleId",
+            "columnName": "schedule_id_fk",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "group_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_schedule_groups_schedule_id_fk",
+            "unique": false,
+            "columnNames": [
+              "schedule_id_fk"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_schedule_groups_schedule_id_fk` ON `${TABLE_NAME}` (`schedule_id_fk`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "schedules",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "schedule_id_fk"
+            ],
+            "referencedColumns": [
+              "schedule_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "schedule_group_days",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `group_id_fk` TEXT NOT NULL, `day_of_week` TEXT NOT NULL, FOREIGN KEY(`group_id_fk`) REFERENCES `schedule_groups`(`group_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "groupId",
+            "columnName": "group_id_fk",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dayOfWeek",
+            "columnName": "day_of_week",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_schedule_group_days_group_id_fk",
+            "unique": false,
+            "columnNames": [
+              "group_id_fk"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_schedule_group_days_group_id_fk` ON `${TABLE_NAME}` (`group_id_fk`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "schedule_groups",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "group_id_fk"
+            ],
+            "referencedColumns": [
+              "group_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "schedule_time_ranges",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `group_id_fk` TEXT NOT NULL, `from_minute_of_day` INTEGER NOT NULL, `to_minute_of_day` INTEGER NOT NULL, FOREIGN KEY(`group_id_fk`) REFERENCES `schedule_groups`(`group_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "groupId",
+            "columnName": "group_id_fk",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fromMinuteOfDay",
+            "columnName": "from_minute_of_day",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "toMinuteOfDay",
+            "columnName": "to_minute_of_day",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_schedule_time_ranges_group_id_fk",
+            "unique": false,
+            "columnNames": [
+              "group_id_fk"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_schedule_time_ranges_group_id_fk` ON `${TABLE_NAME}` (`group_id_fk`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "schedule_groups",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "group_id_fk"
+            ],
+            "referencedColumns": [
+              "group_id"
+            ]
+          }
+        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c762dfa01c63e1b8c18dcf429549232b')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '628c838a213d06ee2790d91c07a54fce')"
     ]
   }
 }

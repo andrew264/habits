@@ -1,12 +1,13 @@
 package com.andrew264.habits.data.entity.schedule
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.andrew264.habits.model.schedule.ScheduleGroup
 
 @Entity(tableName = "schedules")
 data class ScheduleEntity(
-    @PrimaryKey val id: String,
+    @PrimaryKey
+    @ColumnInfo(name = "schedule_id")
+    val id: String,
     val name: String,
-    val groups: List<ScheduleGroup>
 )

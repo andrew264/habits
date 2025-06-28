@@ -1,8 +1,13 @@
 package com.andrew264.habits.data.repository
 
+import androidx.room.Transaction
 import com.andrew264.habits.data.dao.ScheduleDao
 import com.andrew264.habits.data.entity.schedule.ScheduleEntity
+import com.andrew264.habits.data.entity.schedule.ScheduleGroupDayEntity
+import com.andrew264.habits.data.entity.schedule.ScheduleGroupEntity
+import com.andrew264.habits.data.entity.schedule.ScheduleTimeRangeEntity
 import com.andrew264.habits.model.schedule.Schedule
+import com.andrew264.habits.model.schedule.ScheduleGroup
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -13,38 +18,59 @@ class ScheduleRepository @Inject constructor(
     private val scheduleDao: ScheduleDao
 ) {
     fun getSchedule(id: String): Flow<Schedule?> {
-        return scheduleDao.getScheduleById(id).map { entity ->
-            entity?.toDomainModel()
+        return scheduleDao.getScheduleWithRelationsById(id).map { relation ->
+            relation?.toDomainModel()
         }
     }
 
     fun getAllSchedules(): Flow<List<Schedule>> {
-        return scheduleDao.getAllSchedules().map { entities ->
-            entities.map { it.toDomainModel() }
+        return scheduleDao.getAllSchedulesWithRelations().map { relations ->
+            relations.map { it.toDomainModel() }
         }
     }
 
+    @Transaction
     suspend fun saveSchedule(schedule: Schedule) {
-        scheduleDao.upsert(schedule.toEntity())
+        scheduleDao.upsertScheduleEntity(schedule.toEntity())
+        // Deleting old groups will cascade to days and time ranges due to ForeignKey constraints
+        scheduleDao.deleteGroupsForSchedule(schedule.id)
+
+        schedule.groups.forEach { group ->
+            scheduleDao.upsertScheduleGroupEntity(group.toEntity(schedule.id))
+            if (group.days.isNotEmpty()) {
+                scheduleDao.insertScheduleGroupDays(group.days.map { day ->
+                    ScheduleGroupDayEntity(groupId = group.id, dayOfWeek = day)
+                })
+            }
+            if (group.timeRanges.isNotEmpty()) {
+                scheduleDao.insertScheduleTimeRanges(group.timeRanges.map { timeRange ->
+                    ScheduleTimeRangeEntity(
+                        groupId = group.id,
+                        fromMinuteOfDay = timeRange.fromMinuteOfDay,
+                        toMinuteOfDay = timeRange.toMinuteOfDay
+                    )
+                })
+            }
+        }
     }
 
     suspend fun deleteSchedule(schedule: Schedule) {
-        scheduleDao.delete(schedule.toEntity())
+        // Deleting the parent schedule will cascade delete all children thanks to onDelete = CASCADE
+        scheduleDao.deleteScheduleEntity(schedule.toEntity())
     }
-}
-
-private fun ScheduleEntity.toDomainModel(): Schedule {
-    return Schedule(
-        id = this.id,
-        name = this.name,
-        groups = this.groups
-    )
 }
 
 private fun Schedule.toEntity(): ScheduleEntity {
     return ScheduleEntity(
         id = this.id,
         name = this.name,
-        groups = this.groups
+    )
+}
+
+private fun ScheduleGroup.toEntity(scheduleId: String): ScheduleGroupEntity {
+    return ScheduleGroupEntity(
+        id = this.id,
+        scheduleId = scheduleId,
+        name = this.name
     )
 }
