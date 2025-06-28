@@ -1,6 +1,5 @@
 package com.andrew264.habits.presentation.bedtime
 
-import android.text.format.DateFormat
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -8,8 +7,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Bedtime
-import androidx.compose.material.icons.outlined.WbSunny
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,8 +16,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -29,8 +25,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.state.UserPresenceState
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -42,50 +38,13 @@ fun BedtimeScreen(
     modifier: Modifier = Modifier,
     viewModel: BedtimeViewModel = hiltViewModel()
 ) {
-    val currentBedtimeHour by viewModel.currentBedtimeHour.collectAsState()
-    val currentBedtimeMinute by viewModel.currentBedtimeMinute.collectAsState()
-    val currentWakeUpHour by viewModel.currentWakeUpHour.collectAsState()
-    val currentWakeUpMinute by viewModel.currentWakeUpMinute.collectAsState()
-
-    var showBedtimePicker by remember { mutableStateOf(false) }
-    var showWakeUpTimePicker by remember { mutableStateOf(false) }
-
-    val context = LocalContext.current
-    val isSystem24Hour = remember(context) { DateFormat.is24HourFormat(context) }
-
-    val bedtimePickerState = rememberTimePickerState(
-        initialHour = currentBedtimeHour ?: 22,
-        initialMinute = currentBedtimeMinute ?: 0,
-        is24Hour = isSystem24Hour
-    )
-    val wakeUpTimePickerState = rememberTimePickerState(
-        initialHour = currentWakeUpHour ?: 6,
-        initialMinute = currentWakeUpMinute ?: 0,
-        is24Hour = isSystem24Hour
-    )
-
-    LaunchedEffect(currentBedtimeHour, currentBedtimeMinute) {
-        currentBedtimeHour?.let { bedtimePickerState.hour = it }
-        currentBedtimeMinute?.let { bedtimePickerState.minute = it }
-    }
-    LaunchedEffect(currentWakeUpHour, currentWakeUpMinute) {
-        currentWakeUpHour?.let { wakeUpTimePickerState.hour = it }
-        currentWakeUpMinute?.let { wakeUpTimePickerState.minute = it }
-    }
-
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
-
-    val formatter = remember(isSystem24Hour) {
-        if (isSystem24Hour) SimpleDateFormat("HH:mm", Locale.getDefault())
-        else SimpleDateFormat("hh:mm a", Locale.getDefault())
-    }
-
     val timelineSegments by viewModel.timelineSegments.collectAsState()
     val selectedTimelineRange by viewModel.selectedTimelineRange.collectAsState()
+    val allSchedules by viewModel.allSchedules.collectAsState()
+    val selectedSchedule by viewModel.selectedSchedule.collectAsState()
+    val scheduleInfo by viewModel.scheduleInfo.collectAsState()
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0.dp)
     ) { paddingValues ->
@@ -177,145 +136,117 @@ fun BedtimeScreen(
 
             // Sleep Schedule Configuration Section
             Text(
-                text = "Sleep Schedule Configuration",
+                text = "Sleep Schedule",
                 style = MaterialTheme.typography.headlineSmall,
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Set your sleep schedule to help track your sleep patterns. This is also used by Sleep API integration.",
+                text = "Select a schedule to define your typical sleep period. This is used by the Sleep API and other heuristics to determine your presence state.",
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            TimeSettingCard(
-                title = "Bedtime",
-                icon = Icons.Outlined.Bedtime,
-                currentTimeHour = currentBedtimeHour,
-                currentTimeMinute = currentBedtimeMinute,
-                defaultTimeInfo = "Defaults to ~10 PM",
-                formatter = formatter,
-                onSetTimeClick = { showBedtimePicker = true },
-                onClearTimeClick = {
-                    viewModel.clearBedtime()
-                    scope.launch {
-                        snackbarHostState.showSnackbar("Custom bedtime cleared.")
-                    }
-                }
+            ScheduleSelector(
+                schedules = allSchedules,
+                selectedSchedule = selectedSchedule,
+                onScheduleSelected = { viewModel.selectSchedule(it.id) },
+                modifier = Modifier.fillMaxWidth()
             )
 
-            TimeSettingCard(
-                title = "Wake-up Time",
-                icon = Icons.Outlined.WbSunny,
-                currentTimeHour = currentWakeUpHour,
-                currentTimeMinute = currentWakeUpMinute,
-                defaultTimeInfo = "Defaults to ~6 AM or 8hrs after bedtime",
-                formatter = formatter,
-                onSetTimeClick = { showWakeUpTimePicker = true },
-                onClearTimeClick = {
-                    viewModel.clearWakeUpTime()
-                    scope.launch {
-                        snackbarHostState.showSnackbar("Custom wake-up time cleared.")
-                    }
-                }
-            )
-
-            SleepDurationInfo(
-                bedtimeHour = currentBedtimeHour,
-                bedtimeMinute = currentBedtimeMinute,
-                wakeUpHour = currentWakeUpHour,
-                wakeUpMinute = currentWakeUpMinute
-            )
-
-            // Time Picker Dialogs
-            if (showBedtimePicker) {
-                TimePickerDialog(
-                    title = {
-                        Text(
-                            "Set Bedtime",
-                            style = MaterialTheme.typography.titleLarge,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    },
-                    onDismissRequest = { showBedtimePicker = false },
-                    confirmButton = {
-                        TextButton(
-                            onClick = {
-                                viewModel.setBedtime(
-                                    bedtimePickerState.hour,
-                                    bedtimePickerState.minute
-                                )
-                                showBedtimePicker = false
-                                val cal = Calendar.getInstance().apply {
-                                    set(Calendar.HOUR_OF_DAY, bedtimePickerState.hour)
-                                    set(Calendar.MINUTE, bedtimePickerState.minute)
-                                }
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        "Bedtime set to: ${formatter.format(cal.time)}"
-                                    )
-                                }
-                            },
-                            shapes = ButtonDefaults.shapes()
-                        ) { Text("OK") }
-                    },
-                    dismissButton = {
-                        TextButton(
-                            onClick = { showBedtimePicker = false },
-                            shapes = ButtonDefaults.shapes()
-                        ) { Text("Cancel") }
-                    }
-                ) {
-                    TimePicker(state = bedtimePickerState)
-                }
-            }
-
-            if (showWakeUpTimePicker) {
-                TimePickerDialog(
-                    title = {
-                        Text(
-                            "Set Wake-up Time",
-                            style = MaterialTheme.typography.titleLarge,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    },
-                    onDismissRequest = { showWakeUpTimePicker = false },
-                    confirmButton = {
-                        TextButton(
-                            onClick = {
-                                viewModel.setWakeUpTime(
-                                    wakeUpTimePickerState.hour,
-                                    wakeUpTimePickerState.minute
-                                )
-                                showWakeUpTimePicker = false
-                                val cal = Calendar.getInstance().apply {
-                                    set(Calendar.HOUR_OF_DAY, wakeUpTimePickerState.hour)
-                                    set(Calendar.MINUTE, wakeUpTimePickerState.minute)
-                                }
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        "Wake-up time set to: ${formatter.format(cal.time)}"
-                                    )
-                                }
-                            },
-                            shapes = ButtonDefaults.shapes()
-                        ) { Text("OK") }
-                    },
-                    dismissButton = {
-                        TextButton(
-                            onClick = { showWakeUpTimePicker = false },
-                            shapes = ButtonDefaults.shapes()
-                        ) { Text("Cancel") }
-                    }
-                ) {
-                    TimePicker(state = wakeUpTimePickerState)
-                }
+            scheduleInfo?.let { info ->
+                ScheduleInfoCard(
+                    scheduleInfo = info,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ScheduleSelector(
+    schedules: List<Schedule>,
+    selectedSchedule: Schedule,
+    onScheduleSelected: (Schedule) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = selectedSchedule.name,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Active Sleep Schedule") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            schedules.forEach { schedule ->
+                DropdownMenuItem(
+                    text = { Text(schedule.name) },
+                    onClick = {
+                        onScheduleSelected(schedule)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ScheduleInfoCard(
+    scheduleInfo: ScheduleInfo,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = scheduleInfo.summary,
+                style = MaterialTheme.typography.bodyLarge,
+                lineHeight = 22.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(12.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(12.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Schedule,
+                    contentDescription = "Total hours",
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = String.format("%.1f hours/week", scheduleInfo.coverage.totalHours),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
 
 @Composable
 fun PresenceLegend() {
@@ -450,178 +381,5 @@ fun UserPresenceState.toColor(): Color {
         UserPresenceState.AWAKE -> Color(0xFF4CAF50) // Green
         UserPresenceState.SLEEPING -> Color(0xFF3F51B5) // Indigo
         UserPresenceState.UNKNOWN -> Color(0xFF9E9E9E) // Grey
-    }
-}
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun TimeSettingCard(
-    title: String,
-    icon: ImageVector,
-    currentTimeHour: Int?,
-    currentTimeMinute: Int?,
-    defaultTimeInfo: String,
-    formatter: SimpleDateFormat,
-    onSetTimeClick: () -> Unit,
-    onClearTimeClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = title,
-                    modifier = Modifier.size(28.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-
-            val timeIsSet = currentTimeHour != null && currentTimeMinute != null
-            val displayTime: String = if (timeIsSet) {
-                val cal = Calendar.getInstance().apply {
-                    set(Calendar.HOUR_OF_DAY, currentTimeHour)
-                    set(Calendar.MINUTE, currentTimeMinute)
-                }
-                formatter.format(cal.time)
-            } else {
-                "Not Set"
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = displayTime,
-                        style = if (timeIsSet)
-                            MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
-                        else
-                            MaterialTheme.typography.headlineSmall.copy(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                    )
-                    if (!timeIsSet) {
-                        Text(
-                            text = defaultTimeInfo,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
-                }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (timeIsSet) {
-                        OutlinedButton(
-                            onClick = onClearTimeClick,
-                            shapes = ButtonDefaults.shapes(),
-                            modifier = Modifier.height(40.dp)
-                        ) {
-                            Text("Clear")
-                        }
-                    }
-                    Button(
-                        onClick = onSetTimeClick,
-                        shapes = ButtonDefaults.shapes(),
-                        modifier = Modifier.height(40.dp)
-                    ) {
-                        Text(if (timeIsSet) "Change" else "Set")
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun SleepDurationInfo(
-    bedtimeHour: Int?,
-    bedtimeMinute: Int?,
-    wakeUpHour: Int?,
-    wakeUpMinute: Int?
-) {
-    if (bedtimeHour != null && bedtimeMinute != null && wakeUpHour != null && wakeUpMinute != null) {
-        val bedtimeCalendar = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, bedtimeHour)
-            set(Calendar.MINUTE, bedtimeMinute)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        val wakeUpCalendar = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, wakeUpHour)
-            set(Calendar.MINUTE, wakeUpMinute)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-
-        if (wakeUpCalendar.before(bedtimeCalendar)) {
-            wakeUpCalendar.add(Calendar.DAY_OF_YEAR, 1)
-        }
-
-        val durationMillis = wakeUpCalendar.timeInMillis - bedtimeCalendar.timeInMillis
-        val hours = TimeUnit.MILLISECONDS.toHours(durationMillis)
-        val minutes = TimeUnit.MILLISECONDS.toMinutes(durationMillis) % 60
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
-            )
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth()
-            ) {
-                Text(
-                    "💤 Estimated Sleep Window",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "${hours}h ${minutes}m",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                if (wakeUpHour * 60 + wakeUpMinute < bedtimeHour * 60 + bedtimeMinute) {
-                    Text(
-                        "(Sleep window crosses midnight)",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                }
-            }
-        }
-    } else if (bedtimeHour != null || bedtimeMinute != null || wakeUpHour != null || wakeUpMinute != null) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            )
-        ) {
-            Text(
-                "Set both bedtime and wake-up time to see your estimated sleep window.",
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(16.dp)
-            )
-        }
     }
 }

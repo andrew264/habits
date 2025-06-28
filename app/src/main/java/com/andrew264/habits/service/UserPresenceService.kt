@@ -14,24 +14,20 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.andrew264.habits.MainActivity
 import com.andrew264.habits.R
+import com.andrew264.habits.data.repository.ScheduleRepository
 import com.andrew264.habits.data.repository.SettingsRepository
 import com.andrew264.habits.data.repository.UserPresenceHistoryRepository
-import com.andrew264.habits.model.ManualSleepSchedule
+import com.andrew264.habits.model.schedule.DefaultSchedules
 import com.andrew264.habits.receiver.SleepReceiver
 import com.andrew264.habits.state.UserPresenceState
+import com.andrew264.habits.util.ScheduleAnalyzer
 import com.google.android.gms.location.ActivityRecognition
 import com.google.android.gms.location.SleepClassifyEvent
 import com.google.android.gms.location.SleepSegmentEvent
 import com.google.android.gms.location.SleepSegmentRequest
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import java.util.Calendar
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -43,7 +39,8 @@ class UserPresenceService : Service() {
         SCREEN_OFF,
         USER_PRESENT,
         SLEEP_API_SEGMENT,
-        SLEEP_API_CLASSIFY
+        SLEEP_API_CLASSIFY,
+        SCHEDULE_CHANGE
     }
 
     private var isSleepApiAvailable = false
@@ -59,27 +56,14 @@ class UserPresenceService : Service() {
         const val ACTION_PROCESS_SLEEP_SEGMENT_EVENTS = "com.andrew264.habits.action.PROCESS_SLEEP_SEGMENT_EVENTS"
         const val ACTION_PROCESS_SLEEP_CLASSIFY_EVENTS = "com.andrew264.habits.action.PROCESS_SLEEP_CLASSIFY_EVENTS"
 
-        const val ACTION_SET_MANUAL_BEDTIME = "com.andrew264.habits.action.SET_MANUAL_BEDTIME"
-        const val ACTION_CLEAR_MANUAL_BEDTIME = "com.andrew264.habits.action.CLEAR_MANUAL_BEDTIME"
-        const val ACTION_SET_MANUAL_WAKE_UP_TIME = "com.andrew264.habits.action.SET_MANUAL_WAKE_UP_TIME"
-        const val ACTION_CLEAR_MANUAL_WAKE_UP_TIME = "com.andrew264.habits.action.CLEAR_MANUAL_WAKE_UP_TIME"
-
         const val EXTRA_SLEEP_SEGMENTS = "com.andrew264.habits.extra.SLEEP_SEGMENTS"
         const val EXTRA_SLEEP_CLASSIFY_EVENTS = "com.andrew264.habits.extra.SLEEP_CLASSIFY_EVENTS"
-        const val EXTRA_MANUAL_BEDTIME_HOUR = "com.andrew264.habits.extra.MANUAL_BEDTIME_HOUR"
-        const val EXTRA_MANUAL_BEDTIME_MINUTE = "com.andrew264.habits.extra.MANUAL_BEDTIME_MINUTE"
-        const val EXTRA_MANUAL_WAKE_UP_HOUR = "com.andrew264.habits.extra.MANUAL_WAKE_UP_HOUR"
-        const val EXTRA_MANUAL_WAKE_UP_MINUTE = "com.andrew264.habits.extra.MANUAL_WAKE_UP_MINUTE"
-
-        private const val DEFAULT_HEURISTIC_SLEEP_DURATION_HOURS = 8
 
         private val _userPresenceStateFlow = MutableStateFlow(UserPresenceState.UNKNOWN)
         val userPresenceState: StateFlow<UserPresenceState> get() = _userPresenceStateFlow.asStateFlow()
 
         private val _isServiceActiveFlow = MutableStateFlow(false)
         val isServiceActive: StateFlow<Boolean> get() = _isServiceActiveFlow.asStateFlow()
-
-        private val _manualSleepScheduleFlow = MutableStateFlow(ManualSleepSchedule())
 
         private fun updateUserPresenceStateInternal(
             newState: UserPresenceState,
@@ -110,6 +94,9 @@ class UserPresenceService : Service() {
     lateinit var settingsRepository: SettingsRepository
 
     @Inject
+    lateinit var scheduleRepository: ScheduleRepository
+
+    @Inject
     lateinit var userPresenceHistoryRepository: UserPresenceHistoryRepository
 
     private val serviceJob = SupervisorJob()
@@ -133,22 +120,21 @@ class UserPresenceService : Service() {
 
     private var isReceiverRegistered = false
     private var _isServiceActuallyRunning = false
-    private var currentManualSleepSchedule = ManualSleepSchedule()
+    private var scheduleAnalyzer: ScheduleAnalyzer? = null
 
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "Service Created")
         createNotificationChannel()
+        initializeScheduleAnalyzer()
 
         serviceScope.launch {
             settingsRepository.settingsFlow.collect { settings ->
                 Log.d(
                     TAG,
-                    "Settings loaded/changed: Active=${settings.isServiceActive}, Schedule=${settings.manualSleepSchedule}"
+                    "Settings loaded/changed: Active=${settings.isServiceActive}, ScheduleId=${settings.selectedScheduleId}"
                 )
                 _isServiceActiveFlow.value = settings.isServiceActive
-                _manualSleepScheduleFlow.value = settings.manualSleepSchedule
-                currentManualSleepSchedule = settings.manualSleepSchedule
 
                 if (settings.isServiceActive && !_isServiceActuallyRunning) {
                     Log.d(TAG, "Service persisted as active, and not running. Starting monitoring logic.")
@@ -157,12 +143,43 @@ class UserPresenceService : Service() {
                     Log.d(TAG, "Service persisted as inactive, but monitoring logic is running. Stopping.")
                     stopAllMonitoringLogic()
                 }
-                if (_isServiceActuallyRunning) {
-                    evaluateState(EvaluationSource.SCREEN_OFF)
-                }
             }
         }
     }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun initializeScheduleAnalyzer() {
+        serviceScope.launch {
+            settingsRepository.settingsFlow
+                .map { it.selectedScheduleId }
+                .distinctUntilChanged()
+                .flatMapLatest { scheduleId ->
+                    when (scheduleId) {
+                        null, DefaultSchedules.DEFAULT_SLEEP_SCHEDULE_ID -> {
+                            flowOf(DefaultSchedules.defaultSleepSchedule)
+                        }
+
+                        else -> {
+                            scheduleRepository.getSchedule(scheduleId)
+                        }
+                    }
+                }
+                .collect { schedule ->
+                    scheduleAnalyzer = if (schedule != null) {
+                        Log.d(TAG, "Updating ScheduleAnalyzer for schedule: ${schedule.name}")
+                        ScheduleAnalyzer(schedule.groups)
+                    } else {
+                        Log.w(TAG, "Selected schedule was null, falling back to default.")
+                        ScheduleAnalyzer(DefaultSchedules.defaultSleepSchedule.groups)
+                    }
+                    // Re-evaluate state whenever the schedule changes
+                    if (_isServiceActuallyRunning) {
+                        evaluateState(EvaluationSource.SCHEDULE_CHANGE)
+                    }
+                }
+        }
+    }
+
 
     override fun onStartCommand(
         intent: Intent?,
@@ -195,35 +212,6 @@ class UserPresenceService : Service() {
                     events?.forEach { event -> evaluateState(EvaluationSource.SLEEP_API_CLASSIFY, event) }
                 }
 
-
-                ACTION_SET_MANUAL_BEDTIME -> {
-                    val hour = intent.getIntExtra(EXTRA_MANUAL_BEDTIME_HOUR, -1)
-                    val minute = intent.getIntExtra(EXTRA_MANUAL_BEDTIME_MINUTE, -1)
-                    if (hour != -1 && minute != -1) {
-                        settingsRepository.updateManualBedtime(hour, minute)
-                        Log.i(TAG, "Manual bedtime set to: $hour:$minute and persisted.")
-                    }
-                }
-
-                ACTION_CLEAR_MANUAL_BEDTIME -> {
-                    settingsRepository.updateManualBedtime(null, null)
-                    Log.i(TAG, "Manual bedtime cleared and persisted.")
-                }
-
-                ACTION_SET_MANUAL_WAKE_UP_TIME -> {
-                    val hour = intent.getIntExtra(EXTRA_MANUAL_WAKE_UP_HOUR, -1)
-                    val minute = intent.getIntExtra(EXTRA_MANUAL_WAKE_UP_MINUTE, -1)
-                    if (hour != -1 && minute != -1) {
-                        settingsRepository.updateManualWakeUpTime(hour, minute)
-                        Log.i(TAG, "Manual wake-up time set to: $hour:$minute and persisted.")
-                    }
-                }
-
-                ACTION_CLEAR_MANUAL_WAKE_UP_TIME -> {
-                    settingsRepository.updateManualWakeUpTime(null, null)
-                    Log.i(TAG, "Manual wake-up time cleared and persisted.")
-                }
-
                 ACTION_STOP_SERVICE -> {
                     Log.d(TAG, "ACTION_STOP_SERVICE received. Persisting inactive state.")
                     settingsRepository.updateServiceActiveState(false)
@@ -250,12 +238,8 @@ class UserPresenceService : Service() {
         registerScreenStateReceiver()
 
         startForeground(NOTIFICATION_ID, createNotification())
-        val powerManager = getSystemService(POWER_SERVICE) as PowerManager
-        if (powerManager.isInteractive) {
-            evaluateState(EvaluationSource.SCREEN_ON)
-        } else {
-            evaluateState(EvaluationSource.SCREEN_OFF)
-        }
+        // Initial state evaluation
+        evaluateState(if ((getSystemService(POWER_SERVICE) as PowerManager).isInteractive) EvaluationSource.SCREEN_ON else EvaluationSource.SCREEN_OFF)
     }
 
     private fun stopAllMonitoringLogic() {
@@ -295,7 +279,7 @@ class UserPresenceService : Service() {
             PendingIntent.getActivity(this, 0, notificationIntent, pendingIntentFlags)
 
         val currentPresenceText = _userPresenceStateFlow.value.name.replace('_', ' ')
-        val baseText = if (isSleepApiAvailable) "Sleep API & Heuristics" else "Heuristics Only"
+        val baseText = if (isSleepApiAvailable) "Sleep API & Schedule" else "Schedule Only"
         val contentText = "$baseText Active. State: $currentPresenceText"
 
         return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
@@ -316,21 +300,18 @@ class UserPresenceService : Service() {
         val oldState = _userPresenceStateFlow.value
         var newState = oldState
         var reason = "No change"
+        val isScheduledTime = isWithinScheduledTime()
 
-        Log.d(TAG, "Evaluating state. Source: $source, Old State: $oldState, Is Night Time: ${isNightTime()}")
+        Log.d(TAG, "Evaluating state. Source: $source, Old State: $oldState, Is Scheduled Time: $isScheduledTime")
 
         when (source) {
             EvaluationSource.SLEEP_API_SEGMENT -> {
                 if (data is SleepSegmentEvent && data.status == SleepSegmentEvent.STATUS_SUCCESSFUL) {
                     val now = System.currentTimeMillis()
-
-                    // Currently in sleep segment
                     if (now >= data.startTimeMillis && now <= data.endTimeMillis) {
                         newState = UserPresenceState.SLEEPING
                         reason = "Sleep API: In sleep segment"
-                    }
-                    // Just woke up (within 15 minutes of segment end)
-                    else if (now > data.endTimeMillis && now < data.endTimeMillis + TimeUnit.MINUTES.toMillis(15)) {
+                    } else if (now > data.endTimeMillis && now < data.endTimeMillis + TimeUnit.MINUTES.toMillis(15)) {
                         newState = UserPresenceState.AWAKE
                         reason = "Sleep API: Just woke up from sleep segment"
                     }
@@ -345,40 +326,27 @@ class UserPresenceService : Service() {
             }
 
             EvaluationSource.SCREEN_ON, EvaluationSource.USER_PRESENT -> {
-                // Only use screen interactions if we don't have Sleep API data or it's daytime
-                if (!isSleepApiAvailable || !isNightTime()) {
+                if (!isSleepApiAvailable || !isScheduledTime) {
                     newState = UserPresenceState.AWAKE
-                    reason = "Device interaction during daytime or no Sleep API"
+                    reason = "Device interaction outside of scheduled sleep time"
                 }
             }
 
-            EvaluationSource.SCREEN_OFF -> {
-                // Only evaluate heuristics if no Sleep API available
-                if (!isSleepApiAvailable) {
-                    if (isNightTime()) {
+            EvaluationSource.SCREEN_OFF, EvaluationSource.SCHEDULE_CHANGE -> {
+                if (!isSleepApiAvailable || source == EvaluationSource.SCHEDULE_CHANGE) {
+                    if (isScheduledTime) {
                         newState = UserPresenceState.SLEEPING
-                        reason = "Heuristic: Night time and screen off"
+                        reason = "Heuristic: Scheduled time and screen off/schedule changed"
                     } else {
                         newState = UserPresenceState.AWAKE
-                        reason = "Heuristic: Daytime"
+                        reason = "Heuristic: Outside scheduled time"
                     }
                 }
             }
         }
 
-        // Override rule: If it's night time, we should be sleeping (unless Sleep API explicitly says we just woke up)
-        if (isNightTime() && newState != UserPresenceState.AWAKE &&
-            !reason.contains("Just woke up")) {
-            newState = UserPresenceState.SLEEPING
-            if (!reason.contains("Sleep API")) {
-                reason = "Night time override: Should be sleeping"
-            }
-        }
-
-        // Update state if changed
         if (newState != oldState) {
             updateUserPresenceStateInternal(newState, reason, userPresenceHistoryRepository, serviceScope)
-            Log.i(TAG, "State changed: $oldState -> $newState ($reason)")
         } else {
             Log.d(TAG, "State unchanged: $oldState ($reason)")
         }
@@ -386,31 +354,8 @@ class UserPresenceService : Service() {
         updateNotificationContentOnly()
     }
 
-    private fun isNightTime(): Boolean {
-        val calendar = Calendar.getInstance()
-        val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
-        val currentMinute = calendar.get(Calendar.MINUTE)
-        val currentTimeInMinutes = currentHour * 60 + currentMinute
-
-        val schedule = currentManualSleepSchedule
-        val userBedtimeInMinutes = schedule.bedtimeInMinutesTotal
-        val userWakeUpTimeInMinutes = schedule.wakeUpInMinutesTotal
-
-        // Log current time and schedule for debugging
-        // Log.d(TAG, "isNightTime check: Current Time=${currentHour}:${currentMinute} ($currentTimeInMinutes mins). Schedule BedtimeMins=${userBedtimeInMinutes}, WakeupMins=${userWakeUpTimeInMinutes}")
-
-        if (userBedtimeInMinutes != null) {
-            val effectiveWakeUpTimeInMinutes = userWakeUpTimeInMinutes
-                ?: ((userBedtimeInMinutes + DEFAULT_HEURISTIC_SLEEP_DURATION_HOURS * 60) % (24 * 60))
-
-            return if (userBedtimeInMinutes <= effectiveWakeUpTimeInMinutes) {
-                currentTimeInMinutes >= userBedtimeInMinutes && currentTimeInMinutes < effectiveWakeUpTimeInMinutes
-            } else {
-                currentTimeInMinutes >= userBedtimeInMinutes || currentTimeInMinutes < effectiveWakeUpTimeInMinutes
-            }
-        }
-        // Default: 10 PM (22:00) to 6 AM (06:00) if no schedule set
-        return currentHour >= 22 || currentHour < 6
+    private fun isWithinScheduledTime(): Boolean {
+        return scheduleAnalyzer?.isCurrentTimeInSchedule() == true
     }
 
 
@@ -454,16 +399,16 @@ class UserPresenceService : Service() {
             ).addOnSuccessListener {
                 Log.i(TAG, "Successfully subscribed to Sleep API.")
                 isSleepApiAvailable = true
-                evaluateState(EvaluationSource.SCREEN_OFF)
+                evaluateState(EvaluationSource.SCHEDULE_CHANGE)
             }.addOnFailureListener { e ->
                 Log.e(TAG, "Failed to subscribe to Sleep API.", e)
                 isSleepApiAvailable = false
-                evaluateState(EvaluationSource.SCREEN_OFF)
+                evaluateState(EvaluationSource.SCHEDULE_CHANGE)
             }
         } else {
             Log.w(TAG, "Attempted to subscribe to Sleep API, but permission is missing.")
             isSleepApiAvailable = false
-            evaluateState(EvaluationSource.SCREEN_OFF)
+            evaluateState(EvaluationSource.SCHEDULE_CHANGE)
         }
     }
 
@@ -476,17 +421,11 @@ class UserPresenceService : Service() {
                     pendingIntent.cancel()
                     sleepApiPendingIntent = null
                     isSleepApiAvailable = false
-                    evaluateState(EvaluationSource.SCREEN_OFF)
+                    evaluateState(EvaluationSource.SCHEDULE_CHANGE)
                 }.addOnFailureListener { e ->
                     Log.e(TAG, "Failed to unsubscribe from Sleep API updates.", e)
-                    isSleepApiAvailable = false
-                    evaluateState(EvaluationSource.SCREEN_OFF)
                 }
         } ?: Log.d(TAG, "No active Sleep API subscription (PendingIntent was null).")
-        if (sleepApiPendingIntent == null) {
-            isSleepApiAvailable = false
-            evaluateState(EvaluationSource.SCREEN_OFF)
-        }
     }
 
     private fun getSleepPendingIntent(): PendingIntent {
@@ -511,9 +450,6 @@ class UserPresenceService : Service() {
         }
         if (_isServiceActuallyRunning) {
             stopAllMonitoringLogic()
-        } else {
-            unregisterScreenStateReceiver()
-            unsubscribeFromSleepUpdates()
         }
         serviceJob.cancel()
         Log.d(TAG, "Service Destroyed. Final state: ${_userPresenceStateFlow.value}")

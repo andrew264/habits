@@ -13,10 +13,6 @@ class UserPresenceController(private val context: Context) {
         private const val TAG = "UserPresenceController"
     }
 
-    fun handleInitialServiceStart(activityRecognitionGranted: Boolean) {
-        Log.d(TAG, "handleInitialServiceStart called. ActivityRecognitionGranted: $activityRecognitionGranted. Service will start based on persisted state.")
-    }
-
     fun startService() {
         val serviceIntent = Intent(context, UserPresenceService::class.java).apply {
             action = UserPresenceService.ACTION_START_SERVICE
@@ -42,73 +38,6 @@ class UserPresenceController(private val context: Context) {
         } catch (e: Exception) {
             Toast.makeText(context, "Error requesting service stop: ${e.message}", Toast.LENGTH_LONG).show()
             Log.e(TAG, "Error requesting service stop", e)
-        }
-    }
-
-    // These methods now just send intents. The service will handle persisting the change.
-    fun setManualBedtime(
-        hour: Int,
-        minute: Int
-    ) {
-        val serviceIntent = Intent(context, UserPresenceService::class.java).apply {
-            action = UserPresenceService.ACTION_SET_MANUAL_BEDTIME
-            putExtra(UserPresenceService.EXTRA_MANUAL_BEDTIME_HOUR, hour)
-            putExtra(UserPresenceService.EXTRA_MANUAL_BEDTIME_MINUTE, minute)
-        }
-        try {
-            context.startService(serviceIntent)
-            Toast.makeText(context, "Manual bedtime ($hour:$minute) command sent.", Toast.LENGTH_SHORT).show()
-            Log.d(TAG, "Manual bedtime set command sent to $hour:$minute")
-        } catch (e: Exception) {
-            Toast.makeText(context, "Error sending set manual bedtime: ${e.message}", Toast.LENGTH_LONG).show()
-            Log.e(TAG, "Error sending set manual bedtime", e)
-        }
-    }
-
-    fun clearManualBedtime() {
-        val serviceIntent = Intent(context, UserPresenceService::class.java).apply {
-            action = UserPresenceService.ACTION_CLEAR_MANUAL_BEDTIME
-        }
-        try {
-            context.startService(serviceIntent)
-            Toast.makeText(context, "Clear manual bedtime command sent.", Toast.LENGTH_SHORT).show()
-            Log.d(TAG, "Clear manual bedtime command sent")
-        } catch (e: Exception) {
-            Toast.makeText(context, "Error sending clear manual bedtime: ${e.message}", Toast.LENGTH_LONG).show()
-            Log.e(TAG, "Error sending clear manual bedtime", e)
-        }
-    }
-
-    fun setManualWakeUpTime(
-        hour: Int,
-        minute: Int
-    ) {
-        val serviceIntent = Intent(context, UserPresenceService::class.java).apply {
-            action = UserPresenceService.ACTION_SET_MANUAL_WAKE_UP_TIME
-            putExtra(UserPresenceService.EXTRA_MANUAL_WAKE_UP_HOUR, hour)
-            putExtra(UserPresenceService.EXTRA_MANUAL_WAKE_UP_MINUTE, minute)
-        }
-        try {
-            context.startService(serviceIntent)
-            Toast.makeText(context, "Manual wake-up time ($hour:$minute) command sent.", Toast.LENGTH_SHORT).show()
-            Log.d(TAG, "Manual wake-up time set command sent to $hour:$minute")
-        } catch (e: Exception) {
-            Toast.makeText(context, "Error sending set manual wake-up time: ${e.message}", Toast.LENGTH_LONG).show()
-            Log.e(TAG, "Error sending set manual wake-up time", e)
-        }
-    }
-
-    fun clearManualWakeUpTime() {
-        val serviceIntent = Intent(context, UserPresenceService::class.java).apply {
-            action = UserPresenceService.ACTION_CLEAR_MANUAL_WAKE_UP_TIME
-        }
-        try {
-            context.startService(serviceIntent)
-            Toast.makeText(context, "Clear manual wake-up time command sent.", Toast.LENGTH_SHORT).show()
-            Log.d(TAG, "Clear manual wake-up time command sent")
-        } catch (e: Exception) {
-            Toast.makeText(context, "Error sending clear manual wake-up time: ${e.message}", Toast.LENGTH_LONG).show()
-            Log.e(TAG, "Error sending clear manual wake-up time", e)
         }
     }
 }

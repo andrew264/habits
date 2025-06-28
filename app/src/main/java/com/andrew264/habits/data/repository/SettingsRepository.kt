@@ -7,7 +7,6 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.andrew264.habits.data.preferences.DataStoreKeys
-import com.andrew264.habits.model.ManualSleepSchedule
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -31,18 +30,9 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         }
         .map { preferences ->
             val isServiceActive = preferences[DataStoreKeys.IS_SERVICE_ACTIVE] == true
-            val manualBedtimeHour = preferences[DataStoreKeys.MANUAL_BEDTIME_HOUR]
-            val manualBedtimeMinute = preferences[DataStoreKeys.MANUAL_BEDTIME_MINUTE]
-            val manualWakeUpHour = preferences[DataStoreKeys.MANUAL_WAKE_UP_HOUR]
-            val manualWakeUpMinute = preferences[DataStoreKeys.MANUAL_WAKE_UP_MINUTE]
+            val selectedScheduleId = preferences[DataStoreKeys.SELECTED_SCHEDULE_ID]
 
-            val manualSleepSchedule = ManualSleepSchedule(
-                bedtimeHour = manualBedtimeHour,
-                bedtimeMinute = manualBedtimeMinute,
-                wakeUpHour = manualWakeUpHour,
-                wakeUpMinute = manualWakeUpMinute
-            )
-            PersistentSettings(isServiceActive, manualSleepSchedule)
+            PersistentSettings(isServiceActive, selectedScheduleId)
         }
 
     suspend fun updateServiceActiveState(isActive: Boolean) {
@@ -51,32 +41,12 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         }
     }
 
-    suspend fun updateManualBedtime(
-        hour: Int?,
-        minute: Int?
-    ) {
+    suspend fun updateSelectedScheduleId(scheduleId: String?) {
         context.dataStore.edit { settings ->
-            if (hour != null && minute != null) {
-                settings[DataStoreKeys.MANUAL_BEDTIME_HOUR] = hour
-                settings[DataStoreKeys.MANUAL_BEDTIME_MINUTE] = minute
+            if (scheduleId != null) {
+                settings[DataStoreKeys.SELECTED_SCHEDULE_ID] = scheduleId
             } else {
-                settings.remove(DataStoreKeys.MANUAL_BEDTIME_HOUR)
-                settings.remove(DataStoreKeys.MANUAL_BEDTIME_MINUTE)
-            }
-        }
-    }
-
-    suspend fun updateManualWakeUpTime(
-        hour: Int?,
-        minute: Int?
-    ) {
-        context.dataStore.edit { settings ->
-            if (hour != null && minute != null) {
-                settings[DataStoreKeys.MANUAL_WAKE_UP_HOUR] = hour
-                settings[DataStoreKeys.MANUAL_WAKE_UP_MINUTE] = minute
-            } else {
-                settings.remove(DataStoreKeys.MANUAL_WAKE_UP_HOUR)
-                settings.remove(DataStoreKeys.MANUAL_WAKE_UP_MINUTE)
+                settings.remove(DataStoreKeys.SELECTED_SCHEDULE_ID)
             }
         }
     }

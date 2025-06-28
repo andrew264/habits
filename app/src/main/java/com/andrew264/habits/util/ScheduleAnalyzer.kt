@@ -57,6 +57,8 @@ class ScheduleAnalyzer(groups: List<ScheduleGroup>) {
 
     /**
      * Merges overlapping or adjacent time ranges into the minimum number of ranges.
+     * This does NOT handle overnight ranges, as merging them would be complex and ambiguous.
+     * The `isTimeInSchedule` method is responsible for interpreting them correctly.
      */
     private fun mergeTimeRanges(ranges: List<TimeRange>): List<TimeRange> {
         if (ranges.size <= 1) {
@@ -69,7 +71,8 @@ class ScheduleAnalyzer(groups: List<ScheduleGroup>) {
 
         for (i in 1 until sortedRanges.size) {
             val next = sortedRanges[i]
-            if (next.fromMinuteOfDay <= currentMerge.toMinuteOfDay) { // Overlap or adjacent
+            // We only merge non-overnight ranges
+            if (currentMerge.toMinuteOfDay >= currentMerge.fromMinuteOfDay && next.fromMinuteOfDay <= currentMerge.toMinuteOfDay) { // Overlap or adjacent
                 currentMerge = currentMerge.copy(
                     toMinuteOfDay = maxOf(currentMerge.toMinuteOfDay, next.toMinuteOfDay)
                 )
@@ -88,18 +91,40 @@ class ScheduleAnalyzer(groups: List<ScheduleGroup>) {
      * @return True if the time is within a scheduled range for that day of the week.
      */
     fun isTimeInSchedule(dateTime: LocalDateTime): Boolean {
-        val dayOfWeek = try {
-            DayOfWeek.valueOf(dateTime.dayOfWeek.name)
-        } catch (_: IllegalArgumentException) {
-            // This can happen if the enums have different names, which they don't.
-            return false
+        val today = DayOfWeek.valueOf(dateTime.dayOfWeek.name)
+        val yesterday = DayOfWeek.valueOf(dateTime.minusDays(1).dayOfWeek.name)
+        val minuteOfDay = dateTime.hour * 60 + dateTime.minute
+
+        // Check ranges for today
+        val rangesForToday = schedulePerDay[today] ?: emptyList()
+        for (range in rangesForToday) {
+            if (range.toMinuteOfDay >= range.fromMinuteOfDay) {
+                // Same-day range
+                if (minuteOfDay >= range.fromMinuteOfDay && minuteOfDay < range.toMinuteOfDay) {
+                    return true
+                }
+            } else {
+                // Overnight range starts today, check if we are in the "today" part
+                if (minuteOfDay >= range.fromMinuteOfDay) {
+                    return true
+                }
+            }
         }
 
-        val minuteOfDay = dateTime.hour * 60 + dateTime.minute
-        val rangesForDay = schedulePerDay[dayOfWeek] ?: return false
+        // Check ranges for yesterday that might spill over into today
+        val rangesForYesterday = schedulePerDay[yesterday] ?: emptyList()
+        for (range in rangesForYesterday) {
+            if (range.toMinuteOfDay < range.fromMinuteOfDay) {
+                // Overnight range that started yesterday, check if we are in the "today" part
+                if (minuteOfDay < range.toMinuteOfDay) {
+                    return true
+                }
+            }
+        }
 
-        return rangesForDay.any { minuteOfDay >= it.fromMinuteOfDay && minuteOfDay < it.toMinuteOfDay }
+        return false
     }
+
 
     /**
      * Checks if the current system time falls within the schedule.
@@ -113,7 +138,14 @@ class ScheduleAnalyzer(groups: List<ScheduleGroup>) {
     fun calculateCoverage(): ScheduleCoverage {
         val totalMinutesInWeek = 7 * 24 * 60
         val scheduledMinutes = schedulePerDay.values.sumOf { ranges ->
-            ranges.sumOf { it.toMinuteOfDay - it.fromMinuteOfDay }
+            ranges.sumOf {
+                if (it.toMinuteOfDay >= it.fromMinuteOfDay) {
+                    it.toMinuteOfDay - it.fromMinuteOfDay
+                } else {
+                    // Overnight range
+                    (24 * 60 - it.fromMinuteOfDay) + it.toMinuteOfDay
+                }
+            }
         }
 
         val totalHours = scheduledMinutes / 60.0
@@ -131,7 +163,14 @@ class ScheduleAnalyzer(groups: List<ScheduleGroup>) {
 
         return DayOfWeek.entries.associateWith { day ->
             val ranges = schedulePerDay[day] ?: emptyList()
-            val scheduledMinutes = ranges.sumOf { it.toMinuteOfDay - it.fromMinuteOfDay }
+            val scheduledMinutes = ranges.sumOf {
+                if (it.toMinuteOfDay >= it.fromMinuteOfDay) {
+                    it.toMinuteOfDay - it.fromMinuteOfDay
+                } else {
+                    // This is tricky for per-day. A simple approach is to assign the whole duration to the start day.
+                    (24 * 60 - it.fromMinuteOfDay) + it.toMinuteOfDay
+                }
+            }
 
             if (scheduledMinutes == 0) {
                 DailyCoverage(0.0, 0.0)

@@ -3,10 +3,14 @@ package com.andrew264.habits.presentation.bedtime
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andrew264.habits.data.entity.UserPresenceEvent
+import com.andrew264.habits.data.repository.ScheduleRepository
 import com.andrew264.habits.data.repository.SettingsRepository
 import com.andrew264.habits.data.repository.UserPresenceHistoryRepository
-import com.andrew264.habits.model.ManualSleepSchedule
+import com.andrew264.habits.model.schedule.DefaultSchedules
+import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.state.UserPresenceState
+import com.andrew264.habits.util.ScheduleAnalyzer
+import com.andrew264.habits.util.ScheduleCoverage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -32,56 +36,63 @@ enum class TimelineRange(
     WEEK("7 Days", TimeUnit.DAYS.toMillis(7))
 }
 
+data class ScheduleInfo(
+    val summary: String,
+    val coverage: ScheduleCoverage
+)
+
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class BedtimeViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
+    private val scheduleRepository: ScheduleRepository,
     private val userPresenceHistoryRepository: UserPresenceHistoryRepository
 ) : ViewModel() {
 
     private val _selectedTimelineRange = MutableStateFlow(TimelineRange.DAY)
     val selectedTimelineRange: StateFlow<TimelineRange> = _selectedTimelineRange.asStateFlow()
 
-    private val manualScheduleState: StateFlow<ManualSleepSchedule> =
-        settingsRepository.settingsFlow
-            .map { persistentSettings -> persistentSettings.manualSleepSchedule }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
-                initialValue = ManualSleepSchedule()
-            )
-
-    val currentBedtimeHour: StateFlow<Int?> = manualScheduleState
-        .map { it.bedtimeHour }
+    val allSchedules: StateFlow<List<Schedule>> = scheduleRepository.getAllSchedules()
+        .map { dbSchedules ->
+            // Add the default schedule to the top of the list
+            listOf(DefaultSchedules.defaultSleepSchedule) + dbSchedules
+        }
         .stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5000),
-            manualScheduleState.value.bedtimeHour
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = listOf(DefaultSchedules.defaultSleepSchedule)
         )
 
-    val currentBedtimeMinute: StateFlow<Int?> = manualScheduleState
-        .map { it.bedtimeMinute }
+    val selectedScheduleId: StateFlow<String?> = settingsRepository.settingsFlow
+        .map { it.selectedScheduleId }
         .stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5000),
-            manualScheduleState.value.bedtimeMinute
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
         )
 
-    val currentWakeUpHour: StateFlow<Int?> = manualScheduleState
-        .map { it.wakeUpHour }
-        .stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5000),
-            manualScheduleState.value.wakeUpHour
-        )
+    val selectedSchedule: StateFlow<Schedule> = combine(
+        allSchedules,
+        selectedScheduleId
+    ) { schedules, id ->
+        schedules.find { it.id == id } ?: DefaultSchedules.defaultSleepSchedule
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = DefaultSchedules.defaultSleepSchedule
+    )
 
-    val currentWakeUpMinute: StateFlow<Int?> = manualScheduleState
-        .map { it.wakeUpMinute }
-        .stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5000),
-            manualScheduleState.value.wakeUpMinute
+    val scheduleInfo: StateFlow<ScheduleInfo?> = selectedSchedule.map { schedule ->
+        val analyzer = ScheduleAnalyzer(schedule.groups)
+        ScheduleInfo(
+            summary = analyzer.createSummary(),
+            coverage = analyzer.calculateCoverage()
         )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = null
+    )
 
     // This flow will combine the selected range and historical data to produce timeline segments
     val timelineSegments: StateFlow<List<TimelineSegment>> = _selectedTimelineRange.flatMapLatest { range ->
@@ -235,33 +246,9 @@ class BedtimeViewModel @Inject constructor(
         _selectedTimelineRange.value = range
     }
 
-    fun setBedtime(
-        hour: Int,
-        minute: Int
-    ) {
+    fun selectSchedule(scheduleId: String) {
         viewModelScope.launch {
-            settingsRepository.updateManualBedtime(hour, minute)
-        }
-    }
-
-    fun clearBedtime() {
-        viewModelScope.launch {
-            settingsRepository.updateManualBedtime(null, null)
-        }
-    }
-
-    fun setWakeUpTime(
-        hour: Int,
-        minute: Int
-    ) {
-        viewModelScope.launch {
-            settingsRepository.updateManualWakeUpTime(hour, minute)
-        }
-    }
-
-    fun clearWakeUpTime() {
-        viewModelScope.launch {
-            settingsRepository.updateManualWakeUpTime(null, null)
+            settingsRepository.updateSelectedScheduleId(scheduleId)
         }
     }
 }
