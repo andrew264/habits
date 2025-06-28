@@ -15,7 +15,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -51,6 +50,12 @@ class BedtimeViewModel @Inject constructor(
 
     private val _selectedTimelineRange = MutableStateFlow(TimelineRange.DAY)
     val selectedTimelineRange: StateFlow<TimelineRange> = _selectedTimelineRange.asStateFlow()
+
+    private val _viewStartTimeMillis = MutableStateFlow(0L)
+    val viewStartTimeMillis: StateFlow<Long> = _viewStartTimeMillis.asStateFlow()
+
+    private val _viewEndTimeMillis = MutableStateFlow(0L)
+    val viewEndTimeMillis: StateFlow<Long> = _viewEndTimeMillis.asStateFlow()
 
     val allSchedules: StateFlow<List<Schedule>> = scheduleRepository.getAllSchedules()
         .map { dbSchedules ->
@@ -97,45 +102,20 @@ class BedtimeViewModel @Inject constructor(
     // This flow will combine the selected range and historical data to produce timeline segments
     val timelineSegments: StateFlow<List<TimelineSegment>> = _selectedTimelineRange.flatMapLatest { range ->
         val now = System.currentTimeMillis()
-        val viewStartTimeMillis: Long
-        val viewEndTimeMillis: Long
+        val viewEnd: Long = now
+        val viewStart: Long = now - range.durationMillis
 
-        when (range) {
-            TimelineRange.TWELVE_HOURS -> {
-                viewEndTimeMillis = now
-                viewStartTimeMillis = now - range.durationMillis
-            }
-
-            TimelineRange.DAY -> {
-                val calendar = Calendar.getInstance().apply { timeInMillis = now }
-                calendar.set(Calendar.HOUR_OF_DAY, 0)
-                calendar.set(Calendar.MINUTE, 0)
-                calendar.set(Calendar.SECOND, 0)
-                calendar.set(Calendar.MILLISECOND, 0)
-                viewStartTimeMillis = calendar.timeInMillis // Start of today
-                viewEndTimeMillis = viewStartTimeMillis + range.durationMillis // End of today
-            }
-
-            TimelineRange.WEEK -> {
-                val calendar = Calendar.getInstance().apply { timeInMillis = now }
-                // Align end time to the end of the current day for a consistent 7-day block
-                calendar.set(Calendar.HOUR_OF_DAY, 23)
-                calendar.set(Calendar.MINUTE, 59)
-                calendar.set(Calendar.SECOND, 59)
-                calendar.set(Calendar.MILLISECOND, 999)
-                viewEndTimeMillis = calendar.timeInMillis // End of today
-                viewStartTimeMillis = viewEndTimeMillis - range.durationMillis + 1 // Start of 7 days ago (inclusive)
-            }
-        }
+        _viewStartTimeMillis.value = viewStart
+        _viewEndTimeMillis.value = viewEnd
 
         // Flow for events within the range
-        val eventsInRangeFlow = userPresenceHistoryRepository.getPresenceHistoryInRangeFlow(viewStartTimeMillis, viewEndTimeMillis)
+        val eventsInRangeFlow = userPresenceHistoryRepository.getPresenceHistoryInRangeFlow(viewStart, viewEnd)
 
         // Combine with the event immediately preceding the startTime
         flow {
-            val precedingEvent = userPresenceHistoryRepository.getLatestEventBefore(viewStartTimeMillis)
+            val precedingEvent = userPresenceHistoryRepository.getLatestEventBefore(viewStart)
             eventsInRangeFlow.collect { eventsInRange ->
-                emit(processEventsToSegments(eventsInRange, precedingEvent, viewStartTimeMillis, viewEndTimeMillis, range))
+                emit(processEventsToSegments(eventsInRange, precedingEvent, viewStart, viewEnd))
             }
         }
     }.stateIn(
@@ -149,7 +129,6 @@ class BedtimeViewModel @Inject constructor(
         precedingEvent: UserPresenceEvent?,
         viewStartTimeMillis: Long,
         viewEndTimeMillis: Long,
-        range: TimelineRange
     ): List<TimelineSegment> {
         if (events.isEmpty() && precedingEvent == null) {
             // If no events and no preceding event, the entire view is UNKNOWN

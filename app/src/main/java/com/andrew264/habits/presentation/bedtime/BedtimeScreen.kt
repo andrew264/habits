@@ -13,9 +13,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -28,9 +31,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.state.UserPresenceState
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.util.Calendar
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import kotlin.math.max
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -61,7 +69,7 @@ fun BedtimeScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
                 )
             ) {
                 Column(
@@ -118,7 +126,9 @@ fun BedtimeScreen(
                     } else {
                         UserPresenceTimeline(
                             segments = timelineSegments,
-                            totalDurationMillis = selectedTimelineRange.durationMillis,
+                            selectedRange = selectedTimelineRange,
+                            viewStartTimeMillis = viewModel.viewStartTimeMillis.collectAsState().value,
+                            viewEndTimeMillis = viewModel.viewEndTimeMillis.collectAsState().value,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(60.dp)
@@ -188,7 +198,7 @@ fun ScheduleSelector(
             label = { Text("Active Sleep Schedule") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
-                .menuAnchor()
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true)
                 .fillMaxWidth()
         )
         ExposedDropdownMenu(
@@ -296,85 +306,134 @@ fun LegendItem(
 @Composable
 fun UserPresenceTimeline(
     segments: List<TimelineSegment>,
-    totalDurationMillis: Long,
+    selectedRange: TimelineRange,
+    viewStartTimeMillis: Long,
+    viewEndTimeMillis: Long,
     modifier: Modifier = Modifier,
     barHeight: Dp = 24.dp,
-    labelSpacing: Dp = 6.dp
+    labelSpacing: Dp = 6.dp,
+    tickHeight: Dp = 4.dp
 ) {
     val textMeasurer = rememberTextMeasurer()
     val labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
     val labelTextStyle = TextStyle(fontSize = 9.sp, color = labelColor)
+    val tickColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
 
     val hourLabelFormatter = remember { SimpleDateFormat("ha", Locale.getDefault()) }
     val dayLabelFormatter = remember { SimpleDateFormat("E", Locale.getDefault()) }
 
     val barOutlineColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
     val barBackgroundColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+    val cornerRadius = CornerRadius(barHeight.value / 3)
 
     Canvas(modifier = modifier) {
         val canvasWidth = size.width
         val canvasHeight = size.height
         val mainBarHeightPx = barHeight.toPx()
-        val barTopY = (canvasHeight - mainBarHeightPx - labelSpacing.toPx() * 2) / 2f
+        val barTopY = (canvasHeight - mainBarHeightPx - labelSpacing.toPx() * 2 - tickHeight.toPx()) / 2f
+        val totalDurationMillis = viewEndTimeMillis - viewStartTimeMillis
 
         if (totalDurationMillis <= 0) return@Canvas
 
         // Draw background
-        drawRect(
+        drawRoundRect(
             color = barBackgroundColor,
             topLeft = Offset(0f, barTopY),
-            size = Size(canvasWidth, mainBarHeightPx)
+            size = Size(canvasWidth, mainBarHeightPx),
+            cornerRadius = cornerRadius
         )
 
         // Draw segments
-        var currentX = 0f
         segments.forEach { segment ->
-            val segmentWidth = (segment.durationMillis.toFloat() / totalDurationMillis.toFloat()) * canvasWidth
+            val startOffset = max(0L, segment.startTimeMillis - viewStartTimeMillis)
+            val endOffset = segment.endTimeMillis - viewStartTimeMillis
+            val segmentWidth = ((endOffset - startOffset).toFloat() / totalDurationMillis.toFloat()) * canvasWidth
+            val currentX = (startOffset.toFloat() / totalDurationMillis.toFloat()) * canvasWidth
+
             if (segmentWidth > 0f) {
                 drawRect(
                     color = segment.state.toColor(),
                     topLeft = Offset(currentX, barTopY),
                     size = Size(segmentWidth, mainBarHeightPx)
                 )
-                currentX += segmentWidth
             }
         }
 
-        // Draw outline
-        drawRect(
+        // Clip drawing to the rounded rectangle shape for the outline
+        drawRoundRect(
             color = barOutlineColor,
             topLeft = Offset(0f, barTopY),
             size = Size(canvasWidth, mainBarHeightPx),
-            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5.dp.toPx())
+            cornerRadius = cornerRadius,
+            style = Stroke(width = 1.dp.toPx())
         )
 
-        // Draw Time Labels
-        val timelineStartTime = segments.firstOrNull()?.startTimeMillis ?: (System.currentTimeMillis() - totalDurationMillis)
-        val numLabels = if (totalDurationMillis <= TimeUnit.DAYS.toMillis(1)) 6 else 8
-        val timeIncrement = totalDurationMillis / (numLabels - 1)
+        val startDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(viewStartTimeMillis), ZoneId.systemDefault())
 
-        for (i in 0 until numLabels) {
-            val labelTimeMillis = timelineStartTime + (i * timeIncrement)
-            val labelText = if (totalDurationMillis <= TimeUnit.DAYS.toMillis(1)) {
-                val cal = Calendar.getInstance().apply { timeInMillis = labelTimeMillis }
-                if (i == numLabels - 1 && totalDurationMillis == TimeUnit.DAYS.toMillis(1)) "Now"
-                else hourLabelFormatter.format(cal.time).lowercase()
-            } else {
-                val cal = Calendar.getInstance().apply { timeInMillis = labelTimeMillis }
-                dayLabelFormatter.format(cal.time)
+        val timeFormatter: SimpleDateFormat
+        val timeIncrement: Long
+        val roundedStartDateTime: LocalDateTime
+        when (selectedRange) {
+            TimelineRange.TWELVE_HOURS -> {
+                timeFormatter = hourLabelFormatter
+                timeIncrement = TimeUnit.HOURS.toMillis(2)
+                roundedStartDateTime = startDateTime.truncatedTo(ChronoUnit.HOURS)
             }
 
-            val textLayoutResult = textMeasurer.measure(text = labelText, style = labelTextStyle)
-            val labelX = (labelTimeMillis - timelineStartTime).toFloat() / totalDurationMillis.toFloat() * canvasWidth
-            val textX = (labelX - textLayoutResult.size.width / 2f).coerceIn(0f, canvasWidth - textLayoutResult.size.width)
+            TimelineRange.DAY -> {
+                timeFormatter = hourLabelFormatter
+                timeIncrement = TimeUnit.HOURS.toMillis(4)
+                roundedStartDateTime = startDateTime.truncatedTo(ChronoUnit.HOURS)
+            }
 
-            drawText(
-                textLayoutResult = textLayoutResult,
-                topLeft = Offset(textX, barTopY + mainBarHeightPx + labelSpacing.toPx())
-            )
+            TimelineRange.WEEK -> {
+                timeFormatter = dayLabelFormatter
+                timeIncrement = TimeUnit.DAYS.toMillis(1)
+                roundedStartDateTime = startDateTime.truncatedTo(ChronoUnit.DAYS)
+            }
+        }
+
+        val roundedStartTimeMillis = roundedStartDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+        var labelTimeMillis = roundedStartTimeMillis
+        val drawnLabels = mutableListOf<Pair<TextLayoutResult, Float>>()
+
+        while (labelTimeMillis <= viewEndTimeMillis) {
+            if (labelTimeMillis >= viewStartTimeMillis) {
+                val cal = Calendar.getInstance().apply { timeInMillis = labelTimeMillis }
+                val labelText = timeFormatter.format(cal.time).lowercase()
+                val textLayoutResult = textMeasurer.measure(text = labelText, style = labelTextStyle)
+
+                val labelX = (labelTimeMillis - viewStartTimeMillis).toFloat() / totalDurationMillis * canvasWidth
+                val textX = (labelX - textLayoutResult.size.width / 2f).coerceIn(0f, canvasWidth - textLayoutResult.size.width)
+
+                val canDraw = drawnLabels.none { (prevLayout, prevX) ->
+                    textX < prevX + prevLayout.size.width && textX + textLayoutResult.size.width > prevX
+                }
+
+                if (canDraw) {
+                    drawnLabels.add(textLayoutResult to textX)
+
+                    // Draw tick mark
+                    drawLine(
+                        color = tickColor,
+                        start = Offset(labelX, barTopY + mainBarHeightPx),
+                        end = Offset(labelX, barTopY + mainBarHeightPx + tickHeight.toPx()),
+                        strokeWidth = 1.dp.toPx()
+                    )
+
+                    // Draw text
+                    drawText(
+                        textLayoutResult = textLayoutResult,
+                        topLeft = Offset(textX, barTopY + mainBarHeightPx + labelSpacing.toPx() + tickHeight.toPx())
+                    )
+                }
+            }
+            labelTimeMillis += timeIncrement
         }
     }
 }
+
 
 fun UserPresenceState.toColor(): Color {
     return when (this) {
