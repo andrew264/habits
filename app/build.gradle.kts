@@ -14,7 +14,7 @@ android {
 
     defaultConfig {
         applicationId = "com.andrew264.habits"
-        minSdk = 35
+        minSdk = 31
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
