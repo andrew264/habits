@@ -2,13 +2,11 @@ package com.andrew264.habits.ui.schedule
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -20,15 +18,14 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun ScheduleEditorScreen(
     viewModel: ScheduleViewModel = hiltViewModel(),
+    snackbarHostState: SnackbarHostState,
     onNavigateUp: () -> Unit
 ) {
     val schedule by viewModel.schedule.collectAsState()
-    val isNewSchedule = viewModel.isNewSchedule
     val viewMode by viewModel.viewMode.collectAsState()
     val perDayRepresentation by viewModel.perDayRepresentation.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(key1 = viewModel.uiEvents) {
+    LaunchedEffect(key1 = true) {
         viewModel.uiEvents.collectLatest { event ->
             when (event) {
                 is ScheduleUiEvent.ShowSnackbar -> {
@@ -38,160 +35,92 @@ fun ScheduleEditorScreen(
                     )
                 }
 
-                is ScheduleUiEvent.NavigateUp -> onNavigateUp()
+                is ScheduleUiEvent.NavigateUp -> {
+                    onNavigateUp()
+                }
             }
         }
     }
 
-    Scaffold(
-        snackbarHost = {
-            SnackbarHost(
-                hostState = snackbarHostState,
-                snackbar = { data ->
-                    Snackbar(
-                        snackbarData = data,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                }
-            )
-        },
-        floatingActionButton = {
-            if (viewMode == ScheduleViewMode.GROUPED) {
-                SmallExtendedFloatingActionButton(
-                    onClick = { viewModel.addGroup() },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Create New Group"
-                        )
-                    },
-                    text = { Text(text = "New Group") }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        schedule?.let {
+            // Main content area
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Schedule Name Editor
+                OutlinedTextField(
+                    value = it.name,
+                    onValueChange = { newName -> viewModel.updateScheduleName(newName) },
+                    label = { Text("Schedule Name") },
+                    placeholder = { Text("Enter schedule name") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
                 )
+
+                // View Mode Toggles
+                val options = ScheduleViewMode.entries
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    options.forEachIndexed { index, mode ->
+                        ToggleButton(
+                            checked = viewMode == mode,
+                            onCheckedChange = { viewModel.setViewMode(mode) },
+                            shapes = when (index) {
+                                0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                                options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                            },
+                        ) {
+                            Text(
+                                text = when (mode) {
+                                    ScheduleViewMode.GROUPED -> "📋 Grouped"
+                                    ScheduleViewMode.PER_DAY -> "📅 Per Day"
+                                },
+                                fontWeight = if (mode == viewMode) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    }
+                }
             }
-        },
-        contentWindowInsets = WindowInsets(0.dp),
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = if (isNewSchedule) "Create New Schedule" else "Update: ${schedule?.name.orEmpty()}",
-                        fontWeight = FontWeight.Medium
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onNavigateUp,
-                        shapes = IconButtonDefaults.shapes()
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                },
-                actions = {
-                    FilledTonalButton(
-                        onClick = { viewModel.saveSchedule() },
-                        shapes = ButtonDefaults.shapes()
-                    ) {
-                        Icon(
-                            Icons.Default.Done,
-                            contentDescription = "Save Schedule",
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            "Save",
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                },
-                windowInsets = WindowInsets(0.dp)
-            )
-        }
-    ) { paddingValues ->
-        Column(
+        } ?: LoadingState()
+
+
+        // Content with smooth transitions
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
         ) {
-            schedule?.let {
-                // Main content area
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    // Schedule Name Editor
-                    OutlinedTextField(
-                        value = it.name,
-                        onValueChange = { newName -> viewModel.updateScheduleName(newName) },
-                        label = { Text("Schedule Name") },
-                        placeholder = { Text("Enter schedule name") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-
-                    // View Mode Toggles
-                    val options = ScheduleViewMode.entries
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
-                    ) {
-                        options.forEachIndexed { index, mode ->
-                            ToggleButton(
-                                checked = viewMode == mode,
-                                onCheckedChange = { viewModel.setViewMode(mode) },
-                                shapes = when (index) {
-                                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                                    options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                                },
-                            ) {
-                                Text(
-                                    text = when (mode) {
-                                        ScheduleViewMode.GROUPED -> "📋 Grouped"
-                                        ScheduleViewMode.PER_DAY -> "📅 Per Day"
-                                    },
-                                    fontWeight = if (mode == viewMode) FontWeight.Bold else FontWeight.Normal
-                                )
-                            }
-                        }
-                    }
-                }
-            } ?: LoadingState()
-
-
-            // Content with smooth transitions
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-            ) {
-                Crossfade(
-                    targetState = viewMode,
-                    label = "ViewModeCrossfade"
-                ) { mode ->
-                    when (mode) {
-                        ScheduleViewMode.GROUPED -> {
-                            schedule?.let {
-                                GroupedView(
-                                    schedule = it,
-                                    viewModel = viewModel,
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            }
-                        }
-
-                        ScheduleViewMode.PER_DAY -> {
-                            PerDayView(
-                                perDayRepresentation = perDayRepresentation,
+            Crossfade(
+                targetState = viewMode,
+                label = "ViewModeCrossfade"
+            ) { mode ->
+                when (mode) {
+                    ScheduleViewMode.GROUPED -> {
+                        schedule?.let {
+                            GroupedView(
+                                schedule = it,
                                 viewModel = viewModel,
                                 modifier = Modifier.fillMaxSize()
                             )
                         }
+                    }
+
+                    ScheduleViewMode.PER_DAY -> {
+                        PerDayView(
+                            perDayRepresentation = perDayRepresentation,
+                            viewModel = viewModel,
+                            modifier = Modifier.fillMaxSize()
+                        )
                     }
                 }
             }

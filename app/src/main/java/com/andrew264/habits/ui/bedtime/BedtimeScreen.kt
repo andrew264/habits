@@ -28,8 +28,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.model.UserPresenceState
+import com.andrew264.habits.model.schedule.Schedule
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDateTime
@@ -52,126 +52,120 @@ fun BedtimeScreen(
     val selectedSchedule by viewModel.selectedSchedule.collectAsState()
     val scheduleInfo by viewModel.scheduleInfo.collectAsState()
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        contentWindowInsets = WindowInsets(0.dp)
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Presence History Section
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
+            )
         ) {
-            // Presence History Section
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
-                )
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Text(
+                    "Presence History",
+                    style = MaterialTheme.typography.headlineSmall,
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Timeline Range Buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+                    ) {
+                        val ranges = TimelineRange.entries
+                        ranges.forEachIndexed { index, range ->
+                            ElevatedToggleButton(
+                                checked = selectedTimelineRange == range,
+                                onCheckedChange = { viewModel.setTimelineRange(range) },
+                                shapes = when (index) {
+                                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                                    ranges.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                                },
+                            ) {
+                                Text(range.label)
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Timeline Visualization
+                if (timelineSegments.isEmpty()) {
                     Text(
-                        "Presence History",
-                        style = MaterialTheme.typography.headlineSmall,
-                        textAlign = TextAlign.Center,
-                        fontWeight = FontWeight.Bold
+                        text = if (selectedTimelineRange == TimelineRange.DAY)
+                            "Loading today's data or no data available yet..."
+                        else "Loading weekly data or no data available yet...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                } else {
+                    UserPresenceTimeline(
+                        segments = timelineSegments,
+                        selectedRange = selectedTimelineRange,
+                        viewStartTimeMillis = viewModel.viewStartTimeMillis.collectAsState().value,
+                        viewEndTimeMillis = viewModel.viewEndTimeMillis.collectAsState().value,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(60.dp)
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Timeline Range Buttons
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
-                        ) {
-                            val ranges = TimelineRange.entries
-                            ranges.forEachIndexed { index, range ->
-                                ElevatedToggleButton(
-                                    checked = selectedTimelineRange == range,
-                                    onCheckedChange = { viewModel.setTimelineRange(range) },
-                                    shapes = when (index) {
-                                        0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                                        ranges.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                                        else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                                    },
-                                ) {
-                                    Text(range.label)
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Timeline Visualization
-                    if (timelineSegments.isEmpty()) {
-                        Text(
-                            text = if (selectedTimelineRange == TimelineRange.DAY)
-                                "Loading today's data or no data available yet..."
-                            else "Loading weekly data or no data available yet...",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                    } else {
-                        UserPresenceTimeline(
-                            segments = timelineSegments,
-                            selectedRange = selectedTimelineRange,
-                            viewStartTimeMillis = viewModel.viewStartTimeMillis.collectAsState().value,
-                            viewEndTimeMillis = viewModel.viewEndTimeMillis.collectAsState().value,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(60.dp)
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // Legend
-                        PresenceLegend()
-                    }
+                    // Legend
+                    PresenceLegend()
                 }
             }
+        }
 
-            HorizontalDivider()
+        HorizontalDivider()
 
-            // Sleep Schedule Configuration Section
-            Text(
-                text = "Sleep Schedule",
-                style = MaterialTheme.typography.headlineSmall,
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "Select a schedule to define your typical sleep period. This is used by the Sleep API and other heuristics to determine your presence state.",
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+        // Sleep Schedule Configuration Section
+        Text(
+            text = "Sleep Schedule",
+            style = MaterialTheme.typography.headlineSmall,
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = "Select a schedule to define your typical sleep period. This is used by the Sleep API and other heuristics to determine your presence state.",
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
 
-            ScheduleSelector(
-                schedules = allSchedules,
-                selectedSchedule = selectedSchedule,
-                onScheduleSelected = { viewModel.selectSchedule(it.id) },
+        ScheduleSelector(
+            schedules = allSchedules,
+            selectedSchedule = selectedSchedule,
+            onScheduleSelected = { viewModel.selectSchedule(it.id) },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        scheduleInfo?.let { info ->
+            ScheduleInfoCard(
+                scheduleInfo = info,
                 modifier = Modifier.fillMaxWidth()
             )
-
-            scheduleInfo?.let { info ->
-                ScheduleInfoCard(
-                    scheduleInfo = info,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
         }
     }
 }

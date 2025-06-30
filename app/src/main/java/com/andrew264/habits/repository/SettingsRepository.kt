@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.andrew264.habits.data.preferences.DataStoreKeys
+import com.andrew264.habits.model.schedule.DefaultSchedules
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -32,7 +33,25 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
             val isServiceActive = preferences[DataStoreKeys.IS_SERVICE_ACTIVE] == true
             val selectedScheduleId = preferences[DataStoreKeys.SELECTED_SCHEDULE_ID]
 
-            PersistentSettings(isServiceActive, selectedScheduleId)
+            // Water Tracking Settings
+            val isWaterTrackingEnabled = preferences[DataStoreKeys.WATER_TRACKING_ENABLED] == true
+            val waterDailyTargetMl = preferences[DataStoreKeys.WATER_DAILY_TARGET_ML] ?: 2500
+            val isWaterReminderEnabled = preferences[DataStoreKeys.WATER_REMINDER_ENABLED] == true
+            val waterReminderIntervalMinutes = preferences[DataStoreKeys.WATER_REMINDER_INTERVAL_MINUTES] ?: 60
+            val waterReminderSnoozeMinutes = preferences[DataStoreKeys.WATER_REMINDER_SNOOZE_MINUTES] ?: 15
+            val waterReminderScheduleId = preferences[DataStoreKeys.WATER_REMINDER_SCHEDULE_ID] ?: DefaultSchedules.DEFAULT_SLEEP_SCHEDULE_ID
+
+
+            PersistentSettings(
+                isServiceActive = isServiceActive,
+                selectedScheduleId = selectedScheduleId,
+                isWaterTrackingEnabled = isWaterTrackingEnabled,
+                waterDailyTargetMl = waterDailyTargetMl,
+                isWaterReminderEnabled = isWaterReminderEnabled,
+                waterReminderIntervalMinutes = waterReminderIntervalMinutes,
+                waterReminderSnoozeMinutes = waterReminderSnoozeMinutes,
+                waterReminderScheduleId = waterReminderScheduleId
+            )
         }
 
     suspend fun updateServiceActiveState(isActive: Boolean) {
@@ -48,6 +67,44 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
             } else {
                 settings.remove(DataStoreKeys.SELECTED_SCHEDULE_ID)
             }
+        }
+    }
+
+    // --- Water Tracking Settings Updaters ---
+
+    suspend fun updateWaterTrackingEnabled(isEnabled: Boolean) {
+        context.dataStore.edit { settings ->
+            settings[DataStoreKeys.WATER_TRACKING_ENABLED] = isEnabled
+        }
+    }
+
+    suspend fun updateWaterDailyTarget(targetMl: Int) {
+        context.dataStore.edit { settings ->
+            settings[DataStoreKeys.WATER_DAILY_TARGET_ML] = targetMl
+        }
+    }
+
+    suspend fun updateWaterReminderEnabled(isEnabled: Boolean) {
+        context.dataStore.edit { settings ->
+            settings[DataStoreKeys.WATER_REMINDER_ENABLED] = isEnabled
+        }
+    }
+
+    suspend fun updateWaterReminderInterval(minutes: Int) {
+        context.dataStore.edit { settings ->
+            settings[DataStoreKeys.WATER_REMINDER_INTERVAL_MINUTES] = minutes
+        }
+    }
+
+    suspend fun updateWaterReminderSnoozeTime(minutes: Int) {
+        context.dataStore.edit { settings ->
+            settings[DataStoreKeys.WATER_REMINDER_SNOOZE_MINUTES] = minutes
+        }
+    }
+
+    suspend fun updateWaterReminderSchedule(scheduleId: String) {
+        context.dataStore.edit { settings ->
+            settings[DataStoreKeys.WATER_REMINDER_SCHEDULE_ID] = scheduleId
         }
     }
 }

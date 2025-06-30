@@ -1,14 +1,8 @@
 package com.andrew264.habits.ui.navigation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Alarm
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.outlined.Alarm
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class Screen(
@@ -22,6 +16,13 @@ sealed class Screen(
         title = "Home",
         selectedIcon = Icons.Filled.Home,
         unselectedIcon = Icons.Outlined.Home
+    )
+
+    object Water : Screen(
+        route = "water_screen",
+        title = "Water",
+        selectedIcon = Icons.Filled.WaterDrop,
+        unselectedIcon = Icons.Outlined.WaterDrop
     )
 
     object Schedules : Screen(
@@ -48,6 +49,7 @@ sealed class Screen(
 
 val railItems = listOf(
     Screen.Home,
+    Screen.Water,
     Screen.Schedules,
     Screen.PermissionSettings,
     Screen.Bedtime

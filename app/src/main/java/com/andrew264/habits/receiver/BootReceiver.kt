@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import com.andrew264.habits.domain.manager.WaterReminderManager
 import com.andrew264.habits.repository.SettingsRepository
 import com.andrew264.habits.service.UserPresenceService
 import dagger.hilt.android.AndroidEntryPoint
@@ -23,6 +24,9 @@ class BootReceiver : BroadcastReceiver() {
     @Inject
     lateinit var settingsRepository: SettingsRepository
 
+    @Inject
+    lateinit var waterReminderManager: WaterReminderManager
+
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
 
@@ -39,6 +43,8 @@ class BootReceiver : BroadcastReceiver() {
             scope.launch {
                 try {
                     val settings = settingsRepository.settingsFlow.first()
+
+                    // Restart presence service if it was active
                     if (settings.isServiceActive) {
                         Log.d(TAG, "Service was persisted as active. Attempting to start UserPresenceService.")
                         val serviceIntent = Intent(context, UserPresenceService::class.java).apply {
@@ -53,8 +59,15 @@ class BootReceiver : BroadcastReceiver() {
                     } else {
                         Log.d(TAG, "Service was persisted as inactive. Not starting on boot.")
                     }
+
+                    // Reschedule water reminders if they were active
+                    if (settings.isWaterTrackingEnabled && settings.isWaterReminderEnabled) {
+                        Log.d(TAG, "Water reminders were active. Rescheduling first reminder.")
+                        waterReminderManager.scheduleNextReminder(settings.waterReminderIntervalMinutes.toLong())
+                    }
+
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error reading settings in BootReceiver: ${e.message}", e)
+                    Log.e(TAG, "Error processing boot tasks in BootReceiver: ${e.message}", e)
                 } finally {
                     pendingResult.finish()
                 }

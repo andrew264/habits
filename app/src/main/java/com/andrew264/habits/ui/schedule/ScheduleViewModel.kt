@@ -3,11 +3,11 @@ package com.andrew264.habits.ui.schedule
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.andrew264.habits.repository.ScheduleRepository
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.model.schedule.ScheduleGroup
 import com.andrew264.habits.model.schedule.TimeRange
+import com.andrew264.habits.repository.ScheduleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch

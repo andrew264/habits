@@ -2,8 +2,8 @@ package com.andrew264.habits.ui.schedule
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.andrew264.habits.repository.ScheduleRepository
 import com.andrew264.habits.model.schedule.Schedule
+import com.andrew264.habits.repository.ScheduleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted

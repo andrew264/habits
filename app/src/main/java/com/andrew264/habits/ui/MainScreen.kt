@@ -15,6 +15,7 @@ import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -41,6 +42,7 @@ fun ContainerScreen(
     val navController = rememberNavController()
     val wideNavRailState = rememberWideNavigationRailState()
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val isCompact =
         calculateWindowSizeClass(activity = LocalActivity.current as Activity).widthSizeClass == WindowWidthSizeClass.Compact
@@ -55,39 +57,26 @@ fun ContainerScreen(
 
         Scaffold(
             topBar = {
-                if (isCompact) {
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-                    val currentRoute = navBackStackEntry?.destination?.route
-                    val isScheduleEditorScreen = currentRoute?.startsWith("schedule_editor") == true
-
-                    if (!isScheduleEditorScreen) {
-                        val currentScreen = railItems.find { it.route == currentRoute }
-
-                        TopAppBar(
-                            title = { Text(currentScreen?.title ?: "Habits") },
-                            navigationIcon = {
-                                IconButton(
-                                    onClick = { scope.launch { wideNavRailState.expand() } },
-                                    shapes = IconButtonDefaults.shapes()
-                                ) {
-                                    Icon(
-                                        Icons.Default.Menu,
-                                        contentDescription = "Open Navigation"
-                                    )
-                                }
-                            }
-                        )
-                    }
-                }
-            }
-        ) { innerPadding ->
-            Box(Modifier.padding(innerPadding)) {
-                ContainerGraph(
+                MainTopAppBar(
                     navController = navController,
-                    onRequestPermissions = onRequestPermissions,
-                    onOpenAppSettings = onOpenAppSettings
+                    railState = wideNavRailState,
+                    isCompact = isCompact,
+                    scope = scope
                 )
-            }
+            },
+            floatingActionButton = {
+                MainFab(navController = navController)
+            },
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            contentWindowInsets = WindowInsets(0.dp)
+        ) { innerPadding ->
+            ContainerGraph(
+                modifier = Modifier.padding(innerPadding),
+                navController = navController,
+                snackbarHostState = snackbarHostState,
+                onRequestPermissions = onRequestPermissions,
+                onOpenAppSettings = onOpenAppSettings
+            )
         }
     }
 }

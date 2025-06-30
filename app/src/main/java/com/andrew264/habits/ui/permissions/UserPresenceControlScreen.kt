@@ -12,8 +12,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.andrew264.habits.service.UserPresenceService
 import com.andrew264.habits.model.UserPresenceState
+import com.andrew264.habits.service.UserPresenceService
 import com.andrew264.habits.ui.theme.HabitsTheme
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

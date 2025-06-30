@@ -2,8 +2,8 @@ package com.andrew264.habits.ui.navigation
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -15,21 +15,26 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.andrew264.habits.ui.bedtime.BedtimeScreen
+import com.andrew264.habits.ui.permissions.UserPresenceControlScreen
 import com.andrew264.habits.ui.schedule.ScheduleEditorScreen
 import com.andrew264.habits.ui.schedule.SchedulesScreen
-import com.andrew264.habits.ui.permissions.UserPresenceControlScreen
+import com.andrew264.habits.ui.water.home.WaterHomeScreen
+import com.andrew264.habits.ui.water.settings.WaterSettingsScreen
+import com.andrew264.habits.ui.water.stats.WaterStatsScreen
 
 
 @Composable
 fun ContainerGraph(
+    modifier: Modifier = Modifier,
     navController: NavHostController,
+    snackbarHostState: SnackbarHostState,
     onRequestPermissions: () -> Unit,
     onOpenAppSettings: () -> Unit
 ) {
     NavHost(
         navController = navController,
         startDestination = Screen.Home.route,
-        modifier = Modifier.fillMaxHeight()
+        modifier = modifier
     ) {
         composable(route = Screen.Home.route) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -42,8 +47,24 @@ fun ContainerGraph(
                 )
             }
         }
+
+        composable(route = Screen.Water.route) {
+            WaterHomeScreen(navController = navController)
+        }
+
+        composable(route = "water_settings") {
+            WaterSettingsScreen()
+        }
+
+        composable(route = "water_stats") {
+            WaterStatsScreen()
+        }
+
         composable(route = Screen.Schedules.route) {
-            SchedulesScreen(navController = navController)
+            SchedulesScreen(
+                navController = navController,
+                snackbarHostState = snackbarHostState
+            )
         }
         composable(route = Screen.PermissionSettings.route) {
             UserPresenceControlScreen(
@@ -64,7 +85,10 @@ fun ContainerGraph(
                 defaultValue = null
             })
         ) {
-            ScheduleEditorScreen(onNavigateUp = { navController.navigateUp() })
+            ScheduleEditorScreen(
+                snackbarHostState = snackbarHostState,
+                onNavigateUp = { navController.navigateUp() }
+            )
         }
 
         composable(route = "TEST") {

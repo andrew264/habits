@@ -12,6 +12,13 @@
     <!-- For notifications (Android 13+ / API 33+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
+
+    <!-- For scheduling exact alarms (Android 12+ / API 31+) -->
+    <!-- For full compliance on Android 14+, you may need to declare a USE_EXACT_ALARM permission -->
+    <!-- or use a non-exact alarm type if precision is not critical. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+
     <!-- Optional: To start service on boot -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 

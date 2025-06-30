@@ -9,8 +9,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.lifecycleScope
-import com.andrew264.habits.repository.SettingsRepository
 import com.andrew264.habits.domain.controller.UserPresenceController
+import com.andrew264.habits.repository.SettingsRepository
 import com.andrew264.habits.ui.ContainerScreen
 import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.util.PermissionHandler

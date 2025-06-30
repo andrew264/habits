@@ -3,6 +3,7 @@ package com.andrew264.habits.di
 import android.app.Application
 import android.content.Context
 import com.andrew264.habits.domain.controller.UserPresenceController
+import com.andrew264.habits.domain.manager.WaterReminderManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,4 +25,9 @@ object AppModule {
         return UserPresenceController(context)
     }
 
+    @Provides
+    @Singleton
+    fun provideWaterReminderManager(context: Context): WaterReminderManager {
+        return WaterReminderManager(context)
+    }
 }

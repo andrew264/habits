@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "628c838a213d06ee2790d91c07a54fce",
+    "identityHash": "8f7aa4910d16f94f4aab31b22f570da0",
     "entities": [
       {
         "tableName": "user_presence_history",
@@ -225,11 +225,41 @@
             ]
           }
         ]
+      },
+      {
+        "tableName": "water_intake_history",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `timestamp` INTEGER NOT NULL, `amount_ml` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "amountMl",
+            "columnName": "amount_ml",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '628c838a213d06ee2790d91c07a54fce')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8f7aa4910d16f94f4aab31b22f570da0')"
     ]
   }
 }

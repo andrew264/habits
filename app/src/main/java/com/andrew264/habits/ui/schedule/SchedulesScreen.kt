@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Schedule
@@ -35,12 +34,12 @@ import java.util.Locale
 @Composable
 fun SchedulesScreen(
     navController: NavController,
+    snackbarHostState: SnackbarHostState,
     viewModel: SchedulesViewModel = hiltViewModel()
 ) {
     val schedules by viewModel.schedules.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(key1 = viewModel.uiEvents) {
+    LaunchedEffect(key1 = viewModel.uiEvents, snackbarHostState) {
         viewModel.uiEvents.collectLatest { event ->
             when (event) {
                 is SchedulesUiEvent.ShowSnackbar -> {
@@ -57,37 +56,24 @@ fun SchedulesScreen(
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        floatingActionButton = {
-            SmallExtendedFloatingActionButton(
-                onClick = { navController.navigate("schedule_editor") },
-                icon = { Icon(Icons.Default.Add, contentDescription = "New Schedule") },
-                text = { Text("New Schedule") }
-            )
-        },
-        contentWindowInsets = WindowInsets(0.dp)
-    ) { paddingValues ->
-        if (schedules.isEmpty()) {
-            EmptyState(Modifier.padding(paddingValues))
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(top = 16.dp, bottom = 88.dp)
-            ) {
-                items(schedules, key = { it.id }) { schedule ->
-                    ScheduleListItem(
-                        schedule = schedule,
-                        onDelete = { viewModel.onDeleteSchedule(schedule) },
-                        onEdit = {
-                            navController.navigate("schedule_editor?scheduleId=${schedule.id}")
-                        }
-                    )
-                }
+    if (schedules.isEmpty()) {
+        EmptyState()
+    } else {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(top = 16.dp, bottom = 88.dp)
+        ) {
+            items(schedules, key = { it.id }) { schedule ->
+                ScheduleListItem(
+                    schedule = schedule,
+                    onDelete = { viewModel.onDeleteSchedule(schedule) },
+                    onEdit = {
+                        navController.navigate("schedule_editor?scheduleId=${schedule.id}")
+                    }
+                )
             }
         }
     }
