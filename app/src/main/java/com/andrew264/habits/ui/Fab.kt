@@ -15,8 +15,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.andrew264.habits.ui.navigation.Screen
-import com.andrew264.habits.ui.schedule.ScheduleViewMode
-import com.andrew264.habits.ui.schedule.ScheduleViewModel
+import com.andrew264.habits.ui.schedule.create.ScheduleViewMode
+import com.andrew264.habits.ui.schedule.create.ScheduleViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

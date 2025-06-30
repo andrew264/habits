@@ -16,8 +16,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.andrew264.habits.ui.bedtime.BedtimeScreen
 import com.andrew264.habits.ui.permissions.UserPresenceControlScreen
-import com.andrew264.habits.ui.schedule.ScheduleEditorScreen
-import com.andrew264.habits.ui.schedule.SchedulesScreen
+import com.andrew264.habits.ui.schedule.create.ScheduleEditorScreen
+import com.andrew264.habits.ui.schedule.list.SchedulesScreen
 import com.andrew264.habits.ui.water.home.WaterHomeScreen
 import com.andrew264.habits.ui.water.settings.WaterSettingsScreen
 import com.andrew264.habits.ui.water.stats.WaterStatsScreen

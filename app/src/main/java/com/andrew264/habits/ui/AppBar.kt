@@ -23,7 +23,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.andrew264.habits.ui.navigation.Screen
 import com.andrew264.habits.ui.navigation.railItems
-import com.andrew264.habits.ui.schedule.ScheduleViewModel
+import com.andrew264.habits.ui.schedule.create.ScheduleViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 

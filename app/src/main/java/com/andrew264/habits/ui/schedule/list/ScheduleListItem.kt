@@ -1,4 +1,4 @@
-package com.andrew264.habits.ui.schedule
+package com.andrew264.habits.ui.schedule.list
 
 import android.os.Build
 import android.view.HapticFeedbackConstants
@@ -6,13 +6,10 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,71 +19,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import com.andrew264.habits.domain.analyzer.ScheduleAnalyzer
 import com.andrew264.habits.model.schedule.Schedule
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun SchedulesScreen(
-    navController: NavController,
-    snackbarHostState: SnackbarHostState,
-    viewModel: SchedulesViewModel = hiltViewModel()
-) {
-    val schedules by viewModel.schedules.collectAsState()
-    val view = LocalView.current
-
-    LaunchedEffect(key1 = viewModel.uiEvents, snackbarHostState) {
-        viewModel.uiEvents.collectLatest { event ->
-            when (event) {
-                is SchedulesUiEvent.ShowSnackbar -> {
-                    val result = snackbarHostState.showSnackbar(
-                        message = event.message,
-                        actionLabel = event.actionLabel,
-                        duration = SnackbarDuration.Short
-                    )
-                    if (result == SnackbarResult.ActionPerformed) {
-                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                        viewModel.onUndoDelete()
-                    }
-                }
-            }
-        }
-    }
-
-    if (schedules.isEmpty()) {
-        EmptyState()
-    } else {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(top = 16.dp, bottom = 88.dp)
-        ) {
-            items(schedules, key = { it.id }) { schedule ->
-                ScheduleListItem(
-                    schedule = schedule,
-                    onDelete = { viewModel.onDeleteSchedule(schedule) },
-                    onEdit = {
-                        navController.navigate("schedule_editor?scheduleId=${schedule.id}")
-                    }
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun ScheduleListItem(
+internal fun ScheduleListItem(
     schedule: Schedule,
     onDelete: () -> Unit,
     onEdit: () -> Unit
@@ -225,35 +167,6 @@ private fun ScheduleListItem(
                     Spacer(Modifier.width(16.dp))
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun EmptyState(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Schedule,
-                contentDescription = null,
-                modifier = Modifier.width(64.dp)
-            )
-            Text(
-                text = "No schedules yet",
-                style = MaterialTheme.typography.headlineSmall,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = "Tap the 'New Schedule' button to create one.",
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center
-            )
         }
     }
 }

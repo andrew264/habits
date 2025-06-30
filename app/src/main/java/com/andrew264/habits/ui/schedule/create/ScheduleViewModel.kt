@@ -1,4 +1,4 @@
-package com.andrew264.habits.ui.schedule
+package com.andrew264.habits.ui.schedule.create
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
