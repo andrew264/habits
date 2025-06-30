@@ -53,6 +53,9 @@ internal fun ScheduleListItem(
         when (dismissState.currentValue) {
             SwipeToDismissBoxValue.EndToStart -> {
                 view.performHapticFeedback(HapticFeedbackConstants.REJECT)
+                scope.launch {
+                    dismissState.reset()
+                }
                 onDelete()
             }
 
