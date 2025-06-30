@@ -5,7 +5,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -83,16 +82,13 @@ class MainActivity : ComponentActivity() {
                     userPresenceController.startService()
                 }
             }
-            Toast.makeText(this, "Activity Recognition permission granted.", Toast.LENGTH_SHORT)
-                .show()
         }
 
         if (!notificationsGranted) {
-            Toast.makeText(
-                this,
-                "Notification permission denied. Service notifications might not show or service may not run reliably.",
-                Toast.LENGTH_LONG
-            ).show()
+            Log.d(
+                "MainActivity",
+                "Notification permission denied. Service notifications might not show or service may not run reliably."
+            )
         }
         initialPermissionCheckDone = true
     }
