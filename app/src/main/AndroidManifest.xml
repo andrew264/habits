@@ -63,6 +63,8 @@
             <!-- No intent filter needed here if PendingIntent is explicit -->
         </receiver>
 
+        <receiver android:name=".receiver.WaterReminderReceiver" android:exported="false" />
+
         <!-- Boot Receiver -->
         <receiver android:name=".receiver.BootReceiver" android:exported="true">
             <intent-filter>

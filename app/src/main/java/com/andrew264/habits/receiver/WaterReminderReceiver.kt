@@ -93,15 +93,9 @@ class WaterReminderReceiver : BroadcastReceiver() {
         val schedule = settings.waterReminderScheduleId?.let { scheduleRepository.getSchedule(it).first() }
         val analyzer = schedule?.let { ScheduleAnalyzer(it.groups) }
         if (analyzer?.isCurrentTimeInSchedule() == false) {
-            Log.d(TAG, "Aborting reminder: Current time is outside of the selected reminder schedule.")
+            Log.d(TAG, "Aborting reminder: Current time is outside the selected schedule.")
             waterReminderManager.scheduleNextReminder(settings.waterReminderIntervalMinutes.toLong())
             return
-        }
-
-        val todaysIntake = waterRepository.getTodaysIntakeFlow().first().sumOf { it.amountMl }
-        if (todaysIntake >= settings.waterDailyTargetMl) {
-            Log.d(TAG, "Aborting reminder: Daily target of ${settings.waterDailyTargetMl}ml has been met.")
-            return // Don't reschedule today
         }
 
         // --- Show Notification ---
