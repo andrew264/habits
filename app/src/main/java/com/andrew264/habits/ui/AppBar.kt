@@ -1,5 +1,6 @@
 package com.andrew264.habits.ui
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -14,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -35,6 +37,7 @@ fun MainTopAppBar(
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    val view = LocalView.current
 
     // Hide TopAppBar only if route is invalid
     if (currentRoute == null) {
@@ -52,14 +55,20 @@ fun MainTopAppBar(
 
     val navigationIcon: @Composable () -> Unit = if (!isTopLevelScreen) {
         {
-            IconButton(onClick = { navController.navigateUp() }) {
+            IconButton(onClick = {
+                navController.navigateUp()
+                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            }) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
             }
         }
     } else if (isCompact) {
         {
             IconButton(
-                onClick = { scope.launch { railState.expand() } },
+                onClick = {
+                    scope.launch { railState.expand() }
+                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                },
                 shapes = IconButtonDefaults.shapes()
             ) {
                 Icon(Icons.Default.Menu, contentDescription = "Open Navigation")
@@ -85,7 +94,10 @@ fun MainTopAppBar(
             navigationIcon = navigationIcon,
             actions = {
                 FilledTonalButton(
-                    onClick = { viewModel.saveSchedule() },
+                    onClick = {
+                        viewModel.saveSchedule()
+                        view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                    },
                     shapes = ButtonDefaults.shapes()
                 ) {
                     Icon(
@@ -105,10 +117,16 @@ fun MainTopAppBar(
             navigationIcon = navigationIcon,
             actions = {
                 if (currentRoute == Screen.Water.route) {
-                    IconButton(onClick = { navController.navigate("water_stats") }) {
+                    IconButton(onClick = {
+                        navController.navigate("water_stats")
+                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                    }) {
                         Icon(Icons.Default.BarChart, contentDescription = "Hydration Statistics")
                     }
-                    IconButton(onClick = { navController.navigate("water_settings") }) {
+                    IconButton(onClick = {
+                        navController.navigate("water_settings")
+                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                    }) {
                         Icon(Icons.Default.Settings, contentDescription = "Water Settings")
                     }
                 }

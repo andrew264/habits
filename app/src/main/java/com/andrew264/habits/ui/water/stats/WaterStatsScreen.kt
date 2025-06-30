@@ -1,5 +1,6 @@
 package com.andrew264.habits.ui.water.stats
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -28,6 +30,7 @@ fun WaterStatsScreen(
     viewModel: WaterStatsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val view = LocalView.current
 
     Column(
         modifier = Modifier
@@ -45,7 +48,10 @@ fun WaterStatsScreen(
                 ranges.forEachIndexed { index, range ->
                     ElevatedToggleButton(
                         checked = uiState.selectedRange == range,
-                        onCheckedChange = { viewModel.setTimeRange(range) },
+                        onCheckedChange = {
+                            viewModel.setTimeRange(range)
+                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                        },
                         shapes = when (index) {
                             0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
                             ranges.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()

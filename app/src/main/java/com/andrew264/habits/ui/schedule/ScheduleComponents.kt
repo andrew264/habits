@@ -1,6 +1,8 @@
 package com.andrew264.habits.ui.schedule
 
+import android.os.Build
 import android.text.format.DateFormat
+import android.view.HapticFeedbackConstants
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -32,6 +35,8 @@ fun DaySelector(
     selectedDays: Set<DayOfWeek>,
     onDayClick: (DayOfWeek) -> Unit,
 ) {
+    val view = LocalView.current
+
     Column(
         modifier = Modifier.padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -69,7 +74,16 @@ fun DaySelector(
                         .clip(CircleShape)
                         .background(color = backgroundColor)
                         .border(width = 1.dp, color = borderColor, shape = CircleShape)
-                        .clickable { onDayClick(day) }
+                        .clickable {
+                            onDayClick(day)
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                                val feedback =
+                                    if (!selected) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
+                                view.performHapticFeedback(feedback)
+                            } else {
+                                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                            }
+                        }
                 ) {
                     Text(
                         text = dayName,
@@ -96,6 +110,7 @@ fun TimeRangeRow(
     var showFromPicker by remember { mutableStateOf(false) }
     var showToPicker by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val view = LocalView.current
     val is24Hour = DateFormat.is24HourFormat(context)
 
     val fromTimeState = rememberTimePickerState(is24Hour = is24Hour)
@@ -136,7 +151,10 @@ fun TimeRangeRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     FilledTonalButton(
-                        onClick = { showFromPicker = true },
+                        onClick = {
+                            showFromPicker = true
+                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                        },
                         shapes = ButtonDefaults.shapes()
                     ) {
                         Text(
@@ -149,7 +167,10 @@ fun TimeRangeRow(
                     )
 
                     FilledTonalButton(
-                        onClick = { showToPicker = true },
+                        onClick = {
+                            showToPicker = true
+                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                        },
                         shapes = ButtonDefaults.shapes()
                     ) {
                         Text(
@@ -170,7 +191,10 @@ fun TimeRangeRow(
             }
 
             IconButton(
-                onClick = onDelete,
+                onClick = {
+                    onDelete()
+                    view.performHapticFeedback(HapticFeedbackConstants.REJECT)
+                },
                 shapes = IconButtonDefaults.shapes()
             ) {
                 Icon(
@@ -191,13 +215,17 @@ fun TimeRangeRow(
                         val newMinuteOfDay = fromTimeState.hour * 60 + fromTimeState.minute
                         onUpdate(timeRange.copy(fromMinuteOfDay = newMinuteOfDay))
                         showFromPicker = false
+                        view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
                     },
                     shapes = ButtonDefaults.shapes()
                 ) { Text("Confirm") }
             },
             dismissButton = {
                 TextButton(
-                    onClick = { showFromPicker = false },
+                    onClick = {
+                        showFromPicker = false
+                        view.performHapticFeedback(HapticFeedbackConstants.REJECT)
+                    },
                     shapes = ButtonDefaults.shapes()
                 ) { Text("Cancel") }
             },
@@ -215,13 +243,17 @@ fun TimeRangeRow(
                         val newMinuteOfDay = toTimeState.hour * 60 + toTimeState.minute
                         onUpdate(timeRange.copy(toMinuteOfDay = newMinuteOfDay))
                         showToPicker = false
+                        view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
                     },
                     shapes = ButtonDefaults.shapes()
                 ) { Text("Confirm") }
             },
             dismissButton = {
                 TextButton(
-                    onClick = { showToPicker = false },
+                    onClick = {
+                        showToPicker = false
+                        view.performHapticFeedback(HapticFeedbackConstants.REJECT)
+                    },
                     shapes = ButtonDefaults.shapes()
                 ) { Text("Cancel") }
             },

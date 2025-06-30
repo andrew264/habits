@@ -1,5 +1,7 @@
 package com.andrew264.habits.ui.water.settings
 
+import android.os.Build
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -8,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -21,6 +24,7 @@ fun WaterSettingsScreen(
     val settings by viewModel.settings.collectAsState()
     val allSchedules by viewModel.allSchedules.collectAsState()
     val selectedSchedule = allSchedules.find { it.id == settings.waterReminderScheduleId }
+    val view = LocalView.current
 
     Column(
         modifier = Modifier
@@ -40,7 +44,15 @@ fun WaterSettingsScreen(
                     Text("Enable Water Tracking", style = MaterialTheme.typography.titleMedium)
                     Switch(
                         checked = settings.isWaterTrackingEnabled,
-                        onCheckedChange = viewModel::onWaterTrackingEnabledChanged
+                        onCheckedChange = { isEnabled ->
+                            viewModel.onWaterTrackingEnabledChanged(isEnabled)
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                                val feedback = if (isEnabled) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
+                                view.performHapticFeedback(feedback)
+                            } else {
+                                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                            }
+                        }
                     )
                 }
                 Spacer(Modifier.height(16.dp))
@@ -66,7 +78,15 @@ fun WaterSettingsScreen(
                     Text("Enable Reminders", style = MaterialTheme.typography.titleMedium)
                     Switch(
                         checked = settings.isWaterReminderEnabled,
-                        onCheckedChange = viewModel::onReminderEnabledChanged,
+                        onCheckedChange = { isEnabled ->
+                            viewModel.onReminderEnabledChanged(isEnabled)
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                                val feedback = if (isEnabled) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
+                                view.performHapticFeedback(feedback)
+                            } else {
+                                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                            }
+                        },
                         enabled = settings.isWaterTrackingEnabled
                     )
                 }
@@ -116,10 +136,16 @@ fun ScheduleSelector(
     label: String = "Active Schedule"
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val view = LocalView.current
 
     ExposedDropdownMenuBox(
         expanded = expanded,
-        onExpandedChange = { if (enabled) expanded = !expanded },
+        onExpandedChange = {
+            if (enabled) {
+                expanded = !expanded
+                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            }
+        },
         modifier = modifier
     ) {
         OutlinedTextField(
@@ -143,6 +169,7 @@ fun ScheduleSelector(
                     onClick = {
                         onScheduleSelected(schedule)
                         expanded = false
+                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                     }
                 )
             }

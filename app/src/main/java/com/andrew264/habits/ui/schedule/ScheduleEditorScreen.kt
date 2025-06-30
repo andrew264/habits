@@ -1,5 +1,6 @@
 package com.andrew264.habits.ui.schedule
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -9,6 +10,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -24,6 +26,7 @@ fun ScheduleEditorScreen(
     val schedule by viewModel.schedule.collectAsState()
     val viewMode by viewModel.viewMode.collectAsState()
     val perDayRepresentation by viewModel.perDayRepresentation.collectAsState()
+    val view = LocalView.current
 
     LaunchedEffect(key1 = true) {
         viewModel.uiEvents.collectLatest { event ->
@@ -74,7 +77,10 @@ fun ScheduleEditorScreen(
                     options.forEachIndexed { index, mode ->
                         ToggleButton(
                             checked = viewMode == mode,
-                            onCheckedChange = { viewModel.setViewMode(mode) },
+                            onCheckedChange = {
+                                viewModel.setViewMode(mode)
+                                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                            },
                             shapes = when (index) {
                                 0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
                                 options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()

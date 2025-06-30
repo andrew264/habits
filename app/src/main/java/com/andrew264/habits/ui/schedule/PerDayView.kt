@@ -1,5 +1,6 @@
 package com.andrew264.habits.ui.schedule
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
@@ -19,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.model.schedule.DayOfWeek
@@ -33,6 +35,7 @@ fun PerDayView(
     modifier: Modifier = Modifier
 ) {
     var expandedDays by rememberSaveable { mutableStateOf(emptySet<DayOfWeek>()) }
+    val view = LocalView.current
 
     LazyColumn(
         modifier = modifier,
@@ -58,6 +61,7 @@ fun PerDayView(
                                 } else {
                                     expandedDays + day
                                 }
+                                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                             }
                             .padding(horizontal = 20.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -157,7 +161,10 @@ fun PerDayView(
 
                             // Add Time Button
                             FilledTonalButton(
-                                onClick = { viewModel.addTimeRangeToDay(day, TimeRange(540, 600)) },
+                                onClick = {
+                                    viewModel.addTimeRangeToDay(day, TimeRange(540, 600))
+                                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                                },
                                 modifier = Modifier.align(Alignment.End),
                                 shapes = ButtonDefaults.shapes()
                             ) {

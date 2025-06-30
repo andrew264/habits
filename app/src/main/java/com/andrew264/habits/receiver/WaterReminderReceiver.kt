@@ -158,8 +158,8 @@ class WaterReminderReceiver : BroadcastReceiver() {
         val notification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground) // Replace with a proper water drop icon
             .setContentTitle("Time to Hydrate!")
-            .setContentText("Don't forget to drink some water to stay on track with your goal.")
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentText("Don't forget to drink some water.")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .addAction(R.drawable.ic_launcher_foreground, "Log ${QUICK_ADD_AMOUNT_ML}ml", logPendingIntent)
             .addAction(R.drawable.ic_launcher_foreground, "Snooze ($snoozeMinutes min)", snoozePendingIntent)
@@ -172,7 +172,7 @@ class WaterReminderReceiver : BroadcastReceiver() {
         val channel = NotificationChannel(
             NOTIFICATION_CHANNEL_ID,
             "Water Reminders",
-            NotificationManager.IMPORTANCE_DEFAULT
+            NotificationManager.IMPORTANCE_HIGH
         ).apply {
             description = "Reminders to drink water"
         }

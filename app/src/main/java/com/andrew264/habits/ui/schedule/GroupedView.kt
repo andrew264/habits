@@ -1,5 +1,6 @@
 package com.andrew264.habits.ui.schedule
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.model.schedule.Schedule
@@ -22,6 +24,8 @@ fun GroupedView(
     viewModel: ScheduleViewModel,
     modifier: Modifier = Modifier
 ) {
+    val view = LocalView.current
+
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp),
@@ -52,7 +56,10 @@ fun GroupedView(
                         )
 
                         IconButton(
-                            onClick = { viewModel.deleteGroup(group.id) },
+                            onClick = {
+                                viewModel.deleteGroup(group.id)
+                                view.performHapticFeedback(HapticFeedbackConstants.REJECT)
+                            },
                             shapes = IconButtonDefaults.shapes()
                         ) {
                             Icon(
@@ -97,7 +104,10 @@ fun GroupedView(
 
                     // Add Time Button
                     FilledTonalButton(
-                        onClick = { viewModel.addTimeRangeToGroup(group.id, TimeRange(540, 600)) },
+                        onClick = {
+                            viewModel.addTimeRangeToGroup(group.id, TimeRange(540, 600))
+                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                        },
                         modifier = Modifier.align(Alignment.End),
                         shapes = ButtonDefaults.shapes()
                     ) {

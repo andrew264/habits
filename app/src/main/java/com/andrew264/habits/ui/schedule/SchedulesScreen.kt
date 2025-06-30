@@ -1,5 +1,7 @@
 package com.andrew264.habits.ui.schedule
 
+import android.os.Build
+import android.view.HapticFeedbackConstants
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -18,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -38,6 +41,7 @@ fun SchedulesScreen(
     viewModel: SchedulesViewModel = hiltViewModel()
 ) {
     val schedules by viewModel.schedules.collectAsState()
+    val view = LocalView.current
 
     LaunchedEffect(key1 = viewModel.uiEvents, snackbarHostState) {
         viewModel.uiEvents.collectLatest { event ->
@@ -49,6 +53,7 @@ fun SchedulesScreen(
                         duration = SnackbarDuration.Short
                     )
                     if (result == SnackbarResult.ActionPerformed) {
+                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                         viewModel.onUndoDelete()
                     }
                 }
@@ -90,11 +95,27 @@ private fun ScheduleListItem(
         positionalThreshold = { it * 0.25f }
     )
     val scope = rememberCoroutineScope()
+    val view = LocalView.current
+
+    LaunchedEffect(dismissState.targetValue) {
+        if (dismissState.targetValue != SwipeToDismissBoxValue.Settled) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                view.performHapticFeedback(HapticFeedbackConstants.GESTURE_THRESHOLD_ACTIVATE)
+            } else {
+                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            }
+        }
+    }
 
     LaunchedEffect(dismissState.currentValue) {
         when (dismissState.currentValue) {
-            SwipeToDismissBoxValue.EndToStart -> onDelete()
+            SwipeToDismissBoxValue.EndToStart -> {
+                view.performHapticFeedback(HapticFeedbackConstants.REJECT)
+                onDelete()
+            }
+
             SwipeToDismissBoxValue.StartToEnd -> {
+                view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
                 scope.launch {
                     dismissState.reset()
                 }
@@ -156,7 +177,10 @@ private fun ScheduleListItem(
         val coverage = remember(analyzer) { analyzer.calculateCoverage() }
 
         Card(
-            onClick = onEdit,
+            onClick = {
+                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                onEdit()
+            },
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(

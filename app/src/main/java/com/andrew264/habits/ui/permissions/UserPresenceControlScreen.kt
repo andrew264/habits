@@ -1,5 +1,7 @@
 package com.andrew264.habits.ui.permissions
 
+import android.os.Build
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -7,6 +9,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,6 +29,7 @@ fun UserPresenceControlScreen(
 ) {
     val presenceState by UserPresenceService.userPresenceState.collectAsState()
     val isServiceActive by UserPresenceService.isServiceActive.collectAsState()
+    val view = LocalView.current
 
     Column(
         modifier = modifier
@@ -65,6 +69,12 @@ fun UserPresenceControlScreen(
                     } else {
                         viewModel.onStopService()
                     }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        val feedback = if (isOn) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
+                        view.performHapticFeedback(feedback)
+                    } else {
+                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                    }
                 }
             )
         }
@@ -79,7 +89,10 @@ fun UserPresenceControlScreen(
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
         Button(
-            onClick = onRequestPermissions,
+            onClick = {
+                onRequestPermissions()
+                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            },
             modifier = Modifier.fillMaxWidth(),
             shapes = ButtonDefaults.shapes()
         ) {
@@ -87,7 +100,10 @@ fun UserPresenceControlScreen(
         }
 
         Button(
-            onClick = onOpenAppSettings,
+            onClick = {
+                onOpenAppSettings()
+                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            },
             modifier = Modifier.fillMaxWidth(),
             shapes = ButtonDefaults.shapes()
         ) {

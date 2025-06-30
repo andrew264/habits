@@ -1,6 +1,7 @@
 package com.andrew264.habits.ui
 
 import android.app.Activity
+import android.view.HapticFeedbackConstants
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*
@@ -18,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -90,6 +92,7 @@ private fun AppNavigationRail(
     isCompact: Boolean,
     scope: CoroutineScope
 ) {
+    val view = LocalView.current
     if (isCompact) {
         ModalWideNavigationRail(
             state = state,
@@ -109,7 +112,10 @@ private fun AppNavigationRail(
             header = {
                 val expanded = state.targetValue == WideNavigationRailValue.Expanded
                 IconButton(
-                    onClick = { scope.launch { if (expanded) state.collapse() else state.expand() } },
+                    onClick = {
+                        scope.launch { if (expanded) state.collapse() else state.expand() }
+                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                    },
                     modifier = Modifier.padding(start = 24.dp),
                     shapes = IconButtonDefaults.shapes()
                 ) {
@@ -146,6 +152,7 @@ private fun AppNavigationRailContent(
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    val view = LocalView.current
 
     Column(Modifier.verticalScroll(rememberScrollState())) {
         railItems.forEach { screen ->
@@ -161,6 +168,7 @@ private fun AppNavigationRailContent(
                 label = { Text(screen.title) },
                 selected = selected,
                 onClick = {
+                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                     navController.navigate(screen.route) {
                         popUpTo(navController.graph.findStartDestination().id) {
                             saveState = true

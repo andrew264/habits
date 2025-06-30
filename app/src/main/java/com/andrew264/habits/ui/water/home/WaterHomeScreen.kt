@@ -1,5 +1,7 @@
 package com.andrew264.habits.ui.water.home
 
+import android.os.Build
+import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -48,6 +51,7 @@ private fun WaterTrackingContent(
     var sliderValue by remember { mutableFloatStateOf(250f) }
     val animatedProgress by animateFloatAsState(targetValue = uiState.progress, label = "WaterProgressAnimation")
     val timeFormat = remember { SimpleDateFormat("h:mm a", Locale.getDefault()) }
+    val view = LocalView.current
 
     LazyColumn(
         modifier = modifier
@@ -94,7 +98,18 @@ private fun WaterTrackingContent(
                     )
                     Slider(
                         value = sliderValue,
-                        onValueChange = { sliderValue = it },
+                        onValueChange = { newValue ->
+                            val stepSize = 50f
+                            val currentStep = (newValue / stepSize).roundToInt()
+                            val previousStep = (sliderValue / stepSize).roundToInt()
+
+                            if (currentStep != previousStep) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                                    view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_TICK)
+                                }
+                            }
+                            sliderValue = newValue
+                        },
                         valueRange = 50f..1000f,
                         steps = (1000 / 50) - 2 // 50ml increments
                     )
@@ -102,12 +117,24 @@ private fun WaterTrackingContent(
                         Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
                     ) {
-                        Button(onClick = { sliderValue = 250f }) { Text("250ml") }
-                        Button(onClick = { sliderValue = 500f }) { Text("500ml") }
-                        Button(onClick = { sliderValue = 700f }) { Text("750ml") }
+                        Button(onClick = {
+                            sliderValue = 250f
+                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                        }) { Text("250ml") }
+                        Button(onClick = {
+                            sliderValue = 500f
+                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                        }) { Text("500ml") }
+                        Button(onClick = {
+                            sliderValue = 750f
+                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                        }) { Text("750ml") }
                     }
                     Button(
-                        onClick = { onLogWater(sliderValue.roundToInt()) },
+                        onClick = {
+                            onLogWater(sliderValue.roundToInt())
+                            view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = sliderValue.roundToInt() > 0
                     ) {
@@ -141,6 +168,7 @@ private fun FeatureDisabledContent(
     modifier: Modifier = Modifier,
     onEnableClicked: () -> Unit
 ) {
+    val view = LocalView.current
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -168,7 +196,10 @@ private fun FeatureDisabledContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(24.dp))
-        Button(onClick = onEnableClicked) {
+        Button(onClick = {
+            onEnableClicked()
+            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+        }) {
             Text("Go to Settings")
         }
     }

@@ -1,5 +1,6 @@
 package com.andrew264.habits.ui.bedtime
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -18,6 +19,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -51,6 +53,7 @@ fun BedtimeScreen(
     val allSchedules by viewModel.allSchedules.collectAsState()
     val selectedSchedule by viewModel.selectedSchedule.collectAsState()
     val scheduleInfo by viewModel.scheduleInfo.collectAsState()
+    val view = LocalView.current
 
     Column(
         modifier = modifier
@@ -93,7 +96,10 @@ fun BedtimeScreen(
                         ranges.forEachIndexed { index, range ->
                             ElevatedToggleButton(
                                 checked = selectedTimelineRange == range,
-                                onCheckedChange = { viewModel.setTimelineRange(range) },
+                                onCheckedChange = {
+                                    viewModel.setTimelineRange(range)
+                                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                                },
                                 shapes = when (index) {
                                     0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
                                     ranges.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
@@ -179,10 +185,14 @@ fun ScheduleSelector(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val view = LocalView.current
 
     ExposedDropdownMenuBox(
         expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
+        onExpandedChange = {
+            expanded = !expanded
+            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+        },
         modifier = modifier
     ) {
         OutlinedTextField(
@@ -205,6 +215,7 @@ fun ScheduleSelector(
                     onClick = {
                         onScheduleSelected(schedule)
                         expanded = false
+                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                     }
                 )
             }
