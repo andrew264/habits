@@ -1,4 +1,4 @@
-package com.andrew264.habits.navigation
+package com.andrew264.habits.ui.navigation
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -14,10 +14,10 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.andrew264.habits.presentation.bedtime.BedtimeScreen
-import com.andrew264.habits.presentation.schedule.ScheduleEditorScreen
-import com.andrew264.habits.presentation.schedules.SchedulesScreen
-import com.andrew264.habits.presentation.userPresenceControl.UserPresenceControlScreen
+import com.andrew264.habits.ui.bedtime.BedtimeScreen
+import com.andrew264.habits.ui.schedule.ScheduleEditorScreen
+import com.andrew264.habits.ui.schedule.SchedulesScreen
+import com.andrew264.habits.ui.permissions.UserPresenceControlScreen
 
 
 @Composable

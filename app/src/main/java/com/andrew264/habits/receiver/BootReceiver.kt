@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import com.andrew264.habits.data.repository.SettingsRepository
+import com.andrew264.habits.repository.SettingsRepository
 import com.andrew264.habits.service.UserPresenceService
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope

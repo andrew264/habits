@@ -1,4 +1,4 @@
-package com.andrew264.habits.data.repository
+package com.andrew264.habits.repository
 
 import androidx.room.Transaction
 import com.andrew264.habits.data.dao.ScheduleDao

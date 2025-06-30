@@ -1,7 +1,7 @@
-package com.andrew264.habits.presentation.userPresenceControl
+package com.andrew264.habits.ui.permissions
 
 import androidx.lifecycle.ViewModel
-import com.andrew264.habits.manager.UserPresenceController
+import com.andrew264.habits.domain.controller.UserPresenceController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 

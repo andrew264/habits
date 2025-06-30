@@ -1,4 +1,4 @@
-package com.andrew264.habits.presentation.schedule
+package com.andrew264.habits.ui.schedule
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*

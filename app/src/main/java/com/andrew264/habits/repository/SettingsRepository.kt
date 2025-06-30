@@ -1,4 +1,4 @@
-package com.andrew264.habits.data.repository
+package com.andrew264.habits.repository
 
 import android.content.Context
 import androidx.datastore.core.DataStore

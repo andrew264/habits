@@ -1,4 +1,4 @@
-package com.andrew264.habits.navigation
+package com.andrew264.habits.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Alarm

@@ -1,4 +1,4 @@
-package com.andrew264.habits.util
+package com.andrew264.habits.domain.analyzer
 
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.ScheduleGroup
@@ -7,6 +7,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.collections.iterator
 
 /**
  * A data class to hold the results of the schedule coverage calculation for a full week.

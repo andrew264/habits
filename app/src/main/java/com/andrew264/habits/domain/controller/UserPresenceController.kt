@@ -1,4 +1,4 @@
-package com.andrew264.habits.manager
+package com.andrew264.habits.domain.controller
 
 import android.content.Context
 import android.content.Intent

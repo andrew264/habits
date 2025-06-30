@@ -1,4 +1,4 @@
-package com.andrew264.habits.presentation.schedule
+package com.andrew264.habits.ui.schedule
 
 import android.text.format.DateFormat
 import androidx.compose.animation.animateColorAsState

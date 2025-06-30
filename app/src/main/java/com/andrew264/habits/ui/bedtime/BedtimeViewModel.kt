@@ -1,16 +1,16 @@
-package com.andrew264.habits.presentation.bedtime
+package com.andrew264.habits.ui.bedtime
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andrew264.habits.data.entity.UserPresenceEvent
-import com.andrew264.habits.data.repository.ScheduleRepository
-import com.andrew264.habits.data.repository.SettingsRepository
-import com.andrew264.habits.data.repository.UserPresenceHistoryRepository
+import com.andrew264.habits.repository.ScheduleRepository
+import com.andrew264.habits.repository.SettingsRepository
+import com.andrew264.habits.repository.UserPresenceHistoryRepository
 import com.andrew264.habits.model.schedule.DefaultSchedules
 import com.andrew264.habits.model.schedule.Schedule
-import com.andrew264.habits.state.UserPresenceState
-import com.andrew264.habits.util.ScheduleAnalyzer
-import com.andrew264.habits.util.ScheduleCoverage
+import com.andrew264.habits.model.UserPresenceState
+import com.andrew264.habits.domain.analyzer.ScheduleAnalyzer
+import com.andrew264.habits.domain.analyzer.ScheduleCoverage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -44,7 +44,7 @@ data class ScheduleInfo(
 @HiltViewModel
 class BedtimeViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
-    private val scheduleRepository: ScheduleRepository,
+    scheduleRepository: ScheduleRepository,
     private val userPresenceHistoryRepository: UserPresenceHistoryRepository
 ) : ViewModel() {
 

@@ -1,8 +1,8 @@
-package com.andrew264.habits.data.repository
+package com.andrew264.habits.repository
 
 import com.andrew264.habits.data.dao.UserPresenceEventDao
 import com.andrew264.habits.data.entity.UserPresenceEvent
-import com.andrew264.habits.state.UserPresenceState
+import com.andrew264.habits.model.UserPresenceState
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton

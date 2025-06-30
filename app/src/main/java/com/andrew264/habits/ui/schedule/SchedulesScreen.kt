@@ -1,4 +1,4 @@
-package com.andrew264.habits.presentation.schedules
+package com.andrew264.habits.ui.schedule
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -25,8 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.andrew264.habits.domain.analyzer.ScheduleAnalyzer
 import com.andrew264.habits.model.schedule.Schedule
-import com.andrew264.habits.util.ScheduleAnalyzer
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.Locale

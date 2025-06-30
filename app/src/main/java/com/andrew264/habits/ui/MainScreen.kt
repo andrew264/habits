@@ -1,4 +1,4 @@
-package com.andrew264.habits.presentation
+package com.andrew264.habits.ui
 
 import android.app.Activity
 import androidx.activity.compose.LocalActivity
@@ -23,8 +23,8 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.andrew264.habits.navigation.ContainerGraph
-import com.andrew264.habits.navigation.railItems
+import com.andrew264.habits.ui.navigation.ContainerGraph
+import com.andrew264.habits.ui.navigation.railItems
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 

@@ -1,4 +1,4 @@
-package com.andrew264.habits.state
+package com.andrew264.habits.model
 
 enum class UserPresenceState {
     /** High confidence: User is interacting with the device. */

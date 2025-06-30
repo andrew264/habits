@@ -1,4 +1,4 @@
-package com.andrew264.habits.presentation.schedule
+package com.andrew264.habits.ui.schedule
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn

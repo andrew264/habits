@@ -2,7 +2,7 @@ package com.andrew264.habits.di
 
 import android.app.Application
 import android.content.Context
-import com.andrew264.habits.manager.UserPresenceController
+import com.andrew264.habits.domain.controller.UserPresenceController
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

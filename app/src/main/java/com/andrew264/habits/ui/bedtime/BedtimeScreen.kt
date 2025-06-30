@@ -1,4 +1,4 @@
-package com.andrew264.habits.presentation.bedtime
+package com.andrew264.habits.ui.bedtime
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.andrew264.habits.model.schedule.Schedule
-import com.andrew264.habits.state.UserPresenceState
+import com.andrew264.habits.model.UserPresenceState
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDateTime
