@@ -1,7 +1,6 @@
 package com.andrew264.habits.ui.water.stats
 
 import android.view.HapticFeedbackConstants
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -11,16 +10,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.andrew264.habits.domain.analyzer.DailyWaterIntake
-import com.andrew264.habits.domain.analyzer.HourlyWaterIntake
+import com.andrew264.habits.ui.common.charts.BarChart
+import com.andrew264.habits.ui.common.charts.BarChartEntry
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
@@ -104,12 +102,19 @@ private fun StatsContent(stats: com.andrew264.habits.domain.analyzer.WaterStatis
         Column(Modifier.padding(16.dp)) {
             Text("Daily Intake", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(16.dp))
-            SimpleBarChart(
+            val dailyEntries = remember(stats.dailyIntakes) {
+                stats.dailyIntakes.map {
+                    BarChartEntry(
+                        value = it.totalMl.toFloat(),
+                        label = it.date.format(DateTimeFormatter.ofPattern("d MMM"))
+                    )
+                }
+            }
+            BarChart(
+                entries = dailyEntries,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp),
-                data = stats.dailyIntakes,
-                labelFormatter = { it.date.format(DateTimeFormatter.ofPattern("MMM d")) }
+                    .height(200.dp)
             )
         }
     }
@@ -119,20 +124,24 @@ private fun StatsContent(stats: com.andrew264.habits.domain.analyzer.WaterStatis
         Column(Modifier.padding(16.dp)) {
             Text("Peak Hours", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(16.dp))
-            SimpleBarChart(
+            val hourlyEntries = remember(stats.hourlyBreakdown) {
+                stats.hourlyBreakdown.filter { it.totalMl > 0 }.map {
+                    BarChartEntry(
+                        value = it.totalMl.toFloat(),
+                        label = when {
+                            it.hour == 0 -> "12a"
+                            it.hour == 12 -> "12p"
+                            it.hour < 12 -> "${it.hour}a"
+                            else -> "${it.hour - 12}p"
+                        }
+                    )
+                }
+            }
+            BarChart(
+                entries = hourlyEntries,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp),
-                data = stats.hourlyBreakdown.filter { it.totalMl > 0 }, // Only show hours with intake
-                labelFormatter = {
-                    val hour = it.hour
-                    when {
-                        hour == 0 -> "12a"
-                        hour == 12 -> "12p"
-                        hour < 12 -> "${hour}a"
-                        else -> "${hour - 12}p"
-                    }
-                }
+                    .height(200.dp)
             )
         }
     }
@@ -155,42 +164,6 @@ fun StatCard(
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = MaterialTheme.typography.titleLarge.fontWeight
             )
-        }
-    }
-}
-
-@Composable
-fun <T> SimpleBarChart(
-    modifier: Modifier = Modifier,
-    data: List<T>,
-    labelFormatter: (T) -> String,
-) {
-    val barColor = MaterialTheme.colorScheme.primary
-    val values = data.map {
-        when (it) {
-            is DailyWaterIntake -> it.totalMl
-            is HourlyWaterIntake -> it.totalMl
-            else -> 0
-        }
-    }
-    val maxValue = values.maxOrNull()?.toFloat() ?: 0f
-
-    Canvas(modifier = modifier) {
-        if (data.isEmpty()) return@Canvas
-
-        val barWidth = (size.width / data.size) * 0.6f
-        val barSpacing = (size.width / data.size) * 0.4f
-        var currentX = barSpacing / 2
-
-        data.forEachIndexed { index, item ->
-            val barHeight = if (maxValue > 0) (values[index] / maxValue) * size.height else 0f
-            drawRect(
-                color = barColor,
-                topLeft = Offset(x = currentX, y = size.height - barHeight),
-                size = Size(width = barWidth, height = barHeight)
-            )
-            // Simple label drawing could be added here if needed
-            currentX += barWidth + barSpacing
         }
     }
 }

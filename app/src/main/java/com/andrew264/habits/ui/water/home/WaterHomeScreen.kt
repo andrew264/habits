@@ -2,7 +2,9 @@ package com.andrew264.habits.ui.water.home
 
 import android.os.Build
 import android.view.HapticFeedbackConstants
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,6 +14,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -42,6 +47,7 @@ fun WaterHomeScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun WaterTrackingContent(
     modifier: Modifier = Modifier,
@@ -49,9 +55,21 @@ private fun WaterTrackingContent(
     onLogWater: (Int) -> Unit
 ) {
     var sliderValue by remember { mutableFloatStateOf(250f) }
-    val animatedProgress by animateFloatAsState(targetValue = uiState.progress, label = "WaterProgressAnimation")
+    val animatedProgress by animateFloatAsState(
+        targetValue = uiState.progress,
+        label = "WaterProgressAnimation",
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        )
+    )
     val timeFormat = remember { SimpleDateFormat("h:mm a", Locale.getDefault()) }
     val view = LocalView.current
+
+    val strokeWidth = 6.dp
+    val stroke = with(LocalDensity.current) {
+        remember { Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round) }
+    }
 
     LazyColumn(
         modifier = modifier
@@ -63,10 +81,11 @@ private fun WaterTrackingContent(
         // --- Progress Section ---
         item {
             Box(contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(
+                CircularWavyProgressIndicator(
                     progress = { animatedProgress },
                     modifier = Modifier.size(200.dp),
-                    strokeWidth = 12.dp,
+                    stroke = stroke,
+                    trackStroke = stroke,
                     trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {

@@ -24,7 +24,7 @@ data class WaterHomeUiState(
 @HiltViewModel
 class WaterHomeViewModel @Inject constructor(
     private val waterRepository: WaterRepository,
-    private val settingsRepository: SettingsRepository
+    settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val todaysIntakeFlow = waterRepository.getTodaysIntakeFlow()
