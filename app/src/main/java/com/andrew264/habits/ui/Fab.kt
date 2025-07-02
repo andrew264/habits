@@ -41,9 +41,9 @@ fun MainFab(
 
         "schedule_editor?scheduleId={scheduleId}" -> {
             val viewModel: ScheduleViewModel = hiltViewModel(navBackStackEntry!!)
-            val viewMode by viewModel.viewMode.collectAsState()
+            val uiState by viewModel.uiState.collectAsState()
 
-            if (viewMode == ScheduleViewMode.GROUPED) {
+            if (uiState.viewMode == ScheduleViewMode.GROUPED) {
                 SmallExtendedFloatingActionButton(
                     onClick = {
                         viewModel.addGroup()

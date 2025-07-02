@@ -6,10 +6,7 @@ import com.andrew264.habits.domain.repository.ScheduleRepository
 import com.andrew264.habits.domain.usecase.DeleteScheduleUseCase
 import com.andrew264.habits.model.schedule.Schedule
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -20,17 +17,23 @@ sealed interface SchedulesUiEvent {
     ) : SchedulesUiEvent
 }
 
+data class SchedulesUiState(
+    val schedules: List<Schedule> = emptyList(),
+    val isLoading: Boolean = true
+)
+
 @HiltViewModel
 class SchedulesViewModel @Inject constructor(
     private val scheduleRepository: ScheduleRepository,
     private val deleteScheduleUseCase: DeleteScheduleUseCase
 ) : ViewModel() {
 
-    val schedules = scheduleRepository.getAllSchedules()
+    val uiState: StateFlow<SchedulesUiState> = scheduleRepository.getAllSchedules()
+        .map { schedules -> SchedulesUiState(schedules = schedules, isLoading = false) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
+            initialValue = SchedulesUiState()
         )
 
     private val _uiEvents = MutableSharedFlow<SchedulesUiEvent>()

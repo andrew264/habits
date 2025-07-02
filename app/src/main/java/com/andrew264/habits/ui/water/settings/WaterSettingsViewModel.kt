@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.andrew264.habits.domain.model.PersistentSettings
 import com.andrew264.habits.domain.usecase.GetWaterSettingsUseCase
 import com.andrew264.habits.domain.usecase.UpdateWaterSettingsUseCase
-import com.andrew264.habits.domain.usecase.WaterSettingsData
 import com.andrew264.habits.domain.usecase.WaterSettingsUpdate
 import com.andrew264.habits.model.schedule.DefaultSchedules
 import com.andrew264.habits.model.schedule.Schedule
@@ -17,34 +16,35 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+data class WaterSettingsUiState(
+    val settings: PersistentSettings,
+    val allSchedules: List<Schedule>
+) {
+    companion object {
+        val default = WaterSettingsUiState(
+            settings = PersistentSettings(false, null, false, 2500, false, 60, 15, null),
+            allSchedules = listOf(DefaultSchedules.defaultSleepSchedule)
+        )
+    }
+}
+
 @HiltViewModel
 class WaterSettingsViewModel @Inject constructor(
     getWaterSettingsUseCase: GetWaterSettingsUseCase,
     private val updateWaterSettingsUseCase: UpdateWaterSettingsUseCase
 ) : ViewModel() {
 
-    private val waterSettingsData: StateFlow<WaterSettingsData> = getWaterSettingsUseCase.execute()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = WaterSettingsData(
-                settings = PersistentSettings(false, null, false, 2500, false, 60, 15, null),
-                allSchedules = listOf(DefaultSchedules.defaultSleepSchedule)
+    val uiState: StateFlow<WaterSettingsUiState> = getWaterSettingsUseCase.execute()
+        .map { data ->
+            WaterSettingsUiState(
+                settings = data.settings,
+                allSchedules = data.allSchedules
             )
-        )
-
-    val settings: StateFlow<PersistentSettings> = waterSettingsData.map { it.settings }
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = waterSettingsData.value.settings
-        )
-
-    val allSchedules: StateFlow<List<Schedule>> = waterSettingsData.map { it.allSchedules }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = waterSettingsData.value.allSchedules
+            initialValue = WaterSettingsUiState.default
         )
 
     fun onWaterTrackingEnabledChanged(isEnabled: Boolean) {
@@ -55,7 +55,7 @@ class WaterSettingsViewModel @Inject constructor(
 
     fun onDailyTargetChanged(targetMl: String) {
         viewModelScope.launch {
-            val target = targetMl.toIntOrNull() ?: settings.value.waterDailyTargetMl
+            val target = targetMl.toIntOrNull() ?: uiState.value.settings.waterDailyTargetMl
             updateWaterSettingsUseCase.execute(WaterSettingsUpdate(dailyTargetMl = target))
         }
     }
@@ -68,14 +68,14 @@ class WaterSettingsViewModel @Inject constructor(
 
     fun onReminderIntervalChanged(intervalMinutes: String) {
         viewModelScope.launch {
-            val interval = intervalMinutes.toIntOrNull() ?: settings.value.waterReminderIntervalMinutes
+            val interval = intervalMinutes.toIntOrNull() ?: uiState.value.settings.waterReminderIntervalMinutes
             updateWaterSettingsUseCase.execute(WaterSettingsUpdate(reminderIntervalMinutes = interval))
         }
     }
 
     fun onSnoozeTimeChanged(snoozeMinutes: String) {
         viewModelScope.launch {
-            val snooze = snoozeMinutes.toIntOrNull() ?: settings.value.waterReminderSnoozeMinutes
+            val snooze = snoozeMinutes.toIntOrNull() ?: uiState.value.settings.waterReminderSnoozeMinutes
             updateWaterSettingsUseCase.execute(WaterSettingsUpdate(snoozeMinutes = snooze))
         }
     }

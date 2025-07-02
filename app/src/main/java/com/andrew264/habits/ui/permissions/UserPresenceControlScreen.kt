@@ -26,8 +26,7 @@ fun UserPresenceControlScreen(
     onRequestPermissions: () -> Unit,
     onOpenAppSettings: () -> Unit
 ) {
-    val presenceState by viewModel.presenceState.collectAsState()
-    val isServiceActive by viewModel.isServiceActive.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     val view = LocalView.current
 
     Column(
@@ -42,10 +41,10 @@ fun UserPresenceControlScreen(
             style = MaterialTheme.typography.titleMedium
         )
         Text(
-            text = presenceState.name.replace('_', ' '),
+            text = uiState.presenceState.name.replace('_', ' '),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.SemiBold,
-            color = when (presenceState) {
+            color = when (uiState.presenceState) {
                 UserPresenceState.AWAKE -> MaterialTheme.colorScheme.primary
                 UserPresenceState.SLEEPING -> MaterialTheme.colorScheme.secondary
                 UserPresenceState.UNKNOWN -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
@@ -61,7 +60,7 @@ fun UserPresenceControlScreen(
         ) {
             Text("Presence Monitoring Active", style = MaterialTheme.typography.titleMedium)
             Switch(
-                checked = isServiceActive,
+                checked = uiState.isServiceActive,
                 onCheckedChange = { isOn ->
                     if (isOn) {
                         viewModel.onStartService()

@@ -21,8 +21,9 @@ import com.andrew264.habits.model.schedule.Schedule
 fun WaterSettingsScreen(
     viewModel: WaterSettingsViewModel = hiltViewModel()
 ) {
-    val settings by viewModel.settings.collectAsState()
-    val allSchedules by viewModel.allSchedules.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+    val settings = uiState.settings
+    val allSchedules = uiState.allSchedules
     val selectedSchedule = allSchedules.find { it.id == settings.waterReminderScheduleId }
     val view = LocalView.current
 
@@ -124,7 +125,6 @@ fun WaterSettingsScreen(
     }
 }
 
-// A more generic version of the ScheduleSelector from BedtimeScreen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleSelector(

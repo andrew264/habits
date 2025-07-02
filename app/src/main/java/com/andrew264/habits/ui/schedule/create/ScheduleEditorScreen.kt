@@ -23,8 +23,7 @@ fun ScheduleEditorScreen(
     snackbarHostState: SnackbarHostState,
     onNavigateUp: () -> Unit
 ) {
-    val schedule by viewModel.schedule.collectAsState()
-    val viewMode by viewModel.viewMode.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     val perDayRepresentation by viewModel.perDayRepresentation.collectAsState()
     val view = LocalView.current
 
@@ -49,7 +48,9 @@ fun ScheduleEditorScreen(
         modifier = Modifier
             .fillMaxSize()
     ) {
-        schedule?.let {
+        if (uiState.isLoading) {
+            LoadingState()
+        } else {
             // Main content area
             Column(
                 modifier = Modifier
@@ -59,7 +60,7 @@ fun ScheduleEditorScreen(
             ) {
                 // Schedule Name Editor
                 OutlinedTextField(
-                    value = it.name,
+                    value = uiState.schedule?.name.orEmpty(),
                     onValueChange = { newName -> viewModel.updateScheduleName(newName) },
                     label = { Text("Schedule Name") },
                     placeholder = { Text("Enter schedule name") },
@@ -76,7 +77,7 @@ fun ScheduleEditorScreen(
                 ) {
                     options.forEachIndexed { index, mode ->
                         ToggleButton(
-                            checked = viewMode == mode,
+                            checked = uiState.viewMode == mode,
                             onCheckedChange = {
                                 viewModel.setViewMode(mode)
                                 view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
@@ -92,41 +93,39 @@ fun ScheduleEditorScreen(
                                     ScheduleViewMode.GROUPED -> "📋 Grouped"
                                     ScheduleViewMode.PER_DAY -> "📅 Per Day"
                                 },
-                                fontWeight = if (mode == viewMode) FontWeight.Bold else FontWeight.Normal
+                                fontWeight = if (mode == uiState.viewMode) FontWeight.Bold else FontWeight.Normal
                             )
                         }
                     }
                 }
             }
-        } ?: LoadingState()
 
+            // Content with smooth transitions
+            Box(
+                modifier = Modifier.weight(1f)
+            ) {
+                Crossfade(
+                    targetState = uiState.viewMode,
+                    label = "ViewModeCrossfade"
+                ) { mode ->
+                    when (mode) {
+                        ScheduleViewMode.GROUPED -> {
+                            uiState.schedule?.let {
+                                GroupedView(
+                                    schedule = it,
+                                    viewModel = viewModel,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                        }
 
-        // Content with smooth transitions
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            Crossfade(
-                targetState = viewMode,
-                label = "ViewModeCrossfade"
-            ) { mode ->
-                when (mode) {
-                    ScheduleViewMode.GROUPED -> {
-                        schedule?.let {
-                            GroupedView(
-                                schedule = it,
+                        ScheduleViewMode.PER_DAY -> {
+                            PerDayView(
+                                perDayRepresentation = perDayRepresentation,
                                 viewModel = viewModel,
                                 modifier = Modifier.fillMaxSize()
                             )
                         }
-                    }
-
-                    ScheduleViewMode.PER_DAY -> {
-                        PerDayView(
-                            perDayRepresentation = perDayRepresentation,
-                            viewModel = viewModel,
-                            modifier = Modifier.fillMaxSize()
-                        )
                     }
                 }
             }
@@ -134,25 +133,12 @@ fun ScheduleEditorScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun LoadingState() {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Card {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                LoadingIndicator()
-                Text(
-                    text = "Loading schedule...",
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-            }
-        }
+        CircularProgressIndicator()
     }
 }

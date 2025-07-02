@@ -27,8 +27,8 @@ fun GroupedView(
     val view = LocalView.current
 
     LazyColumn(
-        modifier = modifier,
-        contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp),
+        modifier = modifier.padding(bottom = 72.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         items(schedule.groups, key = { it.id }) { group ->

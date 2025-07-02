@@ -29,6 +29,17 @@ data class ScheduleInfo(
     val coverage: ScheduleCoverage
 )
 
+data class BedtimeUiState(
+    val timelineSegments: List<TimelineSegment> = emptyList(),
+    val selectedTimelineRange: TimelineRange = TimelineRange.DAY,
+    val allSchedules: List<Schedule> = listOf(DefaultSchedules.defaultSleepSchedule),
+    val selectedSchedule: Schedule = DefaultSchedules.defaultSleepSchedule,
+    val scheduleInfo: ScheduleInfo? = null,
+    val viewStartTimeMillis: Long = 0,
+    val viewEndTimeMillis: Long = 0,
+    val isLoading: Boolean = true
+)
+
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class BedtimeViewModel @Inject constructor(
@@ -37,55 +48,38 @@ class BedtimeViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _selectedTimelineRange = MutableStateFlow(TimelineRange.DAY)
-    val selectedTimelineRange: StateFlow<TimelineRange> = _selectedTimelineRange.asStateFlow()
+    private val _uiState = MutableStateFlow(BedtimeUiState())
+    val uiState = _uiState.asStateFlow()
 
-    private val _viewEndTimeMillis = MutableStateFlow(System.currentTimeMillis())
-    val viewEndTimeMillis: StateFlow<Long> = _viewEndTimeMillis
-
-    val viewStartTimeMillis: StateFlow<Long> = _selectedTimelineRange.map { range ->
-        _viewEndTimeMillis.value - range.durationMillis
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = _viewEndTimeMillis.value - _selectedTimelineRange.value.durationMillis
-    )
-
-    val allSchedules: StateFlow<List<Schedule>> = getBedtimeScreenDataUseCase.allSchedules
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = listOf(DefaultSchedules.defaultSleepSchedule)
-        )
-
-    val selectedSchedule: StateFlow<Schedule> = getBedtimeScreenDataUseCase.selectedSchedule
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = DefaultSchedules.defaultSleepSchedule
-        )
-
-    val scheduleInfo: StateFlow<ScheduleInfo?> = getBedtimeScreenDataUseCase.scheduleInfo
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = null
-        )
-
-    val timelineSegments: StateFlow<List<TimelineSegment>> = _selectedTimelineRange
-        .onEach {
-            _viewEndTimeMillis.value = System.currentTimeMillis()
+    init {
+        viewModelScope.launch {
+            _selectedTimelineRange.flatMapLatest { range ->
+                // Every time range changes, we get a new flow of timeline segments
+                getBedtimeScreenDataUseCase.getTimelineSegments(range)
+                    .combine(getBedtimeScreenDataUseCase.allSchedules) { segments, allSchedules ->
+                        Pair(segments, allSchedules)
+                    }
+                    .combine(getBedtimeScreenDataUseCase.selectedSchedule) { (segments, allSchedules), selected ->
+                        Triple(segments, allSchedules, selected)
+                    }
+                    .combine(getBedtimeScreenDataUseCase.scheduleInfo) { (segments, allSchedules, selected), info ->
+                        val endTime = System.currentTimeMillis()
+                        _uiState.update {
+                            it.copy(
+                                selectedTimelineRange = range,
+                                timelineSegments = segments,
+                                allSchedules = allSchedules,
+                                selectedSchedule = selected,
+                                scheduleInfo = info,
+                                viewEndTimeMillis = endTime,
+                                viewStartTimeMillis = endTime - range.durationMillis,
+                                isLoading = false
+                            )
+                        }
+                    }
+            }.collect()
         }
-        .flatMapLatest { range ->
-            getBedtimeScreenDataUseCase.getTimelineSegments(range)
-        }
-        .map { domainSegments ->
-            domainSegments.map { it }
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    }
 
     fun setTimelineRange(range: TimelineRange) {
         _selectedTimelineRange.value = range

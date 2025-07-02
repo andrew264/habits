@@ -25,6 +25,13 @@ sealed interface ScheduleUiEvent {
     object NavigateUp : ScheduleUiEvent
 }
 
+data class ScheduleEditorUiState(
+    val schedule: Schedule? = null,
+    val viewMode: ScheduleViewMode = ScheduleViewMode.GROUPED,
+    val isNewSchedule: Boolean = true,
+    val isLoading: Boolean = true
+)
+
 @HiltViewModel
 class ScheduleViewModel @Inject constructor(
     private val scheduleRepository: ScheduleRepository,
@@ -34,18 +41,15 @@ class ScheduleViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val scheduleId: String? = savedStateHandle["scheduleId"]
-    val isNewSchedule: Boolean = scheduleId == null
 
-    private val _schedule = MutableStateFlow<Schedule?>(null)
-    val schedule: StateFlow<Schedule?> = _schedule.asStateFlow()
-
-    private val _viewMode = MutableStateFlow(ScheduleViewMode.GROUPED)
-    val viewMode: StateFlow<ScheduleViewMode> = _viewMode.asStateFlow()
+    private val _uiState = MutableStateFlow(ScheduleEditorUiState(isNewSchedule = scheduleId == null))
+    val uiState: StateFlow<ScheduleEditorUiState> = _uiState.asStateFlow()
 
     private val _uiEvents = MutableSharedFlow<ScheduleUiEvent>()
     val uiEvents = _uiEvents.asSharedFlow()
 
-    val perDayRepresentation: StateFlow<Map<DayOfWeek, List<TimeRange>>> = schedule
+    val perDayRepresentation: StateFlow<Map<DayOfWeek, List<TimeRange>>> = uiState
+        .map { it.schedule }
         .filterNotNull()
         .map { currentSchedule ->
             DayOfWeek.entries.associateWith { day ->
@@ -68,12 +72,19 @@ class ScheduleViewModel @Inject constructor(
     private fun loadSchedule() {
         viewModelScope.launch {
             if (scheduleId == null) {
-                _schedule.value = createNewSchedule()
+                _uiState.update {
+                    it.copy(
+                        schedule = createNewSchedule(),
+                        isLoading = false
+                    )
+                }
             } else {
-                scheduleRepository.getSchedule(scheduleId).collect {
-                    // Only set the value if it's the first time, to avoid overwriting user edits.
-                    if (_schedule.value == null) {
-                        _schedule.value = it ?: createNewSchedule(scheduleId)
+                scheduleRepository.getSchedule(scheduleId).collect { schedule ->
+                    _uiState.update {
+                        it.copy(
+                            schedule = it.schedule ?: schedule ?: createNewSchedule(scheduleId),
+                            isLoading = false
+                        )
                     }
                 }
             }
@@ -84,14 +95,12 @@ class ScheduleViewModel @Inject constructor(
         return Schedule(id = id, name = "", groups = emptyList())
     }
 
-    // --- General Actions ---
-
     fun setViewMode(mode: ScheduleViewMode) {
-        _viewMode.value = mode
+        _uiState.update { it.copy(viewMode = mode) }
     }
 
     fun saveSchedule() {
-        val currentSchedule = _schedule.value ?: return
+        val currentSchedule = _uiState.value.schedule ?: return
         viewModelScope.launch {
             when (val result = saveScheduleUseCase.execute(currentSchedule)) {
                 is SaveScheduleUseCase.Result.Success -> {
@@ -106,38 +115,45 @@ class ScheduleViewModel @Inject constructor(
         }
     }
 
-    // --- State Modification Actions ---
+    private fun updateSchedule(transform: (Schedule) -> Schedule) {
+        _uiState.update { state ->
+            state.schedule?.let {
+                state.copy(schedule = transform(it))
+            } ?: state
+        }
+    }
+
     fun updateScheduleName(name: String) {
-        _schedule.update { it?.let { schedule -> scheduleEditor.updateScheduleName(schedule, name) } }
+        updateSchedule { scheduleEditor.updateScheduleName(it, name) }
     }
 
     fun addGroup() {
-        _schedule.update { it?.let { schedule -> scheduleEditor.addGroup(schedule) } }
+        updateSchedule { scheduleEditor.addGroup(it) }
     }
 
     fun deleteGroup(groupId: String) {
-        _schedule.update { it?.let { schedule -> scheduleEditor.deleteGroup(schedule, groupId) } }
+        updateSchedule { scheduleEditor.deleteGroup(it, groupId) }
     }
 
     fun updateGroupName(
         groupId: String,
         newName: String
     ) {
-        _schedule.update { it?.let { schedule -> scheduleEditor.updateGroupName(schedule, groupId, newName) } }
+        updateSchedule { scheduleEditor.updateGroupName(it, groupId, newName) }
     }
 
     fun toggleDayInGroup(
         groupId: String,
         day: DayOfWeek
     ) {
-        _schedule.update { it?.let { schedule -> scheduleEditor.toggleDayInGroup(schedule, groupId, day) } }
+        updateSchedule { scheduleEditor.toggleDayInGroup(it, groupId, day) }
     }
 
     fun addTimeRangeToGroup(
         groupId: String,
         timeRange: TimeRange
     ) {
-        _schedule.update { it?.let { schedule -> scheduleEditor.addTimeRangeToGroup(schedule, groupId, timeRange) } }
+        updateSchedule { scheduleEditor.addTimeRangeToGroup(it, groupId, timeRange) }
     }
 
     fun updateTimeRangeInGroup(
@@ -145,21 +161,21 @@ class ScheduleViewModel @Inject constructor(
         old: TimeRange,
         new: TimeRange
     ) {
-        _schedule.update { it?.let { schedule -> scheduleEditor.updateTimeRangeInGroup(schedule, groupId, old, new) } }
+        updateSchedule { scheduleEditor.updateTimeRangeInGroup(it, groupId, old, new) }
     }
 
     fun deleteTimeRangeFromGroup(
         groupId: String,
         timeRange: TimeRange
     ) {
-        _schedule.update { it?.let { schedule -> scheduleEditor.deleteTimeRangeFromGroup(schedule, groupId, timeRange) } }
+        updateSchedule { scheduleEditor.deleteTimeRangeFromGroup(it, groupId, timeRange) }
     }
 
     fun addTimeRangeToDay(
         day: DayOfWeek,
         timeRange: TimeRange
     ) {
-        _schedule.update { it?.let { schedule -> scheduleEditor.addTimeRangeToDay(schedule, day, timeRange) } }
+        updateSchedule { scheduleEditor.addTimeRangeToDay(it, day, timeRange) }
     }
 
     fun updateTimeRangeInDay(
@@ -167,9 +183,9 @@ class ScheduleViewModel @Inject constructor(
         old: TimeRange,
         new: TimeRange
     ) {
-        _schedule.value?.let { currentSchedule ->
+        _uiState.value.schedule?.let { currentSchedule ->
             val result = scheduleEditor.updateTimeRangeInDay(currentSchedule, day, old, new)
-            _schedule.value = result.schedule
+            _uiState.update { it.copy(schedule = result.schedule) }
             result.userMessage?.let { message ->
                 viewModelScope.launch { _uiEvents.emit(ScheduleUiEvent.ShowSnackbar(message)) }
             }
@@ -180,9 +196,9 @@ class ScheduleViewModel @Inject constructor(
         day: DayOfWeek,
         timeRange: TimeRange
     ) {
-        _schedule.value?.let { currentSchedule ->
+        _uiState.value.schedule?.let { currentSchedule ->
             val result = scheduleEditor.deleteTimeRangeFromDay(currentSchedule, day, timeRange)
-            _schedule.value = result.schedule
+            _uiState.update { it.copy(schedule = result.schedule) }
             result.userMessage?.let { message ->
                 viewModelScope.launch { _uiEvents.emit(ScheduleUiEvent.ShowSnackbar(message)) }
             }

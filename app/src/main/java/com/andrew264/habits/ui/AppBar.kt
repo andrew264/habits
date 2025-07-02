@@ -81,13 +81,12 @@ fun MainTopAppBar(
     if (currentRoute.startsWith("schedule_editor")) {
         // Special handling for ScheduleEditorScreen as it has dynamic title and actions
         val viewModel: ScheduleViewModel = hiltViewModel(navBackStackEntry!!)
-        val schedule by viewModel.schedule.collectAsState()
-        val isNewSchedule = viewModel.isNewSchedule
+        val uiState by viewModel.uiState.collectAsState()
 
         TopAppBar(
             title = {
                 Text(
-                    text = if (isNewSchedule) "Create New Schedule" else "Update: ${schedule?.name.orEmpty()}",
+                    text = if (uiState.isNewSchedule) "Create New Schedule" else "Update: ${uiState.schedule?.name.orEmpty()}",
                     fontWeight = FontWeight.Medium
                 )
             },

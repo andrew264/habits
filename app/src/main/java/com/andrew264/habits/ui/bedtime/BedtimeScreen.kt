@@ -49,11 +49,7 @@ fun BedtimeScreen(
     modifier: Modifier = Modifier,
     viewModel: BedtimeViewModel = hiltViewModel()
 ) {
-    val timelineSegments by viewModel.timelineSegments.collectAsState()
-    val selectedTimelineRange by viewModel.selectedTimelineRange.collectAsState()
-    val allSchedules by viewModel.allSchedules.collectAsState()
-    val selectedSchedule by viewModel.selectedSchedule.collectAsState()
-    val scheduleInfo by viewModel.scheduleInfo.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     val view = LocalView.current
 
     Column(
@@ -96,7 +92,7 @@ fun BedtimeScreen(
                         val ranges = TimelineRange.entries
                         ranges.forEachIndexed { index, range ->
                             ElevatedToggleButton(
-                                checked = selectedTimelineRange == range,
+                                checked = uiState.selectedTimelineRange == range,
                                 onCheckedChange = {
                                     viewModel.setTimelineRange(range)
                                     view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
@@ -116,21 +112,21 @@ fun BedtimeScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Timeline Visualization
-                if (timelineSegments.isEmpty()) {
+                if (uiState.isLoading) {
+                    CircularProgressIndicator()
+                } else if (uiState.timelineSegments.isEmpty()) {
                     Text(
-                        text = if (selectedTimelineRange == TimelineRange.DAY)
-                            "Loading today's data or no data available yet..."
-                        else "Loading weekly data or no data available yet...",
+                        text = "No presence data available for this time range.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
                 } else {
                     UserPresenceTimeline(
-                        segments = timelineSegments,
-                        selectedRange = selectedTimelineRange,
-                        viewStartTimeMillis = viewModel.viewStartTimeMillis.collectAsState().value,
-                        viewEndTimeMillis = viewModel.viewEndTimeMillis.collectAsState().value,
+                        segments = uiState.timelineSegments,
+                        selectedRange = uiState.selectedTimelineRange,
+                        viewStartTimeMillis = uiState.viewStartTimeMillis,
+                        viewEndTimeMillis = uiState.viewEndTimeMillis,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(60.dp)
@@ -162,13 +158,13 @@ fun BedtimeScreen(
         )
 
         ScheduleSelector(
-            schedules = allSchedules,
-            selectedSchedule = selectedSchedule,
+            schedules = uiState.allSchedules,
+            selectedSchedule = uiState.selectedSchedule,
             onScheduleSelected = { viewModel.selectSchedule(it.id) },
             modifier = Modifier.fillMaxWidth()
         )
 
-        scheduleInfo?.let { info ->
+        uiState.scheduleInfo?.let { info ->
             ScheduleInfoCard(
                 scheduleInfo = info,
                 modifier = Modifier.fillMaxWidth()
