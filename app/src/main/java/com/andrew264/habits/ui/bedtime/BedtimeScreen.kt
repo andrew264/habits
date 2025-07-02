@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.andrew264.habits.domain.model.TimelineSegment
 import com.andrew264.habits.model.UserPresenceState
 import com.andrew264.habits.model.schedule.Schedule
 import java.text.SimpleDateFormat

@@ -35,8 +35,7 @@ import kotlinx.coroutines.launch
 )
 @Composable
 fun ContainerScreen(
-    destinationRoute: String?,
-    onRouteConsumed: () -> Unit,
+    viewModel: MainViewModel,
     onRequestPermissions: () -> Unit,
     onOpenAppSettings: () -> Unit
 ) {
@@ -44,20 +43,30 @@ fun ContainerScreen(
     val wideNavRailState = rememberWideNavigationRailState()
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    val uiState by viewModel.uiState.collectAsState()
 
     val isCompact =
         calculateWindowSizeClass(activity = LocalActivity.current as Activity).widthSizeClass == WindowWidthSizeClass.Compact
 
-    LaunchedEffect(destinationRoute) {
-        if (destinationRoute != null) {
-            navController.navigate(destinationRoute) {
+    // Handle one-time navigation events from the ViewModel
+    LaunchedEffect(uiState.destinationRoute) {
+        val route = uiState.destinationRoute
+        if (route != null) {
+            navController.navigate(route) {
                 popUpTo(navController.graph.findStartDestination().id) {
                     saveState = true
                 }
                 launchSingleTop = true
                 restoreState = true
             }
-            onRouteConsumed()
+            viewModel.onRouteConsumed()
+        }
+    }
+
+    // Handle initial permission check
+    LaunchedEffect(Unit) {
+        if (viewModel.needsInitialPermissionCheck()) {
+            onRequestPermissions()
         }
     }
 

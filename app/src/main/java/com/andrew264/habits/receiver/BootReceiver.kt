@@ -4,9 +4,9 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import com.andrew264.habits.domain.manager.WaterReminderManager
-import com.andrew264.habits.repository.SettingsRepository
-import com.andrew264.habits.service.UserPresenceService
+import com.andrew264.habits.domain.repository.SettingsRepository
+import com.andrew264.habits.domain.scheduler.WaterAlarmScheduler
+import com.andrew264.habits.domain.usecase.StartPresenceMonitoringUseCase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +25,10 @@ class BootReceiver : BroadcastReceiver() {
     lateinit var settingsRepository: SettingsRepository
 
     @Inject
-    lateinit var waterReminderManager: WaterReminderManager
+    lateinit var waterAlarmScheduler: WaterAlarmScheduler
+
+    @Inject
+    lateinit var startPresenceMonitoringUseCase: StartPresenceMonitoringUseCase
 
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
@@ -47,15 +50,7 @@ class BootReceiver : BroadcastReceiver() {
                     // Restart presence service if it was active
                     if (settings.isServiceActive) {
                         Log.d(TAG, "Service was persisted as active. Attempting to start UserPresenceService.")
-                        val serviceIntent = Intent(context, UserPresenceService::class.java).apply {
-                            action = UserPresenceService.ACTION_START_SERVICE
-                        }
-                        try {
-                            context.startForegroundService(serviceIntent)
-                            Log.i(TAG, "UserPresenceService start command sent on boot.")
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Error starting UserPresenceService on boot: ${e.message}", e)
-                        }
+                        startPresenceMonitoringUseCase.execute()
                     } else {
                         Log.d(TAG, "Service was persisted as inactive. Not starting on boot.")
                     }
@@ -63,7 +58,7 @@ class BootReceiver : BroadcastReceiver() {
                     // Reschedule water reminders if they were active
                     if (settings.isWaterTrackingEnabled && settings.isWaterReminderEnabled) {
                         Log.d(TAG, "Water reminders were active. Rescheduling first reminder.")
-                        waterReminderManager.scheduleNextReminder(settings.waterReminderIntervalMinutes.toLong())
+                        waterAlarmScheduler.scheduleNextReminder(settings.waterReminderIntervalMinutes.toLong())
                     }
 
                 } catch (e: Exception) {

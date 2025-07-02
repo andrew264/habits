@@ -1,4 +1,4 @@
-package com.andrew264.habits.repository
+package com.andrew264.habits.data.repository
 
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.andrew264.habits.data.preferences.DataStoreKeys
+import com.andrew264.habits.domain.model.PersistentSettings
+import com.andrew264.habits.domain.repository.SettingsRepository
 import com.andrew264.habits.model.schedule.DefaultSchedules
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -19,9 +21,9 @@ import javax.inject.Singleton
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "habits_settings")
 
 @Singleton
-class SettingsRepository @Inject constructor(@ApplicationContext private val context: Context) {
+class SettingsRepositoryImpl @Inject constructor(@param:ApplicationContext private val context: Context) : SettingsRepository {
 
-    val settingsFlow: Flow<PersistentSettings> = context.dataStore.data
+    override val settingsFlow: Flow<PersistentSettings> = context.dataStore.data
         .catch { exception ->
             if (exception is IOException) {
                 emit(emptyPreferences())
@@ -54,13 +56,13 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
             )
         }
 
-    suspend fun updateServiceActiveState(isActive: Boolean) {
+    override suspend fun updateServiceActiveState(isActive: Boolean) {
         context.dataStore.edit { settings ->
             settings[DataStoreKeys.IS_SERVICE_ACTIVE] = isActive
         }
     }
 
-    suspend fun updateSelectedScheduleId(scheduleId: String?) {
+    override suspend fun updateSelectedScheduleId(scheduleId: String?) {
         context.dataStore.edit { settings ->
             if (scheduleId != null) {
                 settings[DataStoreKeys.SELECTED_SCHEDULE_ID] = scheduleId
@@ -72,37 +74,37 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
 
     // --- Water Tracking Settings Updaters ---
 
-    suspend fun updateWaterTrackingEnabled(isEnabled: Boolean) {
+    override suspend fun updateWaterTrackingEnabled(isEnabled: Boolean) {
         context.dataStore.edit { settings ->
             settings[DataStoreKeys.WATER_TRACKING_ENABLED] = isEnabled
         }
     }
 
-    suspend fun updateWaterDailyTarget(targetMl: Int) {
+    override suspend fun updateWaterDailyTarget(targetMl: Int) {
         context.dataStore.edit { settings ->
             settings[DataStoreKeys.WATER_DAILY_TARGET_ML] = targetMl
         }
     }
 
-    suspend fun updateWaterReminderEnabled(isEnabled: Boolean) {
+    override suspend fun updateWaterReminderEnabled(isEnabled: Boolean) {
         context.dataStore.edit { settings ->
             settings[DataStoreKeys.WATER_REMINDER_ENABLED] = isEnabled
         }
     }
 
-    suspend fun updateWaterReminderInterval(minutes: Int) {
+    override suspend fun updateWaterReminderInterval(minutes: Int) {
         context.dataStore.edit { settings ->
             settings[DataStoreKeys.WATER_REMINDER_INTERVAL_MINUTES] = minutes
         }
     }
 
-    suspend fun updateWaterReminderSnoozeTime(minutes: Int) {
+    override suspend fun updateWaterReminderSnoozeTime(minutes: Int) {
         context.dataStore.edit { settings ->
             settings[DataStoreKeys.WATER_REMINDER_SNOOZE_MINUTES] = minutes
         }
     }
 
-    suspend fun updateWaterReminderSchedule(scheduleId: String) {
+    override suspend fun updateWaterReminderSchedule(scheduleId: String) {
         context.dataStore.edit { settings ->
             settings[DataStoreKeys.WATER_REMINDER_SCHEDULE_ID] = scheduleId
         }

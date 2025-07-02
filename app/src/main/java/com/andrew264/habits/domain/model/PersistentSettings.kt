@@ -1,4 +1,4 @@
-package com.andrew264.habits.repository
+package com.andrew264.habits.domain.model
 
 data class PersistentSettings(
     val isServiceActive: Boolean,

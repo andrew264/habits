@@ -1,10 +1,11 @@
-package com.andrew264.habits.domain.manager
+package com.andrew264.habits.data.scheduler
 
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import com.andrew264.habits.domain.scheduler.WaterAlarmScheduler
 import com.andrew264.habits.receiver.WaterReminderReceiver
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.concurrent.TimeUnit
@@ -12,27 +13,20 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class WaterReminderManager @Inject constructor(
-    @ApplicationContext private val context: Context
-) {
+class WaterAlarmSchedulerImpl @Inject constructor(
+    @param:ApplicationContext private val context: Context
+) : WaterAlarmScheduler {
+
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
     companion object {
-        private const val TAG = "WaterReminderManager"
+        private const val TAG = "WaterAlarmScheduler"
         private const val REMINDER_REQUEST_CODE = 2001
     }
 
-    fun scheduleNextReminder(intervalMinutes: Long) {
+    override fun scheduleNextReminder(intervalMinutes: Long) {
         val triggerAtMillis = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(intervalMinutes)
-        val intent = Intent(context, WaterReminderReceiver::class.java).apply {
-            action = WaterReminderReceiver.ACTION_WATER_REMINDER_ALARM
-        }
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            REMINDER_REQUEST_CODE,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val pendingIntent = createPendingIntent()
 
         try {
             alarmManager.setExactAndAllowWhileIdle(
@@ -42,22 +36,13 @@ class WaterReminderManager @Inject constructor(
             )
             Log.d(TAG, "Scheduled next water reminder for $intervalMinutes minutes from now.")
         } catch (e: SecurityException) {
-            Log.e(TAG, "Could not schedule exact alarm. Check for SCHEDULE_EXACT_ALARM permission if required on API 31+.", e)
-            // Fallback or notify user if this permission becomes necessary
+            Log.e(TAG, "Could not schedule exact alarm. Check for SCHEDULE_EXACT_ALARM permission.", e)
         }
     }
 
-    fun handleSnooze(snoozeMinutes: Long) {
+    override fun handleSnooze(snoozeMinutes: Long) {
         val triggerAtMillis = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(snoozeMinutes)
-        val intent = Intent(context, WaterReminderReceiver::class.java).apply {
-            action = WaterReminderReceiver.ACTION_WATER_REMINDER_ALARM
-        }
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            REMINDER_REQUEST_CODE,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val pendingIntent = createPendingIntent()
 
         alarmManager.setExactAndAllowWhileIdle(
             AlarmManager.RTC_WAKEUP,
@@ -67,7 +52,7 @@ class WaterReminderManager @Inject constructor(
         Log.d(TAG, "Snoozed water reminder for $snoozeMinutes minutes.")
     }
 
-    fun cancelReminders() {
+    override fun cancelReminders() {
         val intent = Intent(context, WaterReminderReceiver::class.java).apply {
             action = WaterReminderReceiver.ACTION_WATER_REMINDER_ALARM
         }
@@ -83,5 +68,17 @@ class WaterReminderManager @Inject constructor(
             pendingIntent.cancel()
             Log.d(TAG, "Canceled water reminders.")
         }
+    }
+
+    private fun createPendingIntent(): PendingIntent {
+        val intent = Intent(context, WaterReminderReceiver::class.java).apply {
+            action = WaterReminderReceiver.ACTION_WATER_REMINDER_ALARM
+        }
+        return PendingIntent.getBroadcast(
+            context,
+            REMINDER_REQUEST_CODE,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
     }
 }

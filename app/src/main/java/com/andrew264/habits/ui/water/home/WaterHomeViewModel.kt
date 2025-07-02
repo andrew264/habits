@@ -3,12 +3,11 @@ package com.andrew264.habits.ui.water.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andrew264.habits.data.entity.WaterIntakeEntry
-import com.andrew264.habits.repository.SettingsRepository
-import com.andrew264.habits.repository.WaterRepository
+import com.andrew264.habits.domain.usecase.GetWaterHomeUiStateUseCase
+import com.andrew264.habits.domain.usecase.LogWaterUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -23,39 +22,20 @@ data class WaterHomeUiState(
 
 @HiltViewModel
 class WaterHomeViewModel @Inject constructor(
-    private val waterRepository: WaterRepository,
-    settingsRepository: SettingsRepository
+    getWaterHomeUiStateUseCase: GetWaterHomeUiStateUseCase,
+    private val logWaterUseCase: LogWaterUseCase
 ) : ViewModel() {
 
-    private val todaysIntakeFlow = waterRepository.getTodaysIntakeFlow()
-
-    val uiState: StateFlow<WaterHomeUiState> = combine(
-        settingsRepository.settingsFlow,
-        todaysIntakeFlow
-    ) { settings, todaysLog ->
-        val todaysIntakeMl = todaysLog.sumOf { it.amountMl }
-        val progress = if (settings.waterDailyTargetMl > 0) {
-            (todaysIntakeMl.toFloat() / settings.waterDailyTargetMl.toFloat()).coerceIn(0f, 1f)
-        } else {
-            0f
-        }
-
-        WaterHomeUiState(
-            isEnabled = settings.isWaterTrackingEnabled,
-            dailyTargetMl = settings.waterDailyTargetMl,
-            todaysIntakeMl = todaysIntakeMl,
-            todaysLog = todaysLog,
-            progress = progress
+    val uiState: StateFlow<WaterHomeUiState> = getWaterHomeUiStateUseCase.execute()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = WaterHomeUiState()
         )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = WaterHomeUiState()
-    )
 
     fun logWater(amountMl: Int) {
         viewModelScope.launch {
-            waterRepository.logWater(amountMl)
+            logWaterUseCase.execute(amountMl)
         }
     }
 }

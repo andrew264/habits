@@ -11,12 +11,12 @@ import androidx.core.app.NotificationCompat
 import com.andrew264.habits.MainActivity
 import com.andrew264.habits.R
 import com.andrew264.habits.domain.analyzer.ScheduleAnalyzer
-import com.andrew264.habits.domain.manager.WaterReminderManager
+import com.andrew264.habits.domain.repository.ScheduleRepository
+import com.andrew264.habits.domain.repository.SettingsRepository
+import com.andrew264.habits.domain.repository.UserPresenceHistoryRepository
+import com.andrew264.habits.domain.repository.WaterRepository
+import com.andrew264.habits.domain.scheduler.WaterAlarmScheduler
 import com.andrew264.habits.model.UserPresenceState
-import com.andrew264.habits.repository.ScheduleRepository
-import com.andrew264.habits.repository.SettingsRepository
-import com.andrew264.habits.repository.UserPresenceHistoryRepository
-import com.andrew264.habits.repository.WaterRepository
 import com.andrew264.habits.ui.navigation.Screen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -39,7 +39,7 @@ class WaterReminderReceiver : BroadcastReceiver() {
     lateinit var scheduleRepository: ScheduleRepository
 
     @Inject
-    lateinit var waterReminderManager: WaterReminderManager
+    lateinit var waterAlarmScheduler: WaterAlarmScheduler
 
     @Inject
     lateinit var userPresenceHistoryRepository: UserPresenceHistoryRepository
@@ -84,7 +84,7 @@ class WaterReminderReceiver : BroadcastReceiver() {
         // --- Condition Checks ---
         if (!settings.isWaterTrackingEnabled || !settings.isWaterReminderEnabled) {
             Log.d(TAG, "Aborting reminder: Feature disabled in settings.")
-            waterReminderManager.cancelReminders() // Clean up alarms if feature is off
+            waterAlarmScheduler.cancelReminders() // Clean up alarms if feature is off
             return
         }
 
@@ -92,7 +92,7 @@ class WaterReminderReceiver : BroadcastReceiver() {
         if (currentUserState != UserPresenceState.AWAKE) {
             Log.d(TAG, "Aborting reminder: User is not AWAKE. Current state: $currentUserState")
             // Reschedule for later, so we don't miss reminders completely
-            waterReminderManager.scheduleNextReminder(settings.waterReminderIntervalMinutes.toLong())
+            waterAlarmScheduler.scheduleNextReminder(settings.waterReminderIntervalMinutes.toLong())
             return
         }
 
@@ -100,7 +100,7 @@ class WaterReminderReceiver : BroadcastReceiver() {
         val analyzer = schedule?.let { ScheduleAnalyzer(it.groups) }
         if (analyzer?.isCurrentTimeInSchedule() == false) {
             Log.d(TAG, "Aborting reminder: Current time is outside the selected schedule.")
-            waterReminderManager.scheduleNextReminder(settings.waterReminderIntervalMinutes.toLong())
+            waterAlarmScheduler.scheduleNextReminder(settings.waterReminderIntervalMinutes.toLong())
             return
         }
 
@@ -109,7 +109,7 @@ class WaterReminderReceiver : BroadcastReceiver() {
         showReminderNotification(context, settings.waterReminderSnoozeMinutes)
 
         // --- Reschedule ---
-        waterReminderManager.scheduleNextReminder(settings.waterReminderIntervalMinutes.toLong())
+        waterAlarmScheduler.scheduleNextReminder(settings.waterReminderIntervalMinutes.toLong())
     }
 
     private suspend fun handleLogWaterAction(context: Context) {
@@ -120,13 +120,13 @@ class WaterReminderReceiver : BroadcastReceiver() {
         // Re-schedule next reminder based on settings
         val settings = settingsRepository.settingsFlow.first()
         if (settings.isWaterReminderEnabled) {
-            waterReminderManager.scheduleNextReminder(settings.waterReminderIntervalMinutes.toLong())
+            waterAlarmScheduler.scheduleNextReminder(settings.waterReminderIntervalMinutes.toLong())
         }
     }
 
     private suspend fun handleSnoozeAction(context: Context) {
         val settings = settingsRepository.settingsFlow.first()
-        waterReminderManager.handleSnooze(settings.waterReminderSnoozeMinutes.toLong())
+        waterAlarmScheduler.handleSnooze(settings.waterReminderSnoozeMinutes.toLong())
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancel(NOTIFICATION_ID)
         Log.d(TAG, "Snoozed reminder from notification action.")

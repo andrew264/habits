@@ -2,12 +2,14 @@ package com.andrew264.habits.ui.schedule.list
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.andrew264.habits.model.schedule.DefaultSchedules
+import com.andrew264.habits.domain.repository.ScheduleRepository
+import com.andrew264.habits.domain.usecase.DeleteScheduleUseCase
 import com.andrew264.habits.model.schedule.Schedule
-import com.andrew264.habits.repository.ScheduleRepository
-import com.andrew264.habits.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -21,7 +23,7 @@ sealed interface SchedulesUiEvent {
 @HiltViewModel
 class SchedulesViewModel @Inject constructor(
     private val scheduleRepository: ScheduleRepository,
-    private val settingsRepository: SettingsRepository
+    private val deleteScheduleUseCase: DeleteScheduleUseCase
 ) : ViewModel() {
 
     val schedules = scheduleRepository.getAllSchedules()
@@ -38,39 +40,23 @@ class SchedulesViewModel @Inject constructor(
 
     fun onDeleteSchedule(schedule: Schedule) {
         viewModelScope.launch {
-            // Prevent deletion if the schedule is assigned
-            val currentSettings = settingsRepository.settingsFlow.first()
-            val isSleepSchedule = currentSettings.selectedScheduleId == schedule.id
-            val isWaterSchedule = currentSettings.waterReminderScheduleId == schedule.id
-
-            if (schedule.id == DefaultSchedules.DEFAULT_SLEEP_SCHEDULE_ID) {
-                _uiEvents.emit(
-                    SchedulesUiEvent.ShowSnackbar(message = "The default schedule cannot be deleted.")
-                )
-                return@launch
-            }
-
-            if (isSleepSchedule || isWaterSchedule) {
-                val usage = when {
-                    isSleepSchedule && isWaterSchedule -> "sleep tracking and water reminders"
-                    isSleepSchedule -> "sleep tracking"
-                    else -> "water reminders"
+            when (val result = deleteScheduleUseCase.execute(schedule)) {
+                is DeleteScheduleUseCase.Result.Success -> {
+                    lastDeletedSchedule = schedule
+                    _uiEvents.emit(
+                        SchedulesUiEvent.ShowSnackbar(
+                            message = "'${schedule.name}' deleted",
+                            actionLabel = "Undo"
+                        )
+                    )
                 }
-                _uiEvents.emit(
-                    SchedulesUiEvent.ShowSnackbar(message = "Cannot delete schedule. It's assigned to $usage.")
-                )
-                return@launch
-            }
 
-            // Proceed with deletion
-            lastDeletedSchedule = schedule
-            scheduleRepository.deleteSchedule(schedule)
-            _uiEvents.emit(
-                SchedulesUiEvent.ShowSnackbar(
-                    message = "'${schedule.name}' deleted",
-                    actionLabel = "Undo"
-                )
-            )
+                is DeleteScheduleUseCase.Result.Failure -> {
+                    _uiEvents.emit(
+                        SchedulesUiEvent.ShowSnackbar(message = result.message)
+                    )
+                }
+            }
         }
     }
 
