@@ -15,8 +15,8 @@ import com.andrew264.habits.domain.manager.WaterReminderManager
 import com.andrew264.habits.model.UserPresenceState
 import com.andrew264.habits.repository.ScheduleRepository
 import com.andrew264.habits.repository.SettingsRepository
+import com.andrew264.habits.repository.UserPresenceHistoryRepository
 import com.andrew264.habits.repository.WaterRepository
-import com.andrew264.habits.service.UserPresenceService
 import com.andrew264.habits.ui.navigation.Screen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -40,6 +40,9 @@ class WaterReminderReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var waterReminderManager: WaterReminderManager
+
+    @Inject
+    lateinit var userPresenceHistoryRepository: UserPresenceHistoryRepository
 
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
@@ -85,8 +88,9 @@ class WaterReminderReceiver : BroadcastReceiver() {
             return
         }
 
-        if (UserPresenceService.userPresenceState.value != UserPresenceState.AWAKE) {
-            Log.d(TAG, "Aborting reminder: User is not AWAKE. Current state: ${UserPresenceService.userPresenceState.value}")
+        val currentUserState = userPresenceHistoryRepository.userPresenceState.value
+        if (currentUserState != UserPresenceState.AWAKE) {
+            Log.d(TAG, "Aborting reminder: User is not AWAKE. Current state: $currentUserState")
             // Reschedule for later, so we don't miss reminders completely
             waterReminderManager.scheduleNextReminder(settings.waterReminderIntervalMinutes.toLong())
             return

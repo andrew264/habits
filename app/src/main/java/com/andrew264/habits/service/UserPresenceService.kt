@@ -27,7 +27,10 @@ import com.google.android.gms.location.SleepSegmentEvent
 import com.google.android.gms.location.SleepSegmentRequest
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -58,36 +61,6 @@ class UserPresenceService : Service() {
 
         const val EXTRA_SLEEP_SEGMENTS = "com.andrew264.habits.extra.SLEEP_SEGMENTS"
         const val EXTRA_SLEEP_CLASSIFY_EVENTS = "com.andrew264.habits.extra.SLEEP_CLASSIFY_EVENTS"
-
-        private val _userPresenceStateFlow = MutableStateFlow(UserPresenceState.UNKNOWN)
-        val userPresenceState: StateFlow<UserPresenceState> get() = _userPresenceStateFlow.asStateFlow()
-
-        private val _isServiceActiveFlow = MutableStateFlow(false)
-        val isServiceActive: StateFlow<Boolean> get() = _isServiceActiveFlow.asStateFlow()
-
-        private fun updateUserPresenceStateInternal(
-            newState: UserPresenceState,
-            reason: String,
-            repository: UserPresenceHistoryRepository?,
-            scope: CoroutineScope
-        ) {
-            val oldState = _userPresenceStateFlow.value
-            if (oldState != newState) {
-                _userPresenceStateFlow.value = newState
-                Log.i(TAG, "STATE CHANGE: User presence -> $newState (Reason: $reason)")
-                repository?.let { repo ->
-                    scope.launch {
-                        try {
-                            val timestamp = System.currentTimeMillis()
-                            repo.addPresenceEvent(newState, timestamp)
-                            Log.d(TAG, "Logged presence event: $newState at $timestamp")
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Failed to log presence event to DB", e)
-                        }
-                    }
-                } ?: Log.w(TAG, "UserPresenceHistoryRepository not available when trying to log state change.")
-            }
-        }
     }
 
     @Inject
@@ -122,6 +95,8 @@ class UserPresenceService : Service() {
     private var _isServiceActuallyRunning = false
     private var scheduleAnalyzer: ScheduleAnalyzer? = null
 
+    private var currentPresenceState = UserPresenceState.UNKNOWN
+
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "Service Created")
@@ -129,12 +104,19 @@ class UserPresenceService : Service() {
         initializeScheduleAnalyzer()
 
         serviceScope.launch {
+            userPresenceHistoryRepository.userPresenceState.collect { state ->
+                currentPresenceState = state
+                updateNotificationContentOnly()
+            }
+        }
+
+        serviceScope.launch {
             settingsRepository.settingsFlow.collect { settings ->
                 Log.d(
                     TAG,
                     "Settings loaded/changed: Active=${settings.isServiceActive}, ScheduleId=${settings.selectedScheduleId}"
                 )
-                _isServiceActiveFlow.value = settings.isServiceActive
+                userPresenceHistoryRepository.updateServiceActiveState(settings.isServiceActive)
 
                 if (settings.isServiceActive && !_isServiceActuallyRunning) {
                     Log.d(TAG, "Service persisted as active, and not running. Starting monitoring logic.")
@@ -172,7 +154,6 @@ class UserPresenceService : Service() {
                         Log.w(TAG, "Selected schedule was null, falling back to default.")
                         ScheduleAnalyzer(DefaultSchedules.defaultSleepSchedule.groups)
                     }
-                    // Re-evaluate state whenever the schedule changes
                     if (_isServiceActuallyRunning) {
                         evaluateState(EvaluationSource.SCHEDULE_CHANGE)
                     }
@@ -191,7 +172,7 @@ class UserPresenceService : Service() {
         serviceScope.launch {
             when (intent?.action) {
                 ACTION_START_SERVICE -> {
-                    if (!_isServiceActiveFlow.value) {
+                    if (!userPresenceHistoryRepository.isServiceActive.value) {
                         Log.i(TAG, "ACTION_START_SERVICE: Persisting active state.")
                         settingsRepository.updateServiceActiveState(true)
                     } else if (!_isServiceActuallyRunning) {
@@ -218,7 +199,7 @@ class UserPresenceService : Service() {
                 }
             }
         }
-        return if (intent?.action == ACTION_STOP_SERVICE && !_isServiceActiveFlow.value) START_NOT_STICKY else START_STICKY
+        return if (intent?.action == ACTION_STOP_SERVICE && !userPresenceHistoryRepository.isServiceActive.value) START_NOT_STICKY else START_STICKY
     }
 
     private fun startAllMonitoringLogic() {
@@ -238,15 +219,14 @@ class UserPresenceService : Service() {
         registerScreenStateReceiver()
 
         startForeground(NOTIFICATION_ID, createNotification())
-        // Initial state evaluation
         evaluateState(if ((getSystemService(POWER_SERVICE) as PowerManager).isInteractive) EvaluationSource.SCREEN_ON else EvaluationSource.SCREEN_OFF)
     }
 
     private fun stopAllMonitoringLogic() {
         if (!_isServiceActuallyRunning) {
             Log.d(TAG, "Stop logic called, but service monitoring is not active.")
-            if (_userPresenceStateFlow.value != UserPresenceState.UNKNOWN) {
-                updateUserPresenceStateInternal(UserPresenceState.UNKNOWN, "Service Monitoring Stopped", userPresenceHistoryRepository, serviceScope)
+            if (userPresenceHistoryRepository.userPresenceState.value != UserPresenceState.UNKNOWN) {
+                updateUserPresenceStateInternal(UserPresenceState.UNKNOWN, "Service Monitoring Stopped")
             }
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
@@ -259,9 +239,20 @@ class UserPresenceService : Service() {
             unsubscribeFromSleepUpdates()
         }
         unregisterScreenStateReceiver()
-        updateUserPresenceStateInternal(UserPresenceState.UNKNOWN, "Service Monitoring Stopped", userPresenceHistoryRepository, serviceScope)
+        updateUserPresenceStateInternal(UserPresenceState.UNKNOWN, "Service Monitoring Stopped")
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
+    }
+
+    private fun updateUserPresenceStateInternal(
+        newState: UserPresenceState,
+        reason: String
+    ) {
+        val oldState = currentPresenceState
+        if (oldState != newState) {
+            userPresenceHistoryRepository.updateUserPresenceState(newState)
+            Log.i(TAG, "STATE CHANGE: User presence -> $newState (Reason: $reason)")
+        }
     }
 
     private fun updateNotificationContentOnly() {
@@ -278,7 +269,7 @@ class UserPresenceService : Service() {
         val pendingIntent =
             PendingIntent.getActivity(this, 0, notificationIntent, pendingIntentFlags)
 
-        val currentPresenceText = _userPresenceStateFlow.value.name.replace('_', ' ')
+        val currentPresenceText = currentPresenceState.name.replace('_', ' ')
         val baseText = if (isSleepApiAvailable) "Sleep API & Schedule" else "Schedule Only"
         val contentText = "$baseText Active. State: $currentPresenceText"
 
@@ -297,7 +288,7 @@ class UserPresenceService : Service() {
         source: EvaluationSource,
         data: Any? = null
     ) {
-        val oldState = _userPresenceStateFlow.value
+        val oldState = currentPresenceState
         var newState = oldState
         var reason = "No change"
         val isScheduledTime = isWithinScheduledTime()
@@ -346,12 +337,11 @@ class UserPresenceService : Service() {
         }
 
         if (newState != oldState) {
-            updateUserPresenceStateInternal(newState, reason, userPresenceHistoryRepository, serviceScope)
+            updateUserPresenceStateInternal(newState, reason)
         } else {
             Log.d(TAG, "State unchanged: $oldState ($reason)")
         }
 
-        updateNotificationContentOnly()
     }
 
     private fun isWithinScheduledTime(): Boolean {
@@ -445,14 +435,12 @@ class UserPresenceService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "Service Destroying. Cleaning up all resources.")
-        if (_isServiceActuallyRunning && _userPresenceStateFlow.value != UserPresenceState.UNKNOWN) {
-            updateUserPresenceStateInternal(UserPresenceState.UNKNOWN, "Service Destroyed", userPresenceHistoryRepository, serviceScope)
-        }
         if (_isServiceActuallyRunning) {
+            updateUserPresenceStateInternal(UserPresenceState.UNKNOWN, "Service Destroyed")
             stopAllMonitoringLogic()
         }
         serviceJob.cancel()
-        Log.d(TAG, "Service Destroyed. Final state: ${_userPresenceStateFlow.value}")
+        Log.d(TAG, "Service Destroyed. Final state: $currentPresenceState")
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

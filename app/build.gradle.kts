@@ -10,12 +10,12 @@ plugins {
 
 android {
     namespace = "com.andrew264.habits"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.andrew264.habits"
-        minSdk = 31
-        targetSdk = 35
+        minSdk = 33
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 

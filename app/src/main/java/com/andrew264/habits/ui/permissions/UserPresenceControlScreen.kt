@@ -16,7 +16,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.andrew264.habits.model.UserPresenceState
-import com.andrew264.habits.service.UserPresenceService
 import com.andrew264.habits.ui.theme.HabitsTheme
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -27,8 +26,8 @@ fun UserPresenceControlScreen(
     onRequestPermissions: () -> Unit,
     onOpenAppSettings: () -> Unit
 ) {
-    val presenceState by UserPresenceService.userPresenceState.collectAsState()
-    val isServiceActive by UserPresenceService.isServiceActive.collectAsState()
+    val presenceState by viewModel.presenceState.collectAsState()
+    val isServiceActive by viewModel.isServiceActive.collectAsState()
     val view = LocalView.current
 
     Column(
