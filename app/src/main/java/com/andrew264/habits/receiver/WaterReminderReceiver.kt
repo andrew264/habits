@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.andrew264.habits.MainActivity
 import com.andrew264.habits.R
 import com.andrew264.habits.domain.analyzer.ScheduleAnalyzer
 import com.andrew264.habits.domain.manager.WaterReminderManager
@@ -16,6 +17,7 @@ import com.andrew264.habits.repository.ScheduleRepository
 import com.andrew264.habits.repository.SettingsRepository
 import com.andrew264.habits.repository.WaterRepository
 import com.andrew264.habits.service.UserPresenceService
+import com.andrew264.habits.ui.navigation.Screen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -133,6 +135,18 @@ class WaterReminderReceiver : BroadcastReceiver() {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         createNotificationChannel(notificationManager)
 
+        // Content Intent to open the app to the water screen
+        val openAppIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("destination_route", Screen.Water.route)
+        }
+        val openAppPendingIntent = PendingIntent.getActivity(
+            context,
+            Screen.Water.route.hashCode(), // Unique request code
+            openAppIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         // Log Action
         val logIntent = Intent(context, WaterReminderReceiver::class.java).apply {
             action = ACTION_LOG_WATER_QUICK
@@ -161,6 +175,7 @@ class WaterReminderReceiver : BroadcastReceiver() {
             .setContentText("Don't forget to drink some water.")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
+            .setContentIntent(openAppPendingIntent)
             .addAction(R.drawable.ic_launcher_foreground, "Log ${QUICK_ADD_AMOUNT_ML}ml", logPendingIntent)
             .addAction(R.drawable.ic_launcher_foreground, "Snooze ($snoozeMinutes min)", snoozePendingIntent)
             .build()

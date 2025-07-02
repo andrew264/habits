@@ -8,6 +8,9 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
 import com.andrew264.habits.domain.controller.UserPresenceController
 import com.andrew264.habits.repository.SettingsRepository
@@ -31,6 +34,7 @@ class MainActivity : ComponentActivity() {
     lateinit var settingsRepository: SettingsRepository
 
     private var initialPermissionCheckDone = false
+    private var destinationRoute by mutableStateOf<String?>(null)
 
     companion object {
         private const val KEY_INITIAL_PERMISSION_CHECK_DONE = "initialPermissionCheckDone"
@@ -39,6 +43,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        handleIntent(intent)
 
         permissionHandler =
             PermissionHandler(this) { activityRecognitionGranted, notificationsGranted ->
@@ -56,6 +62,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             HabitsTheme {
                 ContainerScreen(
+                    destinationRoute = destinationRoute,
+                    onRouteConsumed = { destinationRoute = null },
                     onRequestPermissions = { permissionHandler.requestRelevantPermissions() },
                     onOpenAppSettings = { openAppSettings() }
                 )
@@ -63,9 +71,22 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent)
+    }
+
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putBoolean(KEY_INITIAL_PERMISSION_CHECK_DONE, initialPermissionCheckDone)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        if (intent == null || (intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_LAUNCHER))) {
+            return
+        }
+        destinationRoute = intent.getStringExtra("destination_route")
     }
 
     private fun handlePermissionResults(

@@ -14,10 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
@@ -38,6 +35,8 @@ import kotlinx.coroutines.launch
 )
 @Composable
 fun ContainerScreen(
+    destinationRoute: String?,
+    onRouteConsumed: () -> Unit,
     onRequestPermissions: () -> Unit,
     onOpenAppSettings: () -> Unit
 ) {
@@ -48,6 +47,19 @@ fun ContainerScreen(
 
     val isCompact =
         calculateWindowSizeClass(activity = LocalActivity.current as Activity).widthSizeClass == WindowWidthSizeClass.Compact
+
+    LaunchedEffect(destinationRoute) {
+        if (destinationRoute != null) {
+            navController.navigate(destinationRoute) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
+            }
+            onRouteConsumed()
+        }
+    }
 
     Row(Modifier.fillMaxSize()) {
         AppNavigationRail(
