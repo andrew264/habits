@@ -9,8 +9,8 @@ import com.andrew264.habits.domain.repository.UserPresenceHistoryRepository
 import com.andrew264.habits.model.UserPresenceState
 import com.andrew264.habits.model.schedule.DefaultSchedules
 import com.andrew264.habits.model.schedule.Schedule
+import com.andrew264.habits.ui.bedtime.BedtimeChartRange
 import com.andrew264.habits.ui.bedtime.ScheduleInfo
-import com.andrew264.habits.ui.bedtime.TimelineRange
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -25,8 +25,8 @@ import javax.inject.Inject
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class GetBedtimeScreenDataUseCase @Inject constructor(
-    private val settingsRepository: SettingsRepository,
-    private val scheduleRepository: ScheduleRepository,
+    settingsRepository: SettingsRepository,
+    scheduleRepository: ScheduleRepository,
     private val userPresenceHistoryRepository: UserPresenceHistoryRepository
 ) {
     val allSchedules: Flow<List<Schedule>> = scheduleRepository.getAllSchedules()
@@ -50,7 +50,7 @@ class GetBedtimeScreenDataUseCase @Inject constructor(
         )
     }
 
-    fun getTimelineSegments(range: TimelineRange): Flow<List<TimelineSegment>> {
+    fun getTimelineSegments(range: BedtimeChartRange): Flow<List<TimelineSegment>> {
         val now = System.currentTimeMillis()
         val viewEnd: Long = now
         val viewStart: Long = now - range.durationMillis

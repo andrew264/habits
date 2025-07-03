@@ -15,13 +15,15 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-enum class TimelineRange(
+enum class BedtimeChartRange(
     val label: String,
-    val durationMillis: Long
+    val durationMillis: Long,
+    val isLinear: Boolean
 ) {
-    TWELVE_HOURS("12 Hr", TimeUnit.HOURS.toMillis(12)),
-    DAY("1 Day", TimeUnit.DAYS.toMillis(1)),
-    WEEK("7 Days", TimeUnit.DAYS.toMillis(7))
+    TWELVE_HOURS("12 Hr", TimeUnit.HOURS.toMillis(12), true),
+    DAY("1 Day", TimeUnit.DAYS.toMillis(1), true),
+    WEEK("7 Days", TimeUnit.DAYS.toMillis(7), false),
+    MONTH("30 Days", TimeUnit.DAYS.toMillis(30), false)
 }
 
 data class ScheduleInfo(
@@ -31,7 +33,7 @@ data class ScheduleInfo(
 
 data class BedtimeUiState(
     val timelineSegments: List<TimelineSegment> = emptyList(),
-    val selectedTimelineRange: TimelineRange = TimelineRange.DAY,
+    val selectedTimelineRange: BedtimeChartRange = BedtimeChartRange.DAY,
     val allSchedules: List<Schedule> = listOf(DefaultSchedules.defaultSleepSchedule),
     val selectedSchedule: Schedule = DefaultSchedules.defaultSleepSchedule,
     val scheduleInfo: ScheduleInfo? = null,
@@ -47,7 +49,7 @@ class BedtimeViewModel @Inject constructor(
     private val setSleepScheduleUseCase: SetSleepScheduleUseCase
 ) : ViewModel() {
 
-    private val _selectedTimelineRange = MutableStateFlow(TimelineRange.DAY)
+    private val _selectedTimelineRange = MutableStateFlow(BedtimeChartRange.DAY)
     private val _uiState = MutableStateFlow(BedtimeUiState())
     val uiState = _uiState.asStateFlow()
 
@@ -81,7 +83,7 @@ class BedtimeViewModel @Inject constructor(
         }
     }
 
-    fun setTimelineRange(range: TimelineRange) {
+    fun setTimelineRange(range: BedtimeChartRange) {
         _selectedTimelineRange.value = range
     }
 

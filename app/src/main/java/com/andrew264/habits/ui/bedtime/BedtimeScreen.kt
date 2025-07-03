@@ -1,6 +1,7 @@
 package com.andrew264.habits.ui.bedtime
 
 import android.view.HapticFeedbackConstants
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -22,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.andrew264.habits.model.UserPresenceState
 import com.andrew264.habits.model.schedule.Schedule
+import com.andrew264.habits.ui.common.charts.SleepChart
 import com.andrew264.habits.ui.common.charts.TimelineChart
 import com.andrew264.habits.ui.common.charts.TimelineLabelStrategy
 import java.util.Locale
@@ -55,7 +57,7 @@ fun BedtimeScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    "Presence History",
+                    "Sleep History",
                     style = MaterialTheme.typography.headlineSmall,
                     textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Bold
@@ -72,7 +74,7 @@ fun BedtimeScreen(
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
                     ) {
-                        val ranges = TimelineRange.entries
+                        val ranges = BedtimeChartRange.entries
                         ranges.forEachIndexed { index, range ->
                             ElevatedToggleButton(
                                 checked = uiState.selectedTimelineRange == range,
@@ -105,30 +107,52 @@ fun BedtimeScreen(
                         textAlign = TextAlign.Center
                     )
                 } else {
-                    val timelineLabelStrategy = remember(uiState.selectedTimelineRange) {
-                        when (uiState.selectedTimelineRange) {
-                            TimelineRange.TWELVE_HOURS -> TimelineLabelStrategy.TWELVE_HOURS
-                            TimelineRange.DAY -> TimelineLabelStrategy.DAY
-                            TimelineRange.WEEK -> TimelineLabelStrategy.WEEK
+                    Crossfade(targetState = uiState.selectedTimelineRange.isLinear, label = "ChartCrossfade") { isLinear ->
+                        if (isLinear) {
+                            // Linear Timeline for short ranges
+                            val timelineLabelStrategy = remember(uiState.selectedTimelineRange) {
+                                when (uiState.selectedTimelineRange) {
+                                    BedtimeChartRange.TWELVE_HOURS -> TimelineLabelStrategy.TWELVE_HOURS
+                                    else -> TimelineLabelStrategy.DAY
+                                }
+                            }
+                            TimelineChart(
+                                segments = uiState.timelineSegments,
+                                getStartTimeMillis = { it.startTimeMillis },
+                                getEndTimeMillis = { it.endTimeMillis },
+                                getColor = { it.state.toColor() },
+                                viewStartTimeMillis = uiState.viewStartTimeMillis,
+                                viewEndTimeMillis = uiState.viewEndTimeMillis,
+                                labelStrategy = timelineLabelStrategy,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(60.dp)
+                            )
+                        } else {
+                            // Sleep Chart for long ranges
+                            val sleepSegments = remember(uiState.timelineSegments) {
+                                uiState.timelineSegments.filter { it.state == UserPresenceState.SLEEPING }
+                            }
+                            val rangeInDays = if (uiState.selectedTimelineRange == BedtimeChartRange.WEEK) 7 else 30
+                            SleepChart(
+                                segments = sleepSegments,
+                                getStartTimeMillis = { it.startTimeMillis },
+                                getEndTimeMillis = { it.endTimeMillis },
+                                getState = { it.state },
+                                getColorForState = { it.toColor() },
+                                rangeInDays = rangeInDays,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(300.dp)
+                            )
                         }
                     }
 
-                    TimelineChart(
-                        segments = uiState.timelineSegments,
-                        getStartTimeMillis = { it.startTimeMillis },
-                        getEndTimeMillis = { it.endTimeMillis },
-                        getColor = { it.state.toColor() },
-                        viewStartTimeMillis = uiState.viewStartTimeMillis,
-                        viewEndTimeMillis = uiState.viewEndTimeMillis,
-                        labelStrategy = timelineLabelStrategy,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(60.dp)
-                    )
-
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    PresenceLegend()
+                    if (uiState.selectedTimelineRange.isLinear) {
+                        PresenceLegend()
+                    }
                 }
             }
         }
