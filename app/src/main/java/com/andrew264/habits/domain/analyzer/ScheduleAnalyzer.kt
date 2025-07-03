@@ -261,9 +261,8 @@ class ScheduleAnalyzer(groups: List<ScheduleGroup>) {
     private fun formatTime(minuteOfDay: Int): String {
         if (minuteOfDay < 0 || minuteOfDay >= 24 * 60) return "Invalid Time"
         val time = LocalTime.ofSecondOfDay(minuteOfDay * 60L)
-        // Use a simpler format for on-the-hour times (e.g., "9 PM" instead of "9:00 PM")
         val pattern = if (time.minute == 0) "h a" else "h:mm a"
-        return time.format(DateTimeFormatter.ofPattern(pattern, Locale.US))
+        return time.format(DateTimeFormatter.ofPattern(pattern, Locale.getDefault()))
     }
 
     /**

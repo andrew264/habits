@@ -14,6 +14,7 @@ import com.andrew264.habits.model.schedule.Schedule
 @Composable
 internal fun ScheduleList(
     schedules: List<Schedule>,
+    pendingDeletionId: String?,
     onDelete: (Schedule) -> Unit,
     onEdit: (scheduleId: String) -> Unit
 ) {
@@ -27,6 +28,7 @@ internal fun ScheduleList(
         items(schedules, key = { it.id }) { schedule ->
             ScheduleListItem(
                 schedule = schedule,
+                isPendingDeletion = schedule.id == pendingDeletionId,
                 onDelete = { onDelete(schedule) },
                 onEdit = { onEdit(schedule.id) }
             )

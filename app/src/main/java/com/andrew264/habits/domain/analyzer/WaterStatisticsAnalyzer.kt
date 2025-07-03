@@ -22,8 +22,7 @@ data class WaterStatistics(
     val hourlyBreakdown: List<HourlyWaterIntake>,
     val dailyAverage: Int,
     val totalDays: Int,
-    val daysGoalMet: Int,
-    val successRate: Float
+    val daysGoalMet: Int
 )
 
 class WaterStatisticsAnalyzer @Inject constructor() {
@@ -33,25 +32,30 @@ class WaterStatisticsAnalyzer @Inject constructor() {
         dailyTargetMl: Int
     ): WaterStatistics {
         if (entries.isEmpty()) {
-            return WaterStatistics(emptyList(), emptyList(), 0, 0, 0, 0f)
+            return WaterStatistics(emptyList(), emptyList(), 0, 0, 0)
         }
 
         val dailyIntakes = groupEntriesByDay(entries)
         val hourlyBreakdown = groupEntriesByHour(entries)
 
         val totalDays = dailyIntakes.size
-        val totalIntake = dailyIntakes.sumOf { it.totalMl }
-        val dailyAverage = if (totalDays > 0) totalIntake / totalDays else 0
         val daysGoalMet = dailyIntakes.count { it.totalMl >= dailyTargetMl }
-        val successRate = if (totalDays > 0) (daysGoalMet.toFloat() / totalDays.toFloat()) else 0f
+
+        val today = LocalDate.now(ZoneId.systemDefault())
+        val pastIntakes = dailyIntakes.filter { it.date.isBefore(today) }
+        val totalPastIntake = pastIntakes.sumOf { it.totalMl }
+        val dailyAverage = if (pastIntakes.isNotEmpty()) {
+            totalPastIntake / pastIntakes.size
+        } else {
+            0
+        }
 
         return WaterStatistics(
             dailyIntakes = dailyIntakes,
             hourlyBreakdown = hourlyBreakdown,
             dailyAverage = dailyAverage,
             totalDays = totalDays,
-            daysGoalMet = daysGoalMet,
-            successRate = successRate
+            daysGoalMet = daysGoalMet
         )
     }
 

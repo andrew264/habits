@@ -3,6 +3,7 @@ package com.andrew264.habits.ui.schedule.list
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andrew264.habits.domain.repository.ScheduleRepository
+import com.andrew264.habits.domain.usecase.CheckScheduleInUseUseCase
 import com.andrew264.habits.domain.usecase.DeleteScheduleUseCase
 import com.andrew264.habits.model.schedule.Schedule
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,18 +20,27 @@ sealed interface SchedulesUiEvent {
 
 data class SchedulesUiState(
     val schedules: List<Schedule> = emptyList(),
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val schedulePendingDeletion: Schedule? = null
 )
 
 @HiltViewModel
 class SchedulesViewModel @Inject constructor(
-    private val scheduleRepository: ScheduleRepository,
-    private val deleteScheduleUseCase: DeleteScheduleUseCase
+    scheduleRepository: ScheduleRepository,
+    private val deleteScheduleUseCase: DeleteScheduleUseCase,
+    private val checkScheduleInUseUseCase: CheckScheduleInUseUseCase
 ) : ViewModel() {
 
-    val uiState: StateFlow<SchedulesUiState> = scheduleRepository.getAllSchedules()
-        .map { schedules -> SchedulesUiState(schedules = schedules, isLoading = false) }
-        .stateIn(
+    private val _schedulePendingDeletion = MutableStateFlow<Schedule?>(null)
+
+    val uiState: StateFlow<SchedulesUiState> =
+        combine(scheduleRepository.getAllSchedules(), _schedulePendingDeletion) { schedules, pendingDeletion ->
+            SchedulesUiState(
+                schedules = schedules,
+                isLoading = false,
+                schedulePendingDeletion = pendingDeletion
+            )
+        }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = SchedulesUiState()
@@ -39,13 +49,21 @@ class SchedulesViewModel @Inject constructor(
     private val _uiEvents = MutableSharedFlow<SchedulesUiEvent>()
     val uiEvents = _uiEvents.asSharedFlow()
 
-    private var lastDeletedSchedule: Schedule? = null
-
     fun onDeleteSchedule(schedule: Schedule) {
         viewModelScope.launch {
-            when (val result = deleteScheduleUseCase.execute(schedule)) {
-                is DeleteScheduleUseCase.Result.Success -> {
-                    lastDeletedSchedule = schedule
+            when (val checkResult = checkScheduleInUseUseCase.execute(schedule.id)) {
+                is CheckScheduleInUseUseCase.Result.IsDefault -> {
+                    _uiEvents.emit(SchedulesUiEvent.ShowSnackbar("The default schedule cannot be deleted."))
+                    return@launch
+                }
+
+                is CheckScheduleInUseUseCase.Result.InUse -> {
+                    _uiEvents.emit(SchedulesUiEvent.ShowSnackbar(checkResult.usageMessage))
+                    return@launch
+                }
+
+                is CheckScheduleInUseUseCase.Result.NotInUse -> {
+                    _schedulePendingDeletion.value = schedule
                     _uiEvents.emit(
                         SchedulesUiEvent.ShowSnackbar(
                             message = "'${schedule.name}' deleted",
@@ -53,21 +71,19 @@ class SchedulesViewModel @Inject constructor(
                         )
                     )
                 }
-
-                is DeleteScheduleUseCase.Result.Failure -> {
-                    _uiEvents.emit(
-                        SchedulesUiEvent.ShowSnackbar(message = result.message)
-                    )
-                }
             }
         }
     }
 
     fun onUndoDelete() {
+        _schedulePendingDeletion.value = null
+    }
+
+    fun onDeletionConfirmed() {
         viewModelScope.launch {
-            lastDeletedSchedule?.let {
-                scheduleRepository.saveSchedule(it)
-                lastDeletedSchedule = null
+            _schedulePendingDeletion.value?.let {
+                deleteScheduleUseCase.execute(it)
+                _schedulePendingDeletion.value = null
             }
         }
     }

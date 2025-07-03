@@ -2,7 +2,7 @@ package com.andrew264.habits.ui.schedule.list
 
 import android.os.Build
 import android.view.HapticFeedbackConstants
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -30,144 +30,154 @@ import java.util.Locale
 @Composable
 internal fun ScheduleListItem(
     schedule: Schedule,
+    isPendingDeletion: Boolean,
     onDelete: () -> Unit,
     onEdit: () -> Unit
 ) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        positionalThreshold = { it * 0.25f }
-    )
-    val scope = rememberCoroutineScope()
     val view = LocalView.current
+    val coroutineScope = rememberCoroutineScope()
+    var hasBeenTriggered by remember { mutableStateOf(false) }
 
-    LaunchedEffect(dismissState.targetValue) {
-        if (dismissState.targetValue != SwipeToDismissBoxValue.Settled) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                view.performHapticFeedback(HapticFeedbackConstants.GESTURE_THRESHOLD_ACTIVATE)
-            } else {
-                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-            }
+    LaunchedEffect(isPendingDeletion) {
+        if (!isPendingDeletion) {
+            hasBeenTriggered = false
         }
     }
 
-    LaunchedEffect(dismissState.currentValue) {
-        when (dismissState.currentValue) {
-            SwipeToDismissBoxValue.EndToStart -> {
-                view.performHapticFeedback(HapticFeedbackConstants.REJECT)
-                scope.launch {
-                    dismissState.reset()
-                }
-                onDelete()
-            }
-
-            SwipeToDismissBoxValue.StartToEnd -> {
-                view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-                scope.launch {
-                    dismissState.reset()
-                }
-                onEdit()
-            }
-
-            SwipeToDismissBoxValue.Settled -> { /* Do nothing */
-            }
-        }
-    }
-
-    SwipeToDismissBox(
-        state = dismissState,
-        modifier = Modifier.clip(RoundedCornerShape(12.dp)),
-        backgroundContent = {
-            val direction = dismissState.dismissDirection
-            val color by animateColorAsState(
-                targetValue = when (direction) {
-                    SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.primaryContainer
-                    SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
-                    SwipeToDismissBoxValue.Settled -> Color.Transparent
-                },
-                animationSpec = tween(300),
-                label = "SwipeBackgroundColor"
-            )
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(color)
-                    .padding(horizontal = 20.dp),
-            ) {
-                if (direction == SwipeToDismissBoxValue.StartToEnd) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Start,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit")
-                        Spacer(Modifier.width(8.dp))
-                        Text("Edit", fontWeight = FontWeight.Bold)
-                    }
-                } else if (direction == SwipeToDismissBoxValue.EndToStart) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.End,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Text("Delete", fontWeight = FontWeight.Bold)
-                        Spacer(Modifier.width(8.dp))
-                        Icon(Icons.Default.Delete, contentDescription = "Delete")
-                    }
-                }
-            }
-        }
+    AnimatedVisibility(
+        visible = !isPendingDeletion,
+        enter = expandVertically() + fadeIn(),
+        exit = shrinkVertically(animationSpec = tween(durationMillis = 300)) + fadeOut(animationSpec = tween(durationMillis = 250))
     ) {
-        val analyzer = remember(schedule.groups) { ScheduleAnalyzer(schedule.groups) }
-        val summary = remember(analyzer) { analyzer.createSummary() }
-        val coverage = remember(analyzer) { analyzer.calculateCoverage() }
+        val dismissState = rememberSwipeToDismissBoxState()
 
-        Card(
-            onClick = {
-                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+        LaunchedEffect(dismissState.currentValue) {
+            if (hasBeenTriggered) return@LaunchedEffect
+
+            if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+                hasBeenTriggered = true
+                view.performHapticFeedback(HapticFeedbackConstants.REJECT)
+                onDelete()
+            } else if (dismissState.currentValue == SwipeToDismissBoxValue.StartToEnd) {
+                hasBeenTriggered = true
+                view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
                 onEdit()
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = schedule.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+            }
+        }
 
-                val summaryText = if (summary.isNotBlank() && summary != "No schedule set.") {
-                    summary
-                } else {
-                    "This schedule is empty. Edit to add times."
+        LaunchedEffect(dismissState.targetValue) {
+            if (dismissState.targetValue != SwipeToDismissBoxValue.Settled) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    view.performHapticFeedback(HapticFeedbackConstants.GESTURE_THRESHOLD_ACTIVATE)
                 }
-                Text(
-                    text = summaryText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 20.sp
+            }
+        }
+
+        LaunchedEffect(hasBeenTriggered) {
+            if (hasBeenTriggered) {
+                coroutineScope.launch {
+                    dismissState.reset()
+                }
+            }
+        }
+
+        SwipeToDismissBox(
+            state = dismissState,
+            modifier = Modifier.clip(RoundedCornerShape(12.dp)),
+            backgroundContent = {
+                val direction = dismissState.dismissDirection
+                val color by animateColorAsState(
+                    targetValue = when (direction) {
+                        SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.primaryContainer
+                        SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
+                        SwipeToDismissBoxValue.Settled -> Color.Transparent
+                    },
+                    animationSpec = tween(300),
+                    label = "SwipeBackgroundColor"
                 )
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(color)
+                        .padding(horizontal = 20.dp),
                 ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Schedule,
-                        contentDescription = "Total hours",
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(Modifier.width(6.dp))
+                    if (direction == SwipeToDismissBoxValue.StartToEnd) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Start,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Icon(Icons.Default.Edit, contentDescription = "Edit")
+                            Spacer(Modifier.width(8.dp))
+                            Text("Edit", fontWeight = FontWeight.Bold)
+                        }
+                    } else if (direction == SwipeToDismissBoxValue.EndToStart) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.End,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Text("Delete", fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.width(8.dp))
+                            Icon(Icons.Default.Delete, contentDescription = "Delete")
+                        }
+                    }
+                }
+            }
+        ) {
+            val analyzer = remember(schedule.groups) { ScheduleAnalyzer(schedule.groups) }
+            val summary = remember(analyzer) { analyzer.createSummary() }
+            val coverage = remember(analyzer) { analyzer.calculateCoverage() }
+
+            Card(
+                onClick = {
+                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                    onEdit()
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Text(
-                        text = "${String.format(Locale.getDefault(), "%.1f", coverage.totalHours)} hours/week (${String.format(Locale.getDefault(), "%.1f", coverage.coveragePercentage)}%)",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = schedule.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
 
-                    Spacer(Modifier.width(16.dp))
+                    val summaryText = if (summary.isNotBlank() && summary != "No schedule set.") {
+                        summary
+                    } else {
+                        "This schedule is empty. Edit to add times."
+                    }
+                    Text(
+                        text = summaryText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 20.sp
+                    )
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Schedule,
+                            contentDescription = "Total hours",
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "${String.format(Locale.getDefault(), "%.1f", coverage.totalHours)} hours/week (${String.format(Locale.getDefault(), "%.1f", coverage.coveragePercentage)}%)",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        Spacer(Modifier.width(16.dp))
+                    }
                 }
             }
         }

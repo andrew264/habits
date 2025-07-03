@@ -1,9 +1,7 @@
 package com.andrew264.habits.ui
 
 import android.view.HapticFeedbackConstants
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.BarChart
@@ -86,26 +84,28 @@ fun MainTopAppBar(
         TopAppBar(
             title = {
                 Text(
-                    text = if (uiState.isNewSchedule) "Create New Schedule" else "Update: ${uiState.schedule?.name.orEmpty()}",
+                    text = if (uiState.isNewSchedule) "Create New Schedule" else "Update ${uiState.schedule?.name.orEmpty()}",
                     fontWeight = FontWeight.Medium
                 )
             },
             navigationIcon = navigationIcon,
             actions = {
-                FilledTonalButton(
-                    onClick = {
-                        viewModel.saveSchedule()
-                        view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-                    },
-                    shapes = ButtonDefaults.shapes()
-                ) {
-                    Icon(
-                        Icons.Default.Done,
-                        contentDescription = "Save Schedule",
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text("Save", fontWeight = FontWeight.Medium)
+                Box(modifier = Modifier.padding(end = 12.dp)) {
+                    FilledTonalButton(
+                        onClick = {
+                            viewModel.saveSchedule()
+                            view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                        },
+                        shapes = ButtonDefaults.shapes()
+                    ) {
+                        Icon(
+                            Icons.Default.Done,
+                            contentDescription = "Save Schedule",
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Save", fontWeight = FontWeight.Medium)
+                    }
                 }
             }
         )

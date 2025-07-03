@@ -9,8 +9,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * A stateless helper class that contains pure functions for modifying a Schedule object.
- * This isolates the complex business logic of schedule manipulation from the ViewModel.
+ * A stateless helper class that contains functions for modifying a Schedule object.
  */
 @Singleton
 class ScheduleEditor @Inject constructor() {

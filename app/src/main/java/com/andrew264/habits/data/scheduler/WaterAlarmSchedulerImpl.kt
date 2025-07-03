@@ -29,11 +29,7 @@ class WaterAlarmSchedulerImpl @Inject constructor(
         val pendingIntent = createPendingIntent()
 
         try {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                triggerAtMillis,
-                pendingIntent
-            )
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
             Log.d(TAG, "Scheduled next water reminder for $intervalMinutes minutes from now.")
         } catch (e: SecurityException) {
             Log.e(TAG, "Could not schedule exact alarm. Check for SCHEDULE_EXACT_ALARM permission.", e)

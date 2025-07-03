@@ -27,23 +27,28 @@ fun SchedulesScreen(
     val uiState by viewModel.uiState.collectAsState()
     val view = LocalView.current
 
-    LaunchedEffect(key1 = viewModel.uiEvents, snackbarHostState) {
+    LaunchedEffect(key1 = true) {
         viewModel.uiEvents.collectLatest { event ->
             when (event) {
                 is SchedulesUiEvent.ShowSnackbar -> {
                     val result = snackbarHostState.showSnackbar(
                         message = event.message,
                         actionLabel = event.actionLabel,
-                        duration = SnackbarDuration.Short
+                        duration = if (event.actionLabel != null) SnackbarDuration.Long else SnackbarDuration.Short
                     )
                     if (result == SnackbarResult.ActionPerformed) {
                         view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                         viewModel.onUndoDelete()
+                    } else if (event.actionLabel != null) {
+                        viewModel.onDeletionConfirmed()
                     }
                 }
             }
         }
     }
+
+    val listToShow = uiState.schedules
+    val pendingDeletionId = uiState.schedulePendingDeletion?.id
 
     when {
         uiState.isLoading -> {
@@ -52,14 +57,19 @@ fun SchedulesScreen(
             }
         }
 
-        uiState.schedules.isEmpty() -> {
+        listToShow.isEmpty() -> {
             EmptyState()
         }
 
         else -> {
             ScheduleList(
-                schedules = uiState.schedules,
-                onDelete = { viewModel.onDeleteSchedule(it) },
+                schedules = listToShow,
+                pendingDeletionId = pendingDeletionId,
+                onDelete = { schedule ->
+                    if (uiState.schedulePendingDeletion == null) {
+                        viewModel.onDeleteSchedule(schedule)
+                    }
+                },
                 onEdit = { scheduleId ->
                     navController.navigate("schedule_editor?scheduleId=$scheduleId")
                 }

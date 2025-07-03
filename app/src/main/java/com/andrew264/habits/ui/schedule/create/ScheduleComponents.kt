@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.TimeRange
+import com.andrew264.habits.ui.common.dialogs.HabitsTimePickerDialog
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -98,7 +99,7 @@ fun DaySelector(
     }
 }
 
-// TimeRangeRow is bugged af; when multiple rows of time ranges are present for a single group/day, changing one affects everything nearby. need to look into this and find where the short comings exist
+// TODO: TimeRangeRow is bugged af; when multiple rows of time ranges are present for a single group/day, changing one affects everything nearby. need to look into this and find where (data structure or UI) the short comings exist
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun TimeRangeRow(
@@ -109,21 +110,7 @@ fun TimeRangeRow(
 ) {
     var showFromPicker by remember { mutableStateOf(false) }
     var showToPicker by remember { mutableStateOf(false) }
-    val context = LocalContext.current
     val view = LocalView.current
-    val is24Hour = DateFormat.is24HourFormat(context)
-
-    val fromTimeState = rememberTimePickerState(is24Hour = is24Hour)
-    LaunchedEffect(key1 = timeRange.fromMinuteOfDay) {
-        fromTimeState.hour = timeRange.fromMinuteOfDay / 60
-        fromTimeState.minute = timeRange.fromMinuteOfDay % 60
-    }
-
-    val toTimeState = rememberTimePickerState(is24Hour = is24Hour)
-    LaunchedEffect(key1 = timeRange.toMinuteOfDay) {
-        toTimeState.hour = timeRange.toMinuteOfDay / 60
-        toTimeState.minute = timeRange.toMinuteOfDay % 60
-    }
 
     val isOvernight = timeRange.toMinuteOfDay < timeRange.fromMinuteOfDay
 
@@ -207,60 +194,31 @@ fun TimeRangeRow(
     }
 
     if (showFromPicker) {
-        TimePickerDialog(
+        HabitsTimePickerDialog(
             onDismissRequest = { showFromPicker = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val newMinuteOfDay = fromTimeState.hour * 60 + fromTimeState.minute
-                        onUpdate(timeRange.copy(fromMinuteOfDay = newMinuteOfDay))
-                        showFromPicker = false
-                        view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-                    },
-                    shapes = ButtonDefaults.shapes()
-                ) { Text("Confirm") }
+            onConfirm = { hour, minute ->
+                val newMinuteOfDay = hour * 60 + minute
+                onUpdate(timeRange.copy(fromMinuteOfDay = newMinuteOfDay))
+                showFromPicker = false
             },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showFromPicker = false
-                        view.performHapticFeedback(HapticFeedbackConstants.REJECT)
-                    },
-                    shapes = ButtonDefaults.shapes()
-                ) { Text("Cancel") }
-            },
-            title = { Text("From Time") },
-        ) {
-            TimePicker(state = fromTimeState)
-        }
+            title = "From Time",
+            initialHour = timeRange.fromMinuteOfDay / 60,
+            initialMinute = timeRange.fromMinuteOfDay % 60
+        )
     }
+
     if (showToPicker) {
-        TimePickerDialog(
+        HabitsTimePickerDialog(
             onDismissRequest = { showToPicker = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val newMinuteOfDay = toTimeState.hour * 60 + toTimeState.minute
-                        onUpdate(timeRange.copy(toMinuteOfDay = newMinuteOfDay))
-                        showToPicker = false
-                        view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-                    },
-                    shapes = ButtonDefaults.shapes()
-                ) { Text("Confirm") }
+            onConfirm = { hour, minute ->
+                val newMinuteOfDay = hour * 60 + minute
+                onUpdate(timeRange.copy(toMinuteOfDay = newMinuteOfDay))
+                showToPicker = false
             },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showToPicker = false
-                        view.performHapticFeedback(HapticFeedbackConstants.REJECT)
-                    },
-                    shapes = ButtonDefaults.shapes()
-                ) { Text("Cancel") }
-            },
-            title = { Text("End Time") },
-        ) {
-            TimePicker(state = toTimeState)
-        }
+            title = "To Time",
+            initialHour = timeRange.toMinuteOfDay / 60,
+            initialMinute = timeRange.toMinuteOfDay % 60
+        )
     }
 }
 

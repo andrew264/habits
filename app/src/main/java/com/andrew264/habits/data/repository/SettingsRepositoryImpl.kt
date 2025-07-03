@@ -9,7 +9,6 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.andrew264.habits.data.preferences.DataStoreKeys
 import com.andrew264.habits.domain.model.PersistentSettings
 import com.andrew264.habits.domain.repository.SettingsRepository
-import com.andrew264.habits.model.schedule.DefaultSchedules
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -41,7 +40,7 @@ class SettingsRepositoryImpl @Inject constructor(@param:ApplicationContext priva
             val isWaterReminderEnabled = preferences[DataStoreKeys.WATER_REMINDER_ENABLED] == true
             val waterReminderIntervalMinutes = preferences[DataStoreKeys.WATER_REMINDER_INTERVAL_MINUTES] ?: 60
             val waterReminderSnoozeMinutes = preferences[DataStoreKeys.WATER_REMINDER_SNOOZE_MINUTES] ?: 15
-            val waterReminderScheduleId = preferences[DataStoreKeys.WATER_REMINDER_SCHEDULE_ID] ?: DefaultSchedules.DEFAULT_SLEEP_SCHEDULE_ID
+            val waterReminderScheduleId = preferences[DataStoreKeys.WATER_REMINDER_SCHEDULE_ID]
 
 
             PersistentSettings(

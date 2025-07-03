@@ -20,7 +20,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.andrew264.habits.ui.common.charts.BarChart
 import com.andrew264.habits.ui.common.charts.BarChartEntry
 import java.time.format.DateTimeFormatter
-import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -91,8 +90,8 @@ private fun StatsContent(stats: com.andrew264.habits.domain.analyzer.WaterStatis
             modifier = Modifier.weight(1f)
         )
         StatCard(
-            label = "Success Rate",
-            value = "${(stats.successRate * 100).roundToInt()}%",
+            label = "Goal Met",
+            value = "${stats.daysGoalMet} days",
             modifier = Modifier.weight(1f)
         )
     }

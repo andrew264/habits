@@ -110,16 +110,14 @@ fun WaterSettingsScreen(
                     enabled = settings.isWaterTrackingEnabled && settings.isWaterReminderEnabled
                 )
                 Spacer(Modifier.height(16.dp))
-                if (selectedSchedule != null) {
-                    ScheduleSelector(
-                        schedules = allSchedules,
-                        selectedSchedule = selectedSchedule,
-                        onScheduleSelected = viewModel::onReminderScheduleChanged,
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = settings.isWaterTrackingEnabled && settings.isWaterReminderEnabled,
-                        label = "Reminder Schedule"
-                    )
-                }
+                ScheduleSelector(
+                    schedules = allSchedules,
+                    selectedSchedule = selectedSchedule,
+                    onScheduleSelected = viewModel::onReminderScheduleChanged,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = settings.isWaterTrackingEnabled && settings.isWaterReminderEnabled,
+                    label = "Reminder Schedule"
+                )
             }
         }
     }
@@ -129,7 +127,7 @@ fun WaterSettingsScreen(
 @Composable
 fun ScheduleSelector(
     schedules: List<Schedule>,
-    selectedSchedule: Schedule,
+    selectedSchedule: Schedule?,
     onScheduleSelected: (Schedule) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -149,7 +147,7 @@ fun ScheduleSelector(
         modifier = modifier
     ) {
         OutlinedTextField(
-            value = selectedSchedule.name,
+            value = selectedSchedule?.name ?: "None",
             onValueChange = {},
             readOnly = true,
             label = { Text(label) },
