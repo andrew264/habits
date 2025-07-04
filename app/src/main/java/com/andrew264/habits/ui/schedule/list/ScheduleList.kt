@@ -15,7 +15,7 @@ import com.andrew264.habits.model.schedule.Schedule
 internal fun ScheduleList(
     schedules: List<Schedule>,
     pendingDeletionId: String?,
-    onDelete: (Schedule) -> Unit,
+    onDelete: suspend (Schedule) -> Boolean,
     onEdit: (scheduleId: String) -> Unit
 ) {
     LazyColumn(

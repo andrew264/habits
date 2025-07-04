@@ -12,7 +12,10 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.andrew264.habits.domain.analyzer.ScheduleAnalyzer
 import com.andrew264.habits.model.schedule.Schedule
-import kotlinx.coroutines.launch
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -31,39 +33,19 @@ import java.util.Locale
 internal fun ScheduleListItem(
     schedule: Schedule,
     isPendingDeletion: Boolean,
-    onDelete: () -> Unit,
+    onDelete: suspend () -> Boolean,
     onEdit: () -> Unit
 ) {
     val view = LocalView.current
-    val coroutineScope = rememberCoroutineScope()
-    var hasBeenTriggered by remember { mutableStateOf(false) }
-
-    LaunchedEffect(isPendingDeletion) {
-        if (!isPendingDeletion) {
-            hasBeenTriggered = false
-        }
-    }
 
     AnimatedVisibility(
         visible = !isPendingDeletion,
         enter = expandVertically() + fadeIn(),
-        exit = shrinkVertically(animationSpec = tween(durationMillis = 300)) + fadeOut(animationSpec = tween(durationMillis = 250))
+        exit = shrinkVertically(animationSpec = tween(durationMillis = 300)) + fadeOut(
+            animationSpec = tween(durationMillis = 250)
+        )
     ) {
         val dismissState = rememberSwipeToDismissBoxState()
-
-        LaunchedEffect(dismissState.currentValue) {
-            if (hasBeenTriggered) return@LaunchedEffect
-
-            if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
-                hasBeenTriggered = true
-                view.performHapticFeedback(HapticFeedbackConstants.REJECT)
-                onDelete()
-            } else if (dismissState.currentValue == SwipeToDismissBoxValue.StartToEnd) {
-                hasBeenTriggered = true
-                view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-                onEdit()
-            }
-        }
 
         LaunchedEffect(dismissState.targetValue) {
             if (dismissState.targetValue != SwipeToDismissBoxValue.Settled) {
@@ -73,17 +55,28 @@ internal fun ScheduleListItem(
             }
         }
 
-        LaunchedEffect(hasBeenTriggered) {
-            if (hasBeenTriggered) {
-                coroutineScope.launch {
-                    dismissState.reset()
-                }
-            }
-        }
-
         SwipeToDismissBox(
             state = dismissState,
             modifier = Modifier.clip(RoundedCornerShape(12.dp)),
+            onDismiss = { direction ->
+                when (direction) {
+                    SwipeToDismissBoxValue.StartToEnd -> {
+                        view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                        onEdit()
+                    }
+
+                    SwipeToDismissBoxValue.EndToStart -> {
+                        view.performHapticFeedback(HapticFeedbackConstants.REJECT)
+                        val wasDeleted = onDelete()
+                        if (!wasDeleted) {
+                            dismissState.reset()
+                        }
+                    }
+
+                    SwipeToDismissBoxValue.Settled -> { /* Do nothing */
+                    }
+                }
+            },
             backgroundContent = {
                 val direction = dismissState.dismissDirection
                 val color by animateColorAsState(
@@ -148,11 +141,12 @@ internal fun ScheduleListItem(
                         fontWeight = FontWeight.SemiBold
                     )
 
-                    val summaryText = if (summary.isNotBlank() && summary != "No schedule set.") {
-                        summary
-                    } else {
-                        "This schedule is empty. Edit to add times."
-                    }
+                    val summaryText =
+                        if (summary.isNotBlank() && summary != "No schedule set.") {
+                            summary
+                        } else {
+                            "This schedule is empty. Edit to add times."
+                        }
                     Text(
                         text = summaryText,
                         style = MaterialTheme.typography.bodyMedium,
@@ -171,7 +165,9 @@ internal fun ScheduleListItem(
                         )
                         Spacer(Modifier.width(6.dp))
                         Text(
-                            text = "${String.format(Locale.getDefault(), "%.1f", coverage.totalHours)} hours/week (${String.format(Locale.getDefault(), "%.1f", coverage.coveragePercentage)}%)",
+                            text = "${String.format(Locale.getDefault(), "%.1f", coverage.totalHours)} hours/week (${
+                                String.format(Locale.getDefault(), "%.1f", coverage.coveragePercentage)
+                            }%)",
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

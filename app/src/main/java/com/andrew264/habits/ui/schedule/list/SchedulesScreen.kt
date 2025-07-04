@@ -65,11 +65,7 @@ fun SchedulesScreen(
             ScheduleList(
                 schedules = listToShow,
                 pendingDeletionId = pendingDeletionId,
-                onDelete = { schedule ->
-                    if (uiState.schedulePendingDeletion == null) {
-                        viewModel.onDeleteSchedule(schedule)
-                    }
-                },
+                onDelete = viewModel::onDeleteSchedule,
                 onEdit = { scheduleId ->
                     navController.navigate("schedule_editor?scheduleId=$scheduleId")
                 }

@@ -49,28 +49,27 @@ class SchedulesViewModel @Inject constructor(
     private val _uiEvents = MutableSharedFlow<SchedulesUiEvent>()
     val uiEvents = _uiEvents.asSharedFlow()
 
-    fun onDeleteSchedule(schedule: Schedule) {
-        viewModelScope.launch {
-            when (val checkResult = checkScheduleInUseUseCase.execute(schedule.id)) {
-                is CheckScheduleInUseUseCase.Result.IsDefault -> {
-                    _uiEvents.emit(SchedulesUiEvent.ShowSnackbar("The default schedule cannot be deleted."))
-                    return@launch
-                }
+    suspend fun onDeleteSchedule(schedule: Schedule): Boolean {
+        when (val checkResult = checkScheduleInUseUseCase.execute(schedule.id)) {
+            is CheckScheduleInUseUseCase.Result.IsDefault -> {
+                _uiEvents.emit(SchedulesUiEvent.ShowSnackbar("The default schedule cannot be deleted."))
+                return false
+            }
 
-                is CheckScheduleInUseUseCase.Result.InUse -> {
-                    _uiEvents.emit(SchedulesUiEvent.ShowSnackbar(checkResult.usageMessage))
-                    return@launch
-                }
+            is CheckScheduleInUseUseCase.Result.InUse -> {
+                _uiEvents.emit(SchedulesUiEvent.ShowSnackbar(checkResult.usageMessage))
+                return false
+            }
 
-                is CheckScheduleInUseUseCase.Result.NotInUse -> {
-                    _schedulePendingDeletion.value = schedule
-                    _uiEvents.emit(
-                        SchedulesUiEvent.ShowSnackbar(
-                            message = "'${schedule.name}' deleted",
-                            actionLabel = "Undo"
-                        )
+            is CheckScheduleInUseUseCase.Result.NotInUse -> {
+                _schedulePendingDeletion.value = schedule
+                _uiEvents.emit(
+                    SchedulesUiEvent.ShowSnackbar(
+                        message = "'${schedule.name}' deleted",
+                        actionLabel = "Undo"
                     )
-                }
+                )
+                return true
             }
         }
     }
