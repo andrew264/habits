@@ -1,6 +1,5 @@
 package com.andrew264.habits.ui.schedule.list
 
-import android.os.Build
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
@@ -49,9 +48,7 @@ internal fun ScheduleListItem(
 
         LaunchedEffect(dismissState.targetValue) {
             if (dismissState.targetValue != SwipeToDismissBoxValue.Settled) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                    view.performHapticFeedback(HapticFeedbackConstants.GESTURE_THRESHOLD_ACTIVATE)
-                }
+                view.performHapticFeedback(HapticFeedbackConstants.GESTURE_THRESHOLD_ACTIVATE)
             }
         }
 

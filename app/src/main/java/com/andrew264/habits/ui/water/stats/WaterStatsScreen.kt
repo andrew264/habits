@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -41,22 +42,42 @@ fun WaterStatsScreen(
             horizontalArrangement = Arrangement.Center
         ) {
             val ranges = StatsTimeRange.entries
-            Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
-                ranges.forEachIndexed { index, range ->
-                    ElevatedToggleButton(
-                        checked = uiState.selectedRange == range,
-                        onCheckedChange = {
-                            viewModel.setTimeRange(range)
-                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                        },
-                        shapes = when (index) {
-                            0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                            ranges.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                            else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                        }
-                    ) {
-                        Text(range.label)
+            ButtonGroup(
+                overflowIndicator = { menuState ->
+                    IconButton(onClick = { menuState.show() }) {
+                        Icon(Icons.Default.MoreVert, "More options")
                     }
+                },
+                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+            ) {
+                ranges.forEachIndexed { index, range ->
+                    customItem(
+                        buttonGroupContent = {
+                            ElevatedToggleButton(
+                                checked = uiState.selectedRange == range,
+                                onCheckedChange = {
+                                    viewModel.setTimeRange(range)
+                                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                                },
+                                shapes = when (index) {
+                                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                                    ranges.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                                }
+                            ) {
+                                Text(range.label)
+                            }
+                        },
+                        menuContent = { menuState ->
+                            DropdownMenuItem(
+                                text = { Text(range.label) },
+                                onClick = {
+                                    viewModel.setTimeRange(range)
+                                    menuState.dismiss()
+                                }
+                            )
+                        }
+                    )
                 }
             }
         }

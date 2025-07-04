@@ -1,6 +1,5 @@
 package com.andrew264.habits.ui.common.dialogs
 
-import android.os.Build
 import android.text.format.DateFormat
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.layout.*
@@ -16,7 +15,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.onEach
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,20 +33,13 @@ fun HabitsTimePickerDialog(
         is24Hour = is24Hour
     )
 
-    // Haptic feedback
     LaunchedEffect(timePickerState, view) {
         snapshotFlow { Pair(timePickerState.hour, timePickerState.minute) }
             .drop(1)
             .distinctUntilChanged()
-            .onEach {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                    view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_FREQUENT_TICK)
-                } else {
-                    @Suppress("DEPRECATION")
-                    view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-                }
+            .collect {
+                view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_FREQUENT_TICK)
             }
-            .collect {}
     }
 
     Dialog(onDismissRequest = onDismissRequest) {

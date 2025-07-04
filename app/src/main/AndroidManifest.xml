@@ -7,11 +7,10 @@
 
     <!-- For starting foreground service -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH"/>
 
     <!-- For notifications (Android 13+ / API 33+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-
 
     <!-- For scheduling exact alarms (Android 12+ / API 31+) -->
     <!-- For full compliance on Android 14+, you may need to declare a USE_EXACT_ALARM permission -->
@@ -51,10 +50,8 @@
             android:enabled="true"
             android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE"
-            android:foregroundServiceType="specialUse"
+            android:foregroundServiceType="health"
             tools:ignore="ExportedService">
-<!--            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"-->
-<!--                android:value="GENERAL_BACKGROUND_TASK_FOR_USER_PRESENCE_MONITORING"/>-->
         </service>
 
         <receiver

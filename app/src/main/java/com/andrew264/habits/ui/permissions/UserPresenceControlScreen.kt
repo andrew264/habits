@@ -1,6 +1,5 @@
 package com.andrew264.habits.ui.permissions
 
-import android.os.Build
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -67,12 +66,8 @@ fun UserPresenceControlScreen(
                     } else {
                         viewModel.onStopService()
                     }
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                        val feedback = if (isOn) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
-                        view.performHapticFeedback(feedback)
-                    } else {
-                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                    }
+                    val feedback = if (isOn) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
+                    view.performHapticFeedback(feedback)
                 }
             )
         }

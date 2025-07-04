@@ -8,6 +8,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -71,25 +72,43 @@ fun BedtimeScreen(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
+                    val ranges = BedtimeChartRange.entries
+                    ButtonGroup(
+                        overflowIndicator = { menuState ->
+                            IconButton(onClick = { menuState.show() }) {
+                                Icon(Icons.Default.MoreVert, "More options")
+                            }
+                        },
                         horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
                     ) {
-                        val ranges = BedtimeChartRange.entries
                         ranges.forEachIndexed { index, range ->
-                            ElevatedToggleButton(
-                                checked = uiState.selectedTimelineRange == range,
-                                onCheckedChange = {
-                                    viewModel.setTimelineRange(range)
-                                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                            customItem(
+                                buttonGroupContent = {
+                                    ElevatedToggleButton(
+                                        checked = uiState.selectedTimelineRange == range,
+                                        onCheckedChange = {
+                                            viewModel.setTimelineRange(range)
+                                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                                        },
+                                        shapes = when (index) {
+                                            0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                                            ranges.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                            else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                                        },
+                                    ) {
+                                        Text(range.label)
+                                    }
                                 },
-                                shapes = when (index) {
-                                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                                    ranges.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                                },
-                            ) {
-                                Text(range.label)
-                            }
+                                menuContent = { menuState ->
+                                    DropdownMenuItem(
+                                        text = { Text(range.label) },
+                                        onClick = {
+                                            viewModel.setTimelineRange(range)
+                                            menuState.dismiss()
+                                        }
+                                    )
+                                }
+                            )
                         }
                     }
                 }
@@ -216,7 +235,7 @@ fun ScheduleSelector(
             label = { Text("Active Sleep Schedule") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true)
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth()
         )
         ExposedDropdownMenu(

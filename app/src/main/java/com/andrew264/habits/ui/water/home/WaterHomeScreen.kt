@@ -1,10 +1,7 @@
 package com.andrew264.habits.ui.water.home
 
-import android.os.Build
 import android.view.HapticFeedbackConstants
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -58,10 +55,7 @@ private fun WaterTrackingContent(
     val animatedProgress by animateFloatAsState(
         targetValue = uiState.progress,
         label = "WaterProgressAnimation",
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        )
+        animationSpec = WavyProgressIndicatorDefaults.ProgressAnimationSpec
     )
     val timeFormat = remember { SimpleDateFormat("h:mm a", Locale.getDefault()) }
     val view = LocalView.current
@@ -123,9 +117,7 @@ private fun WaterTrackingContent(
                             val previousStep = (sliderValue / stepSize).roundToInt()
 
                             if (currentStep != previousStep) {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                                    view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_TICK)
-                                }
+                                view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_TICK)
                             }
                             sliderValue = newValue
                         },

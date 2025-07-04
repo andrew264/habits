@@ -1,6 +1,5 @@
 package com.andrew264.habits.ui.schedule.create
 
-import android.os.Build
 import android.text.format.DateFormat
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.animateColorAsState
@@ -77,13 +76,8 @@ fun DaySelector(
                         .border(width = 1.dp, color = borderColor, shape = CircleShape)
                         .clickable {
                             onDayClick(day)
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                                val feedback =
-                                    if (!selected) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
-                                view.performHapticFeedback(feedback)
-                            } else {
-                                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                            }
+                            val feedback = if (!selected) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
+                            view.performHapticFeedback(feedback)
                         }
                 ) {
                     Text(

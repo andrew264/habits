@@ -3,6 +3,8 @@ package com.andrew264.habits.ui.schedule.create
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -70,32 +72,56 @@ fun ScheduleEditorScreen(
 
                 // View Mode Toggles
                 val options = ScheduleViewMode.entries
-                FlowRow(
+                ButtonGroup(
+                    overflowIndicator = { menuState ->
+                        IconButton(onClick = { menuState.show() }) {
+                            Icon(Icons.Default.MoreVert, "More options")
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
                     options.forEachIndexed { index, mode ->
-                        ToggleButton(
-                            checked = uiState.viewMode == mode,
-                            onCheckedChange = {
-                                viewModel.setViewMode(mode)
-                                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                        customItem(
+                            buttonGroupContent = {
+                                ToggleButton(
+                                    checked = uiState.viewMode == mode,
+                                    onCheckedChange = {
+                                        viewModel.setViewMode(mode)
+                                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                                    },
+                                    shapes = when (index) {
+                                        0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                                        options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                        else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                                    },
+                                ) {
+                                    Text(
+                                        text = when (mode) {
+                                            ScheduleViewMode.GROUPED -> "📋 Grouped"
+                                            ScheduleViewMode.PER_DAY -> "📅 Per Day"
+                                        },
+                                        fontWeight = if (mode == uiState.viewMode) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                }
                             },
-                            shapes = when (index) {
-                                0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                                options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                                else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                            },
-                        ) {
-                            Text(
-                                text = when (mode) {
-                                    ScheduleViewMode.GROUPED -> "📋 Grouped"
-                                    ScheduleViewMode.PER_DAY -> "📅 Per Day"
-                                },
-                                fontWeight = if (mode == uiState.viewMode) FontWeight.Bold else FontWeight.Normal
-                            )
-                        }
+                            menuContent = { menuState ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            when (mode) {
+                                                ScheduleViewMode.GROUPED -> "Grouped"
+                                                ScheduleViewMode.PER_DAY -> "Per Day"
+                                            }
+                                        )
+                                    },
+                                    onClick = {
+                                        viewModel.setViewMode(mode)
+                                        menuState.dismiss()
+                                    }
+                                )
+                            }
+                        )
                     }
                 }
             }

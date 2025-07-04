@@ -7,9 +7,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.content.pm.ServiceInfo
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.andrew264.habits.MainActivity
 import com.andrew264.habits.R
@@ -171,7 +173,12 @@ class UserPresenceService : Service() {
         }
         registerScreenStateReceiver()
 
-        startForeground(NOTIFICATION_ID, createNotification())
+        ServiceCompat.startForeground(
+            this,
+            NOTIFICATION_ID,
+            createNotification(),
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH
+        )
 
         // Perform initial evaluation
         serviceScope.launch {

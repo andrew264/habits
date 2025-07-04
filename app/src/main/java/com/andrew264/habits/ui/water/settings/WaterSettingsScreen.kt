@@ -1,6 +1,5 @@
 package com.andrew264.habits.ui.water.settings
 
-import android.os.Build
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -47,12 +46,8 @@ fun WaterSettingsScreen(
                         checked = settings.isWaterTrackingEnabled,
                         onCheckedChange = { isEnabled ->
                             viewModel.onWaterTrackingEnabledChanged(isEnabled)
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                                val feedback = if (isEnabled) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
-                                view.performHapticFeedback(feedback)
-                            } else {
-                                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                            }
+                            val feedback = if (isEnabled) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
+                            view.performHapticFeedback(feedback)
                         }
                     )
                 }
@@ -81,12 +76,8 @@ fun WaterSettingsScreen(
                         checked = settings.isWaterReminderEnabled,
                         onCheckedChange = { isEnabled ->
                             viewModel.onReminderEnabledChanged(isEnabled)
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                                val feedback = if (isEnabled) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
-                                view.performHapticFeedback(feedback)
-                            } else {
-                                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                            }
+                            val feedback = if (isEnabled) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
+                            view.performHapticFeedback(feedback)
                         },
                         enabled = settings.isWaterTrackingEnabled
                     )
@@ -153,7 +144,7 @@ fun ScheduleSelector(
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true)
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth(),
             enabled = enabled
         )
