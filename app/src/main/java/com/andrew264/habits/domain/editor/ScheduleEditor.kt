@@ -94,14 +94,13 @@ class ScheduleEditor @Inject constructor() {
     fun updateTimeRangeInGroup(
         schedule: Schedule,
         groupId: String,
-        old: TimeRange,
-        new: TimeRange
+        updatedTimeRange: TimeRange
     ): Schedule {
         return schedule.copy(
             groups = schedule.groups.map { group ->
                 if (group.id == groupId) {
                     group.copy(
-                        timeRanges = group.timeRanges.map { if (it == old) new else it }
+                        timeRanges = group.timeRanges.map { if (it.id == updatedTimeRange.id) updatedTimeRange else it }
                             .sortedBy { it.fromMinuteOfDay }
                     )
                 } else {
@@ -119,7 +118,7 @@ class ScheduleEditor @Inject constructor() {
         return schedule.copy(
             groups = schedule.groups.map { group ->
                 if (group.id == groupId) {
-                    group.copy(timeRanges = group.timeRanges - timeRange)
+                    group.copy(timeRanges = group.timeRanges.filterNot { it.id == timeRange.id })
                 } else {
                     group
                 }
@@ -164,11 +163,11 @@ class ScheduleEditor @Inject constructor() {
     fun updateTimeRangeInDay(
         schedule: Schedule,
         day: DayOfWeek,
-        old: TimeRange,
-        new: TimeRange
+        updatedTimeRange: TimeRange
     ): ScheduleModificationResult {
-        val sourceGroup = schedule.groups.find { day in it.days && old in it.timeRanges }
-            ?: return ScheduleModificationResult(schedule, null)
+        val sourceGroup = schedule.groups.find { group ->
+            day in group.days && group.timeRanges.any { it.id == updatedTimeRange.id }
+        } ?: return ScheduleModificationResult(schedule, null)
 
         // Case 1: Simple update, no un-grouping needed.
         if (sourceGroup.days.size == 1) {
@@ -176,7 +175,7 @@ class ScheduleEditor @Inject constructor() {
                 groups = schedule.groups.map { group ->
                     if (group.id == sourceGroup.id) {
                         group.copy(
-                            timeRanges = group.timeRanges.map { if (it == old) new else it }
+                            timeRanges = group.timeRanges.map { if (it.id == updatedTimeRange.id) updatedTimeRange else it }
                                 .sortedBy { it.fromMinuteOfDay })
                     } else {
                         group
@@ -193,7 +192,7 @@ class ScheduleEditor @Inject constructor() {
             id = UUID.randomUUID().toString(),
             name = day.name.lowercase().replaceFirstChar { it.titlecase() },
             days = setOf(day),
-            timeRanges = sourceGroup.timeRanges.map { if (it == old) new else it }
+            timeRanges = sourceGroup.timeRanges.map { if (it.id == updatedTimeRange.id) updatedTimeRange else it }
                 .sortedBy { it.fromMinuteOfDay }
         )
 
@@ -209,17 +208,18 @@ class ScheduleEditor @Inject constructor() {
     fun deleteTimeRangeFromDay(
         schedule: Schedule,
         day: DayOfWeek,
-        timeRange: TimeRange
+        timeRangeToDelete: TimeRange
     ): ScheduleModificationResult {
-        val sourceGroup = schedule.groups.find { day in it.days && timeRange in it.timeRanges }
-            ?: return ScheduleModificationResult(schedule, null)
+        val sourceGroup = schedule.groups.find { group ->
+            day in group.days && group.timeRanges.any { it.id == timeRangeToDelete.id }
+        } ?: return ScheduleModificationResult(schedule, null)
 
         // Case 1: The group only affects this day.
         if (sourceGroup.days.size == 1) {
             val newSchedule = schedule.copy(
                 groups = schedule.groups.map { group ->
                     if (group.id == sourceGroup.id) {
-                        group.copy(timeRanges = group.timeRanges - timeRange)
+                        group.copy(timeRanges = group.timeRanges.filterNot { it.id == timeRangeToDelete.id })
                     } else {
                         group
                     }
@@ -235,7 +235,7 @@ class ScheduleEditor @Inject constructor() {
             id = UUID.randomUUID().toString(),
             name = day.name.lowercase().replaceFirstChar { it.titlecase() },
             days = setOf(day),
-            timeRanges = sourceGroup.timeRanges - timeRange
+            timeRanges = sourceGroup.timeRanges.filterNot { it.id == timeRangeToDelete.id }
         )
 
         val updatedOriginalGroup = sourceGroup.copy(days = sourceGroup.days - day)

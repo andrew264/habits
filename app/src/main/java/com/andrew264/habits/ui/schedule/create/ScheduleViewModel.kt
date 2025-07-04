@@ -158,10 +158,9 @@ class ScheduleViewModel @Inject constructor(
 
     fun updateTimeRangeInGroup(
         groupId: String,
-        old: TimeRange,
-        new: TimeRange
+        updatedTimeRange: TimeRange
     ) {
-        updateSchedule { scheduleEditor.updateTimeRangeInGroup(it, groupId, old, new) }
+        updateSchedule { scheduleEditor.updateTimeRangeInGroup(it, groupId, updatedTimeRange) }
     }
 
     fun deleteTimeRangeFromGroup(
@@ -180,11 +179,10 @@ class ScheduleViewModel @Inject constructor(
 
     fun updateTimeRangeInDay(
         day: DayOfWeek,
-        old: TimeRange,
-        new: TimeRange
+        updatedTimeRange: TimeRange
     ) {
         _uiState.value.schedule?.let { currentSchedule ->
-            val result = scheduleEditor.updateTimeRangeInDay(currentSchedule, day, old, new)
+            val result = scheduleEditor.updateTimeRangeInDay(currentSchedule, day, updatedTimeRange)
             _uiState.update { it.copy(schedule = result.schedule) }
             result.userMessage?.let { message ->
                 viewModelScope.launch { _uiEvents.emit(ScheduleUiEvent.ShowSnackbar(message)) }

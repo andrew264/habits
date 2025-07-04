@@ -93,7 +93,6 @@ fun DaySelector(
     }
 }
 
-// TODO: TimeRangeRow is bugged af; when multiple rows of time ranges are present for a single group/day, changing one affects everything nearby. need to look into this and find where (data structure or UI) the short comings exist
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun TimeRangeRow(

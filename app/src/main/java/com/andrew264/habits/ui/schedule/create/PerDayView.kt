@@ -12,11 +12,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -125,13 +122,23 @@ fun PerDayView(
                             if (timeRanges.isNotEmpty()) {
                                 Column {
                                     timeRanges.forEach { timeRange ->
-                                        TimeRangeRow(
-                                            timeRange = timeRange,
-                                            onDelete = { viewModel.deleteTimeRangeFromDay(day, timeRange) },
-                                            onUpdate = { newTimeRange ->
-                                                viewModel.updateTimeRangeInDay(day, timeRange, newTimeRange)
-                                            }
-                                        )
+                                        key(timeRange.id) {
+                                            TimeRangeRow(
+                                                timeRange = timeRange,
+                                                onDelete = {
+                                                    viewModel.deleteTimeRangeFromDay(
+                                                        day,
+                                                        timeRange
+                                                    )
+                                                },
+                                                onUpdate = { newTimeRange ->
+                                                    viewModel.updateTimeRangeInDay(
+                                                        day,
+                                                        newTimeRange
+                                                    )
+                                                }
+                                            )
+                                        }
                                     }
                                 }
                             } else {
@@ -162,7 +169,7 @@ fun PerDayView(
                             // Add Time Button
                             FilledTonalButton(
                                 onClick = {
-                                    viewModel.addTimeRangeToDay(day, TimeRange(540, 600))
+                                    viewModel.addTimeRangeToDay(day, TimeRange(fromMinuteOfDay = 540, toMinuteOfDay = 600))
                                     view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                                 },
                                 modifier = Modifier.align(Alignment.End),

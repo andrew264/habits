@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
@@ -119,17 +120,23 @@ fun GroupedView(
                                     fontWeight = FontWeight.Medium,
                                 )
                                 group.timeRanges.forEach { timeRange ->
-                                    TimeRangeRow(
-                                        timeRange = timeRange,
-                                        onDelete = { viewModel.deleteTimeRangeFromGroup(group.id, timeRange) },
-                                        onUpdate = { newTimeRange ->
-                                            viewModel.updateTimeRangeInGroup(
-                                                group.id,
-                                                timeRange,
-                                                newTimeRange
-                                            )
-                                        }
-                                    )
+                                    key(timeRange.id) {
+                                        TimeRangeRow(
+                                            timeRange = timeRange,
+                                            onDelete = {
+                                                viewModel.deleteTimeRangeFromGroup(
+                                                    group.id,
+                                                    timeRange
+                                                )
+                                            },
+                                            onUpdate = { newTimeRange ->
+                                                viewModel.updateTimeRangeInGroup(
+                                                    group.id,
+                                                    newTimeRange
+                                                )
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -137,7 +144,7 @@ fun GroupedView(
                         // Add Time Button
                         FilledTonalButton(
                             onClick = {
-                                viewModel.addTimeRangeToGroup(group.id, TimeRange(540, 600))
+                                viewModel.addTimeRangeToGroup(group.id, TimeRange(fromMinuteOfDay = 540, toMinuteOfDay = 600))
                                 view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                             },
                             modifier = Modifier.align(Alignment.End),
