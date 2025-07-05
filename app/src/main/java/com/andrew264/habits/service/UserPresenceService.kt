@@ -63,7 +63,7 @@ class UserPresenceService : Service() {
     lateinit var evaluateUserPresenceUseCase: EvaluateUserPresenceUseCase
 
     private val serviceJob = SupervisorJob()
-    private val serviceScope = CoroutineScope(Dispatchers.Main + serviceJob)
+    private val serviceScope = CoroutineScope(Dispatchers.Default + serviceJob)
 
     private val activityRecognitionClient by lazy { ActivityRecognition.getClient(this) }
     private var sleepApiPendingIntent: PendingIntent? = null

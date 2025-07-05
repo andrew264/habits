@@ -18,12 +18,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import com.andrew264.habits.ui.navigation.ContainerGraph
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.rememberSavedStateNavEntryDecorator
+import androidx.navigation3.ui.rememberSceneSetupNavEntryDecorator
+import com.andrew264.habits.ui.navigation.AppNavDisplay
+import com.andrew264.habits.ui.navigation.Home
+import com.andrew264.habits.ui.navigation.TopLevelBackStack
 import com.andrew264.habits.ui.navigation.railItems
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -39,7 +39,7 @@ fun ContainerScreen(
     onRequestPermissions: () -> Unit,
     onOpenAppSettings: () -> Unit
 ) {
-    val navController = rememberNavController()
+    val topLevelBackStack = remember { TopLevelBackStack(Home) }
     val wideNavRailState = rememberWideNavigationRailState()
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -50,14 +50,11 @@ fun ContainerScreen(
 
     // Handle one-time navigation events from the ViewModel
     LaunchedEffect(uiState.destinationRoute) {
-        val route = uiState.destinationRoute
-        if (route != null) {
-            navController.navigate(route) {
-                popUpTo(navController.graph.findStartDestination().id) {
-                    saveState = true
-                }
-                launchSingleTop = true
-                restoreState = true
+        val routeStr = uiState.destinationRoute
+        if (routeStr != null) {
+            val topLevelRoute = railItems.find { it.javaClass.simpleName == routeStr.split("/").first() }
+            if (topLevelRoute != null) {
+                topLevelBackStack.switchTopLevel(topLevelRoute)
             }
             viewModel.onRouteConsumed()
         }
@@ -72,7 +69,7 @@ fun ContainerScreen(
 
     Row(Modifier.fillMaxSize()) {
         AppNavigationRail(
-            navController = navController,
+            topLevelBackStack = topLevelBackStack,
             state = wideNavRailState,
             isCompact = isCompact,
             scope = scope
@@ -81,22 +78,26 @@ fun ContainerScreen(
         Scaffold(
             topBar = {
                 MainTopAppBar(
-                    navController = navController,
+                    topLevelBackStack = topLevelBackStack,
                     railState = wideNavRailState,
                     isCompact = isCompact,
                     scope = scope
                 )
             },
-            floatingActionButton = {
-                MainFab(navController = navController)
-            },
             snackbarHost = { SnackbarHost(snackbarHostState) },
             contentWindowInsets = WindowInsets(0.dp)
         ) { innerPadding ->
-            ContainerGraph(
+            AppNavDisplay(
                 modifier = Modifier.padding(innerPadding),
-                navController = navController,
+                backStack = topLevelBackStack.backStack,
+                onBack = { topLevelBackStack.removeLast() },
+                entryDecorators = listOf(
+                    rememberSceneSetupNavEntryDecorator(),
+                    rememberSavedStateNavEntryDecorator(),
+                    rememberViewModelStoreNavEntryDecorator()
+                ),
                 snackbarHostState = snackbarHostState,
+                onNavigate = { topLevelBackStack.add(it) },
                 onRequestPermissions = onRequestPermissions,
                 onOpenAppSettings = onOpenAppSettings
             )
@@ -108,7 +109,7 @@ fun ContainerScreen(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun AppNavigationRail(
-    navController: NavHostController,
+    topLevelBackStack: TopLevelBackStack,
     state: WideNavigationRailState,
     isCompact: Boolean,
     scope: CoroutineScope
@@ -120,7 +121,7 @@ private fun AppNavigationRail(
             hideOnCollapse = true
         ) {
             AppNavigationRailContent(
-                navController = navController,
+                topLevelBackStack = topLevelBackStack,
                 railState = state,
                 isRailExpanded = true,
                 isCompact = true,
@@ -152,7 +153,7 @@ private fun AppNavigationRail(
         ) {
             val expanded = state.targetValue == WideNavigationRailValue.Expanded
             AppNavigationRailContent(
-                navController = navController,
+                topLevelBackStack = topLevelBackStack,
                 railState = state,
                 isRailExpanded = expanded,
                 isCompact = false,
@@ -165,19 +166,18 @@ private fun AppNavigationRail(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun AppNavigationRailContent(
-    navController: NavHostController,
+    topLevelBackStack: TopLevelBackStack,
     railState: WideNavigationRailState,
     isRailExpanded: Boolean,
     isCompact: Boolean,
     scope: CoroutineScope
 ) {
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination
+    val currentTopLevelRoute = topLevelBackStack.currentTopLevelRoute
     val view = LocalView.current
 
     Column(Modifier.verticalScroll(rememberScrollState())) {
         railItems.forEach { screen ->
-            val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
+            val selected = currentTopLevelRoute == screen
             WideNavigationRailItem(
                 railExpanded = isRailExpanded,
                 icon = {
@@ -190,13 +190,7 @@ private fun AppNavigationRailContent(
                 selected = selected,
                 onClick = {
                     view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                    navController.navigate(screen.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
+                    topLevelBackStack.switchTopLevel(screen)
                     if (isCompact) {
                         scope.launch { railState.collapse() }
                     }

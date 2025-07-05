@@ -124,16 +124,10 @@ fun GroupedView(
                                         TimeRangeRow(
                                             timeRange = timeRange,
                                             onDelete = {
-                                                viewModel.deleteTimeRangeFromGroup(
-                                                    group.id,
-                                                    timeRange
-                                                )
+                                                viewModel.deleteTimeRangeFromGroup(group.id, timeRange)
                                             },
                                             onUpdate = { newTimeRange ->
-                                                viewModel.updateTimeRangeInGroup(
-                                                    group.id,
-                                                    newTimeRange
-                                                )
+                                                viewModel.updateTimeRangeInGroup(group.id, newTimeRange)
                                             }
                                         )
                                     }

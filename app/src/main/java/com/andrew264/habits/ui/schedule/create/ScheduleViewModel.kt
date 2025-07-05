@@ -1,6 +1,5 @@
 package com.andrew264.habits.ui.schedule.create
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andrew264.habits.domain.editor.ScheduleEditor
@@ -9,11 +8,14 @@ import com.andrew264.habits.domain.usecase.SaveScheduleUseCase
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.model.schedule.TimeRange
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.UUID
-import javax.inject.Inject
+import com.andrew264.habits.ui.navigation.ScheduleEditor as ScheduleEditorRoute
 
 enum class ScheduleViewMode {
     GROUPED,
@@ -32,15 +34,15 @@ data class ScheduleEditorUiState(
     val isLoading: Boolean = true
 )
 
-@HiltViewModel
-class ScheduleViewModel @Inject constructor(
+@HiltViewModel(assistedFactory = ScheduleViewModel.Factory::class)
+class ScheduleViewModel @AssistedInject constructor(
     private val scheduleRepository: ScheduleRepository,
     private val saveScheduleUseCase: SaveScheduleUseCase,
     private val scheduleEditor: ScheduleEditor,
-    savedStateHandle: SavedStateHandle
+    @Assisted private val route: ScheduleEditorRoute
 ) : ViewModel() {
 
-    private val scheduleId: String? = savedStateHandle["scheduleId"]
+    private val scheduleId: String? = route.scheduleId
 
     private val _uiState = MutableStateFlow(ScheduleEditorUiState(isNewSchedule = scheduleId == null))
     val uiState: StateFlow<ScheduleEditorUiState> = _uiState.asStateFlow()
@@ -201,5 +203,10 @@ class ScheduleViewModel @Inject constructor(
                 viewModelScope.launch { _uiEvents.emit(ScheduleUiEvent.ShowSnackbar(message)) }
             }
         }
+    }
+
+    @AssistedFactory
+    interface Factory {
+        fun create(route: ScheduleEditorRoute): ScheduleViewModel
     }
 }

@@ -15,7 +15,9 @@ import androidx.compose.ui.unit.dp
 @Composable
 internal fun EmptyState(modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -25,7 +27,8 @@ internal fun EmptyState(modifier: Modifier = Modifier) {
             Icon(
                 imageVector = Icons.Default.Schedule,
                 contentDescription = null,
-                modifier = Modifier.width(64.dp)
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = "No schedules yet",
@@ -35,7 +38,8 @@ internal fun EmptyState(modifier: Modifier = Modifier) {
             Text(
                 text = "Tap the 'New Schedule' button to create one.",
                 style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

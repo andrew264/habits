@@ -19,7 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
+import com.andrew264.habits.ui.navigation.AppRoute
+import com.andrew264.habits.ui.navigation.WaterSettings
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -27,14 +28,14 @@ import kotlin.math.roundToInt
 
 @Composable
 fun WaterHomeScreen(
-    navController: NavController,
-    viewModel: WaterHomeViewModel = hiltViewModel()
+    viewModel: WaterHomeViewModel = hiltViewModel(),
+    onNavigate: (AppRoute) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     if (!uiState.isEnabled) {
         FeatureDisabledContent(
-            onEnableClicked = { navController.navigate("water_settings") }
+            onEnableClicked = { onNavigate(WaterSettings) }
         )
     } else {
         WaterTrackingContent(

@@ -13,13 +13,14 @@ import com.andrew264.habits.model.schedule.Schedule
 
 @Composable
 internal fun ScheduleList(
+    modifier: Modifier = Modifier,
     schedules: List<Schedule>,
     pendingDeletionId: String?,
     onDelete: suspend (Schedule) -> Boolean,
     onEdit: (scheduleId: String) -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),

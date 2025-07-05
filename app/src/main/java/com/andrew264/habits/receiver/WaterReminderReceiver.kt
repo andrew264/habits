@@ -17,7 +17,6 @@ import com.andrew264.habits.domain.repository.UserPresenceHistoryRepository
 import com.andrew264.habits.domain.repository.WaterRepository
 import com.andrew264.habits.domain.scheduler.WaterAlarmScheduler
 import com.andrew264.habits.model.UserPresenceState
-import com.andrew264.habits.ui.navigation.Screen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -142,11 +141,11 @@ class WaterReminderReceiver : BroadcastReceiver() {
         // Content Intent to open the app to the water screen
         val openAppIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            putExtra("destination_route", Screen.Water.route)
+            putExtra("destination_route", "Water")
         }
         val openAppPendingIntent = PendingIntent.getActivity(
             context,
-            Screen.Water.route.hashCode(), // Unique request code
+            "Water".hashCode(),
             openAppIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
