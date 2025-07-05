@@ -1,11 +1,13 @@
 package com.andrew264.habits.ui.navigation
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,6 +28,13 @@ import com.andrew264.habits.ui.water.home.WaterHomeScreen
 import com.andrew264.habits.ui.water.settings.WaterSettingsScreen
 import com.andrew264.habits.ui.water.stats.WaterStatsScreen
 
+// Constants for Shared Axis transition, based on Material Design guidelines.
+private const val TRANSITION_DURATION = 300
+private const val SLIDE_DISTANCE_PERCENT = 0.2f // A 20% slide distance.
+private const val FADE_OUT_DURATION = 90
+private const val FADE_IN_DELAY = FADE_OUT_DURATION
+private const val FADE_IN_DURATION = TRANSITION_DURATION - FADE_IN_DELAY
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AppNavDisplay(
@@ -38,8 +47,6 @@ fun AppNavDisplay(
     onRequestPermissions: () -> Unit,
     onOpenAppSettings: () -> Unit
 ) {
-    val transitionOffsetScale = 10
-    val motionScheme = MaterialTheme.motionScheme
     NavDisplay(
         backStack = backStack,
         modifier = modifier,
@@ -93,23 +100,67 @@ fun AppNavDisplay(
             }
         },
         transitionSpec = {
-            fadeIn(motionScheme.defaultEffectsSpec(), initialAlpha = 0.2f).plus(slideInHorizontally(motionScheme.defaultEffectsSpec(), initialOffsetX = { it / transitionOffsetScale }))
-                .togetherWith(
-                    fadeOut(motionScheme.defaultEffectsSpec()).plus(slideOutHorizontally(motionScheme.defaultEffectsSpec(), targetOffsetX = { -it / transitionOffsetScale }))
+            // Shared Axis X forward
+            fadeIn(
+                animationSpec = tween(
+                    durationMillis = FADE_IN_DURATION,
+                    delayMillis = FADE_IN_DELAY,
+                    easing = LinearEasing
                 )
+            ) + slideInHorizontally(
+                animationSpec = tween(durationMillis = TRANSITION_DURATION, easing = FastOutSlowInEasing),
+                initialOffsetX = { (it * SLIDE_DISTANCE_PERCENT).toInt() }
+            ) togetherWith fadeOut(
+                animationSpec = tween(
+                    durationMillis = FADE_OUT_DURATION,
+                    easing = LinearEasing
+                )
+            ) + slideOutHorizontally(
+                animationSpec = tween(durationMillis = TRANSITION_DURATION, easing = FastOutSlowInEasing),
+                targetOffsetX = { -(it * SLIDE_DISTANCE_PERCENT).toInt() }
+            )
         },
         popTransitionSpec = {
-            fadeIn(motionScheme.defaultEffectsSpec(), initialAlpha = 0.2f).plus(slideInHorizontally(motionScheme.defaultEffectsSpec(), initialOffsetX = { -it / transitionOffsetScale }))
-                .togetherWith(
-                    fadeOut(motionScheme.defaultEffectsSpec()).plus(slideOutHorizontally(motionScheme.defaultEffectsSpec(), targetOffsetX = { it / transitionOffsetScale }))
+            // Shared Axis X backward
+            fadeIn(
+                animationSpec = tween(
+                    durationMillis = FADE_IN_DURATION,
+                    delayMillis = FADE_IN_DELAY,
+                    easing = LinearEasing
                 )
-
+            ) + slideInHorizontally(
+                animationSpec = tween(durationMillis = TRANSITION_DURATION, easing = FastOutSlowInEasing),
+                initialOffsetX = { -(it * SLIDE_DISTANCE_PERCENT).toInt() }
+            ) togetherWith fadeOut(
+                animationSpec = tween(
+                    durationMillis = FADE_OUT_DURATION,
+                    easing = LinearEasing
+                )
+            ) + slideOutHorizontally(
+                animationSpec = tween(durationMillis = TRANSITION_DURATION, easing = FastOutSlowInEasing),
+                targetOffsetX = { (it * SLIDE_DISTANCE_PERCENT).toInt() }
+            )
         },
         predictivePopTransitionSpec = {
-            fadeIn(motionScheme.defaultEffectsSpec(), initialAlpha = 0.2f).plus(slideInHorizontally(motionScheme.defaultEffectsSpec(), initialOffsetX = { -it / transitionOffsetScale }))
-                .togetherWith(
-                    fadeOut(motionScheme.defaultEffectsSpec()).plus(slideOutHorizontally(motionScheme.defaultEffectsSpec(), targetOffsetX = { it / transitionOffsetScale }))
+            // Shared Axis X backward for predictive pop
+            fadeIn(
+                animationSpec = tween(
+                    durationMillis = FADE_IN_DURATION,
+                    delayMillis = FADE_IN_DELAY,
+                    easing = LinearEasing
                 )
+            ) + slideInHorizontally(
+                animationSpec = tween(durationMillis = TRANSITION_DURATION, easing = FastOutSlowInEasing),
+                initialOffsetX = { -(it * SLIDE_DISTANCE_PERCENT).toInt() }
+            ) togetherWith fadeOut(
+                animationSpec = tween(
+                    durationMillis = FADE_OUT_DURATION,
+                    easing = LinearEasing
+                )
+            ) + slideOutHorizontally(
+                animationSpec = tween(durationMillis = TRANSITION_DURATION, easing = FastOutSlowInEasing),
+                targetOffsetX = { (it * SLIDE_DISTANCE_PERCENT).toInt() }
+            )
         }
     )
 }

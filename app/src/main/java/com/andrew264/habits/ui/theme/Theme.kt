@@ -3,6 +3,7 @@ package com.andrew264.habits.ui.theme
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -30,6 +31,9 @@ fun HabitsTheme(
         colorScheme = colorScheme,
         motionScheme = MotionScheme.expressive(),
         typography = Typography,
-        content = content
-    )
+    ) {
+        CompositionLocalProvider {
+            content()
+        }
+    }
 }
