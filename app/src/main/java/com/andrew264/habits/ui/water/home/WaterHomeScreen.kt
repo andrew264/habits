@@ -15,12 +15,12 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.andrew264.habits.ui.navigation.AppRoute
 import com.andrew264.habits.ui.navigation.WaterSettings
+import com.andrew264.habits.ui.theme.Dimens
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -69,9 +69,9 @@ private fun WaterTrackingContent(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(Dimens.PaddingLarge),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
     ) {
         // --- Progress Section ---
         item {
@@ -86,8 +86,7 @@ private fun WaterTrackingContent(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "${uiState.todaysIntakeMl} ml",
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.headlineLarge
                     )
                     Text(
                         text = "of ${uiState.dailyTargetMl} ml",
@@ -102,9 +101,9 @@ private fun WaterTrackingContent(
         item {
             Card(Modifier.fillMaxWidth()) {
                 Column(
-                    Modifier.padding(16.dp),
+                    Modifier.padding(Dimens.PaddingLarge),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(Dimens.PaddingMedium)
                 ) {
                     Text(
                         "Log Intake: ${sliderValue.roundToInt()} ml",
@@ -127,7 +126,7 @@ private fun WaterTrackingContent(
                     )
                     Row(
                         Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall, Alignment.CenterHorizontally)
                     ) {
                         Button(onClick = {
                             sliderValue = 250f
@@ -194,20 +193,20 @@ private fun FeatureDisabledContent(
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(Dimens.PaddingLarge))
         Text(
             text = "Water Tracking is Disabled",
             style = MaterialTheme.typography.headlineSmall,
             textAlign = TextAlign.Center
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(Dimens.PaddingSmall))
         Text(
             text = "Enable this feature in the settings to start tracking your daily water intake.",
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(Dimens.PaddingExtraLarge))
         Button(onClick = {
             onEnableClicked()
             view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)

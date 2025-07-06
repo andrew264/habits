@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.andrew264.habits.ui.theme.Dimens
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.ceil
@@ -37,7 +37,7 @@ fun BarChart(
     entries: List<BarChartEntry>,
     modifier: Modifier = Modifier,
     barColor: Color = MaterialTheme.colorScheme.primary,
-    gridColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+    gridColor: Color = MaterialTheme.colorScheme.outlineVariant
 ) {
     if (entries.isEmpty()) {
         return
@@ -52,6 +52,17 @@ fun BarChart(
     }
 
     val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
+    val typography = MaterialTheme.typography
+    val valueTextStyle = remember(typography, onPrimaryColor) {
+        typography.bodySmall.copy(color = onPrimaryColor, fontWeight = FontWeight.Bold)
+    }
+    val yAxisTextStyle = remember(typography, gridColor) {
+        typography.bodySmall.copy(color = gridColor, textAlign = TextAlign.End)
+    }
+    val xAxisTextStyle = remember(typography, gridColor) {
+        typography.bodySmall.copy(color = gridColor)
+    }
+
     LaunchedEffect(entries) {
         animationProgress.forEachIndexed { index, animatable ->
             launch {
@@ -105,8 +116,8 @@ fun BarChart(
         val barWidth = barAreaWidth * 0.6f
         val barSpacing = barAreaWidth * 0.4f
 
-        drawYAxis(textMeasurer, yAxisValues, yAxisWidth, chartAreaHeight, gridColor, size.width)
-        drawXAxis(textMeasurer, entries, yAxisWidth, chartAreaHeight, barAreaWidth, gridColor)
+        drawYAxis(textMeasurer, yAxisValues, yAxisWidth, chartAreaHeight, gridColor, size.width, yAxisTextStyle)
+        drawXAxis(textMeasurer, entries, yAxisWidth, chartAreaHeight, barAreaWidth, gridColor, xAxisTextStyle)
 
         entries.forEachIndexed { index, entry ->
             val barHeight = (entry.value / topValue) * chartAreaHeight * animationProgress[index].value
@@ -131,28 +142,24 @@ fun BarChart(
                 val valueText = entry.value.roundToInt().toString()
                 val textLayoutResult = textMeasurer.measure(
                     text = AnnotatedString(valueText),
-                    style = TextStyle(
-                        color = onPrimaryColor,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    style = valueTextStyle
                 )
                 val textTopLeft = Offset(
                     x = rect.center.x - textLayoutResult.size.width / 2,
-                    y = (rect.top - textLayoutResult.size.height - 8.dp.toPx()).coerceAtLeast(0f)
+                    y = (rect.top - textLayoutResult.size.height - Dimens.PaddingSmall.toPx()).coerceAtLeast(0f)
                 )
 
                 val bgRect = Rect(
                     left = textTopLeft.x - 6.dp.toPx(),
-                    top = textTopLeft.y - 4.dp.toPx(),
+                    top = textTopLeft.y - Dimens.PaddingExtraSmall.toPx(),
                     right = textTopLeft.x + textLayoutResult.size.width + 6.dp.toPx(),
-                    bottom = textTopLeft.y + textLayoutResult.size.height + 4.dp.toPx()
+                    bottom = textTopLeft.y + textLayoutResult.size.height + Dimens.PaddingExtraSmall.toPx()
                 )
                 drawRoundRect(
                     color = barColor,
                     topLeft = bgRect.topLeft,
                     size = bgRect.size,
-                    cornerRadius = CornerRadius(4.dp.toPx())
+                    cornerRadius = CornerRadius(Dimens.PaddingExtraSmall.toPx())
                 )
                 drawText(textLayoutResult, topLeft = textTopLeft)
             }
@@ -167,19 +174,20 @@ private fun DrawScope.drawYAxis(
     yAxisWidth: Float,
     chartAreaHeight: Float,
     gridColor: Color,
-    totalWidth: Float
+    totalWidth: Float,
+    yAxisTextStyle: TextStyle
 ) {
     val pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
     yAxisValues.forEach { value ->
         val y = chartAreaHeight - (value / yAxisValues.last()) * chartAreaHeight
         val textLayoutResult = textMeasurer.measure(
             text = AnnotatedString(value.roundToInt().toString()),
-            style = TextStyle(color = gridColor, fontSize = 12.sp, textAlign = TextAlign.End),
-            constraints = Constraints(maxWidth = yAxisWidth.toInt() - 8.dp.toPx().toInt())
+            style = yAxisTextStyle,
+            constraints = Constraints(maxWidth = yAxisWidth.toInt() - Dimens.PaddingSmall.toPx().toInt())
         )
         drawText(
             textLayoutResult = textLayoutResult,
-            topLeft = Offset(yAxisWidth - textLayoutResult.size.width - 8.dp.toPx(), y - textLayoutResult.size.height / 2)
+            topLeft = Offset(yAxisWidth - textLayoutResult.size.width - Dimens.PaddingSmall.toPx(), y - textLayoutResult.size.height / 2)
         )
 
         if (value > 0) {
@@ -201,7 +209,8 @@ private fun DrawScope.drawXAxis(
     yAxisWidth: Float,
     chartAreaHeight: Float,
     barAreaWidth: Float,
-    gridColor: Color
+    gridColor: Color,
+    xAxisTextStyle: TextStyle
 ) {
     drawLine(
         color = gridColor,
@@ -213,12 +222,12 @@ private fun DrawScope.drawXAxis(
     entries.forEachIndexed { index, entry ->
         val textLayoutResult = textMeasurer.measure(
             text = AnnotatedString(entry.label),
-            style = TextStyle(color = gridColor, fontSize = 12.sp)
+            style = xAxisTextStyle
         )
         val x = yAxisWidth + index * barAreaWidth + barAreaWidth / 2 - textLayoutResult.size.width / 2
         drawText(
             textLayoutResult = textLayoutResult,
-            topLeft = Offset(x, chartAreaHeight + 8.dp.toPx())
+            topLeft = Offset(x, chartAreaHeight + Dimens.PaddingSmall.toPx())
         )
     }
 }

@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.TimeRange
 import com.andrew264.habits.ui.common.dialogs.HabitsTimePickerDialog
+import com.andrew264.habits.ui.theme.Dimens
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -38,12 +39,12 @@ fun DaySelector(
     val view = LocalView.current
 
     Column(
-        modifier = Modifier.padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        modifier = Modifier.padding(Dimens.PaddingSmall),
+        verticalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
     ) {
         Text(
             text = "Days",
-            fontWeight = FontWeight.Medium
+            style = MaterialTheme.typography.titleMedium
         )
 
         Row(
@@ -82,10 +83,10 @@ fun DaySelector(
                 ) {
                     Text(
                         text = dayName,
+                        style = MaterialTheme.typography.titleMedium,
                         textAlign = TextAlign.Center,
                         color = contentColor,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = MaterialTheme.typography.titleMedium.fontSize
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
@@ -113,13 +114,18 @@ fun TimeRangeRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+                .padding(
+                    start = Dimens.PaddingMedium,
+                    end = Dimens.PaddingExtraSmall,
+                    top = Dimens.PaddingExtraSmall,
+                    bottom = Dimens.PaddingExtraSmall
+                ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingMedium)
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Schedule,
@@ -128,7 +134,7 @@ fun TimeRangeRow(
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
                 ) {
                     FilledTonalButton(
                         onClick = {
@@ -162,7 +168,6 @@ fun TimeRangeRow(
                         Text(
                             text = "+1d",
                             style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.tertiary,
                             modifier = Modifier.padding(start = 2.dp)
                         )

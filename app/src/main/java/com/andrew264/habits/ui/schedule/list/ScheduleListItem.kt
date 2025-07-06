@@ -5,7 +5,6 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -22,9 +21,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.andrew264.habits.domain.analyzer.ScheduleAnalyzer
 import com.andrew264.habits.model.schedule.Schedule
+import com.andrew264.habits.ui.theme.Dimens
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -54,7 +53,7 @@ internal fun ScheduleListItem(
 
         SwipeToDismissBox(
             state = dismissState,
-            modifier = Modifier.clip(RoundedCornerShape(12.dp)),
+            modifier = Modifier.clip(MaterialTheme.shapes.medium),
             onDismiss = { direction ->
                 when (direction) {
                     SwipeToDismissBoxValue.StartToEnd -> {
@@ -99,8 +98,8 @@ internal fun ScheduleListItem(
                             modifier = Modifier.fillMaxSize()
                         ) {
                             Icon(Icons.Default.Edit, contentDescription = "Edit")
-                            Spacer(Modifier.width(8.dp))
-                            Text("Edit", fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.width(Dimens.PaddingSmall))
+                            Text("Edit", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                         }
                     } else if (direction == SwipeToDismissBoxValue.EndToStart) {
                         Row(
@@ -108,8 +107,8 @@ internal fun ScheduleListItem(
                             horizontalArrangement = Arrangement.End,
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            Text("Delete", fontWeight = FontWeight.Bold)
-                            Spacer(Modifier.width(8.dp))
+                            Text("Delete", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.width(Dimens.PaddingSmall))
                             Icon(Icons.Default.Delete, contentDescription = "Delete")
                         }
                     }
@@ -125,16 +124,16 @@ internal fun ScheduleListItem(
                     view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                     onEdit()
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium
             ) {
                 Column(
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = Dimens.PaddingLarge),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
                 ) {
                     Text(
                         text = schedule.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontSize = 20.sp,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold
                     )
 
@@ -147,8 +146,7 @@ internal fun ScheduleListItem(
                     Text(
                         text = summaryText,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = 20.sp
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     Row(
@@ -169,7 +167,7 @@ internal fun ScheduleListItem(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
-                        Spacer(Modifier.width(16.dp))
+                        Spacer(Modifier.width(Dimens.PaddingLarge))
                     }
                 }
             }

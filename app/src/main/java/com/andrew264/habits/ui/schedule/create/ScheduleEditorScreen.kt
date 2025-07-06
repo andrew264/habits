@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.andrew264.habits.ui.theme.Dimens
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -73,10 +74,10 @@ fun ScheduleEditorScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                        .padding(Dimens.PaddingLarge),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)) {
                         // Schedule Name Editor
                         OutlinedTextField(
                             value = uiState.schedule?.name.orEmpty(),
@@ -98,8 +99,8 @@ fun ScheduleEditorScreen(
                                 contentDescription = "Save Schedule",
                                 modifier = Modifier.size(18.dp)
                             )
-                            Spacer(Modifier.width(8.dp))
-                            Text("Save", fontWeight = FontWeight.Medium)
+                            Spacer(Modifier.width(Dimens.PaddingSmall))
+                            Text("Save")
                         }
                     }
 

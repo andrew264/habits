@@ -14,8 +14,8 @@ import androidx.compose.ui.text.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.andrew264.habits.model.UserPresenceState
+import com.andrew264.habits.ui.theme.Dimens
 import java.time.*
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
@@ -51,11 +51,19 @@ fun <T> SleepChart(
     if (segments.isEmpty()) return
 
     val textMeasurer = rememberTextMeasurer()
-    val gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+    val gridColor = MaterialTheme.colorScheme.outlineVariant
 
     val timeFormatter = remember { DateTimeFormatter.ofPattern("ha") }
     val groupedSegments = remember(segments, rangeInDays) {
         processAndGroupSegments(segments, getStartTimeMillis, getEndTimeMillis, getState)
+    }
+
+    val typography = MaterialTheme.typography
+    val axisTextStyle = remember(typography, gridColor) {
+        typography.bodySmall.copy(color = gridColor)
+    }
+    val yAxisTextStyle = remember(typography, gridColor) {
+        typography.bodySmall.copy(color = gridColor, textAlign = TextAlign.Start)
     }
 
     Canvas(modifier = modifier) {
@@ -70,9 +78,9 @@ fun <T> SleepChart(
         // Calculate the interval for drawing labels to avoid overlap
         val sampleLabelWidth = textMeasurer.measure(
             text = "30", // Use a two-digit number for a representative width
-            style = TextStyle(fontSize = 12.sp)
+            style = axisTextStyle
         ).size.width
-        val requiredWidthPerLabel = sampleLabelWidth + 8.dp.toPx() // Add some padding
+        val requiredWidthPerLabel = sampleLabelWidth + Dimens.PaddingSmall.toPx()
 
         val labelInterval = if (dayColumnWidth < requiredWidthPerLabel) {
             ceil(requiredWidthPerLabel / dayColumnWidth).toInt()
@@ -80,7 +88,7 @@ fun <T> SleepChart(
             1
         }
 
-        drawYAxis(textMeasurer, chartAreaHeight, size.width, yAxisWidth, gridColor, timeFormatter)
+        drawYAxis(textMeasurer, chartAreaHeight, size.width, yAxisWidth, gridColor, timeFormatter, yAxisTextStyle)
 
         val today = LocalDate.now(ZoneId.systemDefault())
         for (i in 0 until rangeInDays) {
@@ -92,7 +100,7 @@ fun <T> SleepChart(
 
             // Conditionally draw the text label to prevent overlap
             if (i % labelInterval == 0) {
-                drawXAxisTextLabel(textMeasurer, date, columnX, dayColumnWidth, chartAreaHeight, gridColor)
+                drawXAxisTextLabel(textMeasurer, date, columnX, dayColumnWidth, chartAreaHeight, gridColor, axisTextStyle)
             }
 
             groupedSegments[date]?.forEach { segment ->
@@ -153,7 +161,8 @@ private fun DrawScope.drawYAxis(
     totalWidth: Float,
     yAxisWidth: Float,
     gridColor: Color,
-    timeFormatter: DateTimeFormatter
+    timeFormatter: DateTimeFormatter,
+    yAxisTextStyle: TextStyle
 ) {
     val pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
     val yAxisHours = listOf(18, 22, 2, 6, 10, 14, 18) // 6PM, 10PM, 2AM ... 6PM
@@ -165,12 +174,12 @@ private fun DrawScope.drawYAxis(
 
         val textLayoutResult = textMeasurer.measure(
             text = label,
-            style = TextStyle(color = gridColor, fontSize = 12.sp, textAlign = TextAlign.Start),
-            constraints = Constraints(maxWidth = yAxisWidth.toInt() - 8.dp.toPx().toInt())
+            style = yAxisTextStyle,
+            constraints = Constraints(maxWidth = yAxisWidth.toInt() - Dimens.PaddingSmall.toPx().toInt())
         )
         drawText(
             textLayoutResult = textLayoutResult,
-            topLeft = Offset(totalWidth - yAxisWidth + 8.dp.toPx(), y - textLayoutResult.size.height / 2)
+            topLeft = Offset(totalWidth - yAxisWidth + Dimens.PaddingSmall.toPx(), y - textLayoutResult.size.height / 2)
         )
 
         drawLine(
@@ -190,18 +199,19 @@ private fun DrawScope.drawXAxisTextLabel(
     columnX: Float,
     columnWidth: Float,
     chartHeight: Float,
-    gridColor: Color
+    gridColor: Color,
+    axisTextStyle: TextStyle
 ) {
     val label = date.dayOfMonth.toString()
     val textLayoutResult = textMeasurer.measure(
         text = label,
-        style = TextStyle(color = gridColor, fontSize = 12.sp)
+        style = axisTextStyle
     )
 
     val textX = columnX + (columnWidth / 2) - (textLayoutResult.size.width / 2)
     drawText(
         textLayoutResult = textLayoutResult,
-        topLeft = Offset(textX, chartHeight + 8.dp.toPx())
+        topLeft = Offset(textX, chartHeight + Dimens.PaddingSmall.toPx())
     )
 }
 

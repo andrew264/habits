@@ -11,18 +11,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.andrew264.habits.ui.theme.Dimens
 
 @Composable
 internal fun EmptyState(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(Dimens.PaddingLarge),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
         ) {
             Icon(
                 imageVector = Icons.Default.Schedule,

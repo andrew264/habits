@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.TimeRange
+import com.andrew264.habits.ui.theme.Dimens
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -36,8 +37,8 @@ fun PerDayView(
 
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        contentPadding = PaddingValues(Dimens.PaddingLarge),
+        verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
     ) {
         items(DayOfWeek.entries.toList(), key = { it.name }) { day ->
             val timeRanges = perDayRepresentation[day] ?: emptyList()
@@ -60,9 +61,9 @@ fun PerDayView(
                                 }
                                 view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                             }
-                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                            .padding(horizontal = 20.dp, vertical = Dimens.PaddingMedium),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
                     ) {
                         Box(
                             modifier = Modifier
@@ -79,6 +80,7 @@ fun PerDayView(
                                 )
                                 Text(
                                     text = day.name.take(3),
+                                    style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
@@ -91,6 +93,7 @@ fun PerDayView(
                                 text = day.name.lowercase().replaceFirstChar {
                                     it.titlecase(Locale.getDefault())
                                 },
+                                style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                             )
 
@@ -100,6 +103,7 @@ fun PerDayView(
                                     1 -> "1 time range"
                                     else -> "${timeRanges.size} time ranges"
                                 },
+                                style = MaterialTheme.typography.bodyMedium
                             )
                         }
 
@@ -149,9 +153,9 @@ fun PerDayView(
                                     Column(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(24.dp),
+                                            .padding(Dimens.PaddingExtraLarge),
                                         horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        verticalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
                                     ) {
                                         Icon(
                                             imageVector = Icons.Outlined.CalendarToday,
@@ -160,7 +164,7 @@ fun PerDayView(
                                         )
                                         Text(
                                             text = "No time ranges set",
-                                            fontWeight = FontWeight.Medium
+                                            style = MaterialTheme.typography.titleSmall
                                         )
                                     }
                                 }
@@ -178,9 +182,9 @@ fun PerDayView(
                                 Icon(
                                     Icons.Default.Add,
                                     contentDescription = null,
-                                    modifier = Modifier.size(16.dp)
+                                    modifier = Modifier.size(Dimens.PaddingLarge)
                                 )
-                                Spacer(Modifier.width(8.dp))
+                                Spacer(Modifier.width(Dimens.PaddingSmall))
                                 Text(
                                     text = "Add Time Range",
                                 )

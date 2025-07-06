@@ -9,13 +9,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.andrew264.habits.model.UserPresenceState
-import com.andrew264.habits.ui.theme.HabitsTheme
+import com.andrew264.habits.ui.theme.Dimens
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -31,9 +28,9 @@ fun UserPresenceControlScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(Dimens.PaddingLarge),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
     ) {
         Text(
             text = "Current User State:",
@@ -42,7 +39,6 @@ fun UserPresenceControlScreen(
         Text(
             text = uiState.presenceState.name.replace('_', ' '),
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.SemiBold,
             color = when (uiState.presenceState) {
                 UserPresenceState.AWAKE -> MaterialTheme.colorScheme.primary
                 UserPresenceState.SLEEPING -> MaterialTheme.colorScheme.secondary
@@ -50,7 +46,7 @@ fun UserPresenceControlScreen(
             }
         )
 
-        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+        HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -76,10 +72,10 @@ fun UserPresenceControlScreen(
             text = "The service uses the Sleep API and time-based heuristics.",
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Left,
-            modifier = Modifier.padding(horizontal = 4.dp)
+            modifier = Modifier.padding(horizontal = Dimens.PaddingExtraSmall)
         )
 
-        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+        HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
 
         Button(
             onClick = {
@@ -102,16 +98,5 @@ fun UserPresenceControlScreen(
         ) {
             Text("Open App Settings")
         }
-    }
-}
-
-@Preview(showBackground = true, widthDp = 360)
-@Composable
-fun UserPresenceControlScreenPreview() {
-    HabitsTheme {
-        UserPresenceControlScreen(
-            onRequestPermissions = {},
-            onOpenAppSettings = {}
-        )
     }
 }

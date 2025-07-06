@@ -11,9 +11,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.andrew264.habits.model.schedule.Schedule
+import com.andrew264.habits.ui.theme.Dimens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,12 +30,12 @@ fun WaterSettingsScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(Dimens.PaddingLarge),
+        verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
     ) {
         // --- General Section ---
         Card(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp)) {
+            Column(Modifier.padding(Dimens.PaddingLarge)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -51,7 +51,7 @@ fun WaterSettingsScreen(
                         }
                     )
                 }
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(Dimens.PaddingLarge))
                 OutlinedTextField(
                     value = settings.waterDailyTargetMl.toString(),
                     onValueChange = viewModel::onDailyTargetChanged,
@@ -65,7 +65,7 @@ fun WaterSettingsScreen(
 
         // --- Reminders Section ---
         Card(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp)) {
+            Column(Modifier.padding(Dimens.PaddingLarge)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -82,7 +82,7 @@ fun WaterSettingsScreen(
                         enabled = settings.isWaterTrackingEnabled
                     )
                 }
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(Dimens.PaddingLarge))
                 OutlinedTextField(
                     value = settings.waterReminderIntervalMinutes.toString(),
                     onValueChange = viewModel::onReminderIntervalChanged,
@@ -91,7 +91,7 @@ fun WaterSettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = settings.isWaterTrackingEnabled && settings.isWaterReminderEnabled
                 )
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(Dimens.PaddingLarge))
                 OutlinedTextField(
                     value = settings.waterReminderSnoozeMinutes.toString(),
                     onValueChange = viewModel::onSnoozeTimeChanged,
@@ -100,7 +100,7 @@ fun WaterSettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = settings.isWaterTrackingEnabled && settings.isWaterReminderEnabled
                 )
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(Dimens.PaddingLarge))
                 ScheduleSelector(
                     schedules = allSchedules,
                     selectedSchedule = selectedSchedule,

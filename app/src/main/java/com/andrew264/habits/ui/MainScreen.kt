@@ -25,6 +25,7 @@ import com.andrew264.habits.ui.navigation.AppNavDisplay
 import com.andrew264.habits.ui.navigation.Home
 import com.andrew264.habits.ui.navigation.TopLevelBackStack
 import com.andrew264.habits.ui.navigation.railItems
+import com.andrew264.habits.ui.theme.Dimens
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -138,7 +139,7 @@ private fun AppNavigationRail(
                         scope.launch { if (expanded) state.collapse() else state.expand() }
                         view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                     },
-                    modifier = Modifier.padding(start = 24.dp),
+                    modifier = Modifier.padding(start = Dimens.PaddingExtraLarge),
                     shapes = IconButtonDefaults.shapes()
                 ) {
                     Crossfade(targetState = expanded, label = "MenuIconCrossfade") { isExpanded ->

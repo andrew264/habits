@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.andrew264.habits.ui.theme.Dimens
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 
@@ -49,7 +50,7 @@ fun HabitsTimePickerDialog(
             tonalElevation = 6.dp
         ) {
             Column(
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
+                modifier = Modifier.padding(horizontal = Dimens.PaddingExtraLarge, vertical = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -65,7 +66,7 @@ fun HabitsTimePickerDialog(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 12.dp),
+                        .padding(top = Dimens.PaddingMedium),
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = {
@@ -74,7 +75,7 @@ fun HabitsTimePickerDialog(
                     }) {
                         Text("Cancel")
                     }
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(Dimens.PaddingSmall))
                     TextButton(
                         onClick = {
                             onConfirm(timePickerState.hour, timePickerState.minute)

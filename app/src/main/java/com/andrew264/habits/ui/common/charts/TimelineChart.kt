@@ -11,12 +11,11 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextLayoutResult
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.andrew264.habits.ui.theme.Dimens
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDateTime
@@ -39,8 +38,7 @@ enum class TimelineLabelStrategy(
     val chronoUnit: ChronoUnit
 ) {
     TWELVE_HOURS(TimeUnit.HOURS.toMillis(2), "ha", ChronoUnit.HOURS),
-    DAY(TimeUnit.HOURS.toMillis(4), "ha", ChronoUnit.HOURS),
-    WEEK(TimeUnit.DAYS.toMillis(1), "E", ChronoUnit.DAYS)
+    DAY(TimeUnit.HOURS.toMillis(4), "ha", ChronoUnit.HOURS)
 }
 
 /**
@@ -69,17 +67,17 @@ fun <T> TimelineChart(
     viewEndTimeMillis: Long,
     labelStrategy: TimelineLabelStrategy,
     modifier: Modifier = Modifier,
-    barHeight: Dp = 24.dp,
+    barHeight: Dp = Dimens.PaddingExtraLarge,
     labelSpacing: Dp = 6.dp,
-    tickHeight: Dp = 4.dp
+    tickHeight: Dp = Dimens.PaddingExtraSmall
 ) {
     val textMeasurer = rememberTextMeasurer()
-    val labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-    val labelTextStyle = TextStyle(fontSize = 9.sp, color = labelColor)
-    val tickColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val labelTextStyle = MaterialTheme.typography.labelSmall.copy(color = labelColor)
+    val tickColor = MaterialTheme.colorScheme.outline
 
-    val barOutlineColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-    val barBackgroundColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+    val barOutlineColor = MaterialTheme.colorScheme.outline
+    val barBackgroundColor = MaterialTheme.colorScheme.surfaceContainer
     val cornerRadius = CornerRadius(barHeight.value / 3)
 
     val timeFormatter = remember(labelStrategy.formatterPattern) {

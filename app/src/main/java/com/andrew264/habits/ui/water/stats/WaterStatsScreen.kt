@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.andrew264.habits.ui.common.charts.BarChart
 import com.andrew264.habits.ui.common.charts.BarChartEntry
+import com.andrew264.habits.ui.theme.Dimens
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -34,8 +35,8 @@ fun WaterStatsScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(Dimens.PaddingLarge),
+        verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -103,7 +104,7 @@ private fun StatsContent(stats: com.andrew264.habits.domain.analyzer.WaterStatis
     // Summary Cards
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+        horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
     ) {
         StatCard(
             label = "Daily Avg",
@@ -119,9 +120,9 @@ private fun StatsContent(stats: com.andrew264.habits.domain.analyzer.WaterStatis
 
     // Daily Intake Chart
     Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp)) {
+        Column(Modifier.padding(Dimens.PaddingLarge)) {
             Text("Daily Intake", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Dimens.PaddingLarge))
             val dailyEntries = remember(stats.dailyIntakes) {
                 stats.dailyIntakes.map {
                     BarChartEntry(
@@ -141,9 +142,9 @@ private fun StatsContent(stats: com.andrew264.habits.domain.analyzer.WaterStatis
 
     // Hourly Breakdown Chart
     Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp)) {
+        Column(Modifier.padding(Dimens.PaddingLarge)) {
             Text("Peak Hours", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Dimens.PaddingLarge))
             val hourlyEntries = remember(stats.hourlyBreakdown) {
                 stats.hourlyBreakdown.filter { it.totalMl > 0 }.map {
                     BarChartEntry(
@@ -175,14 +176,13 @@ fun StatCard(
 ) {
     Card(modifier = modifier) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(Dimens.PaddingLarge),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(text = label, style = MaterialTheme.typography.labelLarge)
             Text(
                 text = value,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = MaterialTheme.typography.titleLarge.fontWeight
+                style = MaterialTheme.typography.headlineSmall
             )
         }
     }
@@ -203,7 +203,7 @@ fun EmptyStatsState() {
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(Dimens.PaddingLarge))
         Text(
             text = "Not Enough Data",
             style = MaterialTheme.typography.headlineSmall,

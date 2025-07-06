@@ -17,16 +17,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.andrew264.habits.model.UserPresenceState
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.ui.common.charts.SleepChart
 import com.andrew264.habits.ui.common.charts.TimelineChart
 import com.andrew264.habits.ui.common.charts.TimelineLabelStrategy
+import com.andrew264.habits.ui.theme.Dimens
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -42,9 +41,9 @@ fun BedtimeScreen(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .padding(Dimens.PaddingLarge),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
     ) {
         // Presence History Section
         Card(
@@ -54,17 +53,16 @@ fun BedtimeScreen(
             )
         ) {
             Column(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(Dimens.PaddingLarge),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     "Sleep History",
                     style = MaterialTheme.typography.headlineSmall,
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold
+                    textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(Dimens.PaddingMedium))
 
                 // Timeline Range Buttons
                 Row(
@@ -113,7 +111,7 @@ fun BedtimeScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(Dimens.PaddingLarge))
 
                 // Timeline Visualization
                 if (uiState.isLoading) {
@@ -167,7 +165,7 @@ fun BedtimeScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(Dimens.PaddingMedium))
 
                     if (uiState.selectedTimelineRange.isLinear) {
                         PresenceLegend()
@@ -182,15 +180,14 @@ fun BedtimeScreen(
         Text(
             text = "Sleep Schedule",
             style = MaterialTheme.typography.headlineSmall,
-            textAlign = TextAlign.Center,
-            fontWeight = FontWeight.Bold
+            textAlign = TextAlign.Center
         )
         Text(
             text = "Select a schedule to define your typical sleep period. This is used by the Sleep API and other heuristics to determine your presence state.",
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
         )
 
         ScheduleSelector(
@@ -265,16 +262,15 @@ fun ScheduleInfoCard(
         modifier = modifier,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(Dimens.PaddingLarge)) {
             Text(
                 text = scheduleInfo.summary,
                 style = MaterialTheme.typography.bodyLarge,
-                lineHeight = 22.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(Dimens.PaddingMedium))
             HorizontalDivider()
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(Dimens.PaddingMedium))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -329,7 +325,7 @@ fun LegendItem(
     ) {
         Box(
             modifier = Modifier
-                .size(12.dp)
+                .size(Dimens.PaddingMedium)
                 .clip(CircleShape)
                 .background(color)
         )

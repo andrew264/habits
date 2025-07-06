@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.model.schedule.Schedule
+import com.andrew264.habits.ui.theme.Dimens
 
 @Composable
 internal fun ScheduleList(
@@ -22,9 +23,9 @@ internal fun ScheduleList(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 88.dp)
+            .padding(horizontal = Dimens.PaddingLarge),
+        verticalArrangement = Arrangement.spacedBy(Dimens.PaddingMedium),
+        contentPadding = PaddingValues(top = Dimens.PaddingLarge, bottom = 88.dp)
     ) {
         items(schedules, key = { it.id }) { schedule ->
             ScheduleListItem(

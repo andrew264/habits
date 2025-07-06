@@ -13,11 +13,11 @@ import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.model.schedule.TimeRange
+import com.andrew264.habits.ui.theme.Dimens
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -32,12 +32,12 @@ fun GroupedView(
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(Dimens.PaddingLarge),
             contentAlignment = Alignment.Center
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -61,7 +61,7 @@ fun GroupedView(
     } else {
         LazyColumn(
             modifier = modifier.padding(bottom = 72.dp),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+            contentPadding = PaddingValues(start = Dimens.PaddingLarge, end = Dimens.PaddingLarge, bottom = Dimens.PaddingLarge),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             items(schedule.groups, key = { it.id }) { group ->
@@ -72,13 +72,13 @@ fun GroupedView(
                 ) {
                     Column(
                         modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
                     ) {
                         // Header Section
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingMedium)
                         ) {
                             OutlinedTextField(
                                 value = group.name,
@@ -112,12 +112,12 @@ fun GroupedView(
                         // Time Ranges Section
                         if (group.timeRanges.isNotEmpty()) {
                             Column(
-                                modifier = Modifier.padding(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                modifier = Modifier.padding(Dimens.PaddingSmall),
+                                verticalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
                             ) {
                                 Text(
                                     text = "Time Ranges",
-                                    fontWeight = FontWeight.Medium,
+                                    style = MaterialTheme.typography.titleMedium
                                 )
                                 group.timeRanges.forEach { timeRange ->
                                     key(timeRange.id) {
@@ -147,9 +147,9 @@ fun GroupedView(
                             Icon(
                                 Icons.Default.Add,
                                 contentDescription = null,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(Dimens.PaddingLarge)
                             )
-                            Spacer(Modifier.width(8.dp))
+                            Spacer(Modifier.width(Dimens.PaddingSmall))
                             Text("Add Time Range")
                         }
                     }
