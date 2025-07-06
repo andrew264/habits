@@ -25,7 +25,7 @@ import com.andrew264.habits.ui.schedule.create.ScheduleEditorScreen
 import com.andrew264.habits.ui.schedule.create.ScheduleViewModel
 import com.andrew264.habits.ui.schedule.list.SchedulesScreen
 import com.andrew264.habits.ui.water.home.WaterHomeScreen
-import com.andrew264.habits.ui.water.settings.WaterSettingsScreen
+import com.andrew264.habits.ui.water.home.WaterHomeViewModel
 import com.andrew264.habits.ui.water.stats.WaterStatsScreen
 
 // Constants for Shared Axis transition, based on Material Design guidelines.
@@ -45,7 +45,8 @@ fun AppNavDisplay(
     snackbarHostState: SnackbarHostState,
     onNavigate: (AppRoute) -> Unit,
     onRequestPermissions: () -> Unit,
-    onOpenAppSettings: () -> Unit
+    onOpenAppSettings: () -> Unit,
+    waterHomeViewModel: WaterHomeViewModel
 ) {
     NavDisplay(
         backStack = backStack,
@@ -63,10 +64,9 @@ fun AppNavDisplay(
                 }
             }
             entry<Water> {
-                WaterHomeScreen(onNavigate = onNavigate)
-            }
-            entry<WaterSettings> {
-                WaterSettingsScreen()
+                WaterHomeScreen(
+                    viewModel = waterHomeViewModel
+                )
             }
             entry<WaterStats> {
                 WaterStatsScreen()

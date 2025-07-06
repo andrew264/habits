@@ -52,9 +52,6 @@ data object Bedtime : TopLevelRoute {
 }
 
 @Serializable
-data object WaterSettings : AppRoute
-
-@Serializable
 data object WaterStats : AppRoute
 
 @Serializable

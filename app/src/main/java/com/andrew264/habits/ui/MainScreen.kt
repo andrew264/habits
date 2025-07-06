@@ -18,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.rememberSavedStateNavEntryDecorator
 import androidx.navigation3.ui.rememberSceneSetupNavEntryDecorator
@@ -26,6 +27,7 @@ import com.andrew264.habits.ui.navigation.Home
 import com.andrew264.habits.ui.navigation.TopLevelBackStack
 import com.andrew264.habits.ui.navigation.railItems
 import com.andrew264.habits.ui.theme.Dimens
+import com.andrew264.habits.ui.water.home.WaterHomeViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -45,6 +47,7 @@ fun ContainerScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val uiState by viewModel.uiState.collectAsState()
+    val waterHomeViewModel: WaterHomeViewModel = hiltViewModel()
 
     val isCompact =
         calculateWindowSizeClass(activity = LocalActivity.current as Activity).widthSizeClass == WindowWidthSizeClass.Compact
@@ -82,7 +85,8 @@ fun ContainerScreen(
                     topLevelBackStack = topLevelBackStack,
                     railState = wideNavRailState,
                     isCompact = isCompact,
-                    scope = scope
+                    scope = scope,
+                    onWaterReminderClick = waterHomeViewModel::onShowReminderDialog
                 )
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -100,7 +104,8 @@ fun ContainerScreen(
                 snackbarHostState = snackbarHostState,
                 onNavigate = { topLevelBackStack.add(it) },
                 onRequestPermissions = onRequestPermissions,
-                onOpenAppSettings = onOpenAppSettings
+                onOpenAppSettings = onOpenAppSettings,
+                waterHomeViewModel = waterHomeViewModel
             )
         }
     }

@@ -2,24 +2,25 @@ package com.andrew264.habits.ui.water.home
 
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.andrew264.habits.ui.navigation.AppRoute
-import com.andrew264.habits.ui.navigation.WaterSettings
 import com.andrew264.habits.ui.theme.Dimens
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -28,19 +29,38 @@ import kotlin.math.roundToInt
 
 @Composable
 fun WaterHomeScreen(
-    viewModel: WaterHomeViewModel = hiltViewModel(),
-    onNavigate: (AppRoute) -> Unit
+    viewModel: WaterHomeViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val showTargetDialog by viewModel.showTargetDialog.collectAsState()
+    val showReminderDialog by viewModel.showReminderDialog.collectAsState()
 
-    if (!uiState.isEnabled) {
+    if (showTargetDialog) {
+        TargetSettingsDialog(
+            settings = uiState.settings,
+            onDismiss = viewModel::onDismissTargetDialog,
+            onSave = viewModel::saveTargetSettings
+        )
+    }
+
+    if (showReminderDialog) {
+        ReminderSettingsDialog(
+            settings = uiState.settings,
+            allSchedules = uiState.allSchedules,
+            onDismiss = viewModel::onDismissReminderDialog,
+            onSave = viewModel::saveReminderSettings
+        )
+    }
+
+    if (!uiState.settings.isWaterTrackingEnabled) {
         FeatureDisabledContent(
-            onEnableClicked = { onNavigate(WaterSettings) }
+            onEnableClicked = viewModel::onShowTargetDialog
         )
     } else {
         WaterTrackingContent(
             uiState = uiState,
-            onLogWater = viewModel::logWater
+            onLogWater = viewModel::logWater,
+            onEditTarget = viewModel::onShowTargetDialog
         )
     }
 }
@@ -50,7 +70,8 @@ fun WaterHomeScreen(
 private fun WaterTrackingContent(
     modifier: Modifier = Modifier,
     uiState: WaterHomeUiState,
-    onLogWater: (Int) -> Unit
+    onLogWater: (Int) -> Unit,
+    onEditTarget: () -> Unit
 ) {
     var sliderValue by remember { mutableFloatStateOf(250f) }
     val animatedProgress by animateFloatAsState(
@@ -83,16 +104,36 @@ private fun WaterTrackingContent(
                     trackStroke = stroke,
                     trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable {
+                            onEditTarget()
+                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                        }
+                        .padding(Dimens.PaddingLarge),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     Text(
                         text = "${uiState.todaysIntakeMl} ml",
                         style = MaterialTheme.typography.headlineLarge
                     )
-                    Text(
-                        text = "of ${uiState.dailyTargetMl} ml",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingExtraSmall)
+                    ) {
+                        Text(
+                            text = "of ${uiState.settings.waterDailyTargetMl} ml",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Icon(
+                            imageVector = Icons.Outlined.Edit,
+                            contentDescription = null, // Click action is on the parent Column
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }
@@ -201,7 +242,7 @@ private fun FeatureDisabledContent(
         )
         Spacer(Modifier.height(Dimens.PaddingSmall))
         Text(
-            text = "Enable this feature in the settings to start tracking your daily water intake.",
+            text = "Enable this feature to start tracking your daily water intake.",
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -211,7 +252,7 @@ private fun FeatureDisabledContent(
             onEnableClicked()
             view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
         }) {
-            Text("Go to Settings")
+            Text("Enable Water Tracking")
         }
     }
 }

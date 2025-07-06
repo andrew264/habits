@@ -3,9 +3,9 @@ package com.andrew264.habits.ui
 import android.view.HapticFeedbackConstants
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalView
@@ -19,7 +19,8 @@ fun MainTopAppBar(
     topLevelBackStack: TopLevelBackStack,
     railState: WideNavigationRailState,
     isCompact: Boolean,
-    scope: CoroutineScope
+    scope: CoroutineScope,
+    onWaterReminderClick: () -> Unit
 ) {
     val currentRoute = topLevelBackStack.backStack.lastOrNull() ?: return
     val view = LocalView.current
@@ -28,7 +29,6 @@ fun MainTopAppBar(
     val isTopLevelScreen = topLevelScreen != null
 
     val title: String = topLevelScreen?.title ?: when (currentRoute) {
-        is WaterSettings -> "Water Tracking Settings"
         is WaterStats -> "Hydration Statistics"
         is ScheduleEditor -> if (currentRoute.scheduleId == null) "Create New Schedule" else "Update Schedule"
         else -> ""
@@ -71,10 +71,10 @@ fun MainTopAppBar(
                     Icon(Icons.Default.BarChart, contentDescription = "Hydration Statistics")
                 }
                 IconButton(onClick = {
-                    topLevelBackStack.add(WaterSettings)
+                    onWaterReminderClick()
                     view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                 }) {
-                    Icon(Icons.Default.Settings, contentDescription = "Water Settings")
+                    Icon(Icons.Default.Alarm, contentDescription = "Reminder Settings")
                 }
             }
         }
