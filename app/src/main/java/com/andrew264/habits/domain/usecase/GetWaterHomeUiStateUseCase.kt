@@ -41,7 +41,6 @@ class GetWaterHomeUiStateUseCase @Inject constructor(
                 settings = settings,
                 allSchedules = allSchedules,
                 todaysIntakeMl = todaysIntakeMl,
-                todaysLog = todaysLog,
                 progress = progress
             )
         }

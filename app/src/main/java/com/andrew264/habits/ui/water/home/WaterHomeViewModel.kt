@@ -2,7 +2,6 @@ package com.andrew264.habits.ui.water.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.andrew264.habits.data.entity.WaterIntakeEntry
 import com.andrew264.habits.domain.model.PersistentSettings
 import com.andrew264.habits.domain.usecase.GetWaterHomeUiStateUseCase
 import com.andrew264.habits.domain.usecase.LogWaterUseCase
@@ -18,7 +17,6 @@ data class WaterHomeUiState(
     val settings: PersistentSettings = PersistentSettings(false, null, false, 2500, false, 60, 15, null),
     val allSchedules: List<Schedule> = emptyList(),
     val todaysIntakeMl: Int = 0,
-    val todaysLog: List<WaterIntakeEntry> = emptyList(),
     val progress: Float = 0f
 )
 

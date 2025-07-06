@@ -8,6 +8,7 @@ object Dimens {
     val PaddingMedium = 12.dp
     val PaddingLarge = 16.dp
     val PaddingExtraLarge = 24.dp
+    val PaddingExtraExtraLarge = 32.dp
 
     val MinTouchTargetSize = 48.dp
 }
