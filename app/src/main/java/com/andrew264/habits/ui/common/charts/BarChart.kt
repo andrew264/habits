@@ -1,10 +1,10 @@
 package com.andrew264.habits.ui.common.charts
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -31,7 +31,7 @@ data class BarChartEntry(
     val label: String
 )
 
-@OptIn(ExperimentalTextApi::class)
+@OptIn(ExperimentalTextApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun BarChart(
     entries: List<BarChartEntry>,
@@ -62,6 +62,7 @@ fun BarChart(
     val xAxisTextStyle = remember(typography, gridColor) {
         typography.bodySmall.copy(color = gridColor)
     }
+    val animationSpec: AnimationSpec<Float> = MaterialTheme.motionScheme.defaultSpatialSpec()
 
     LaunchedEffect(entries) {
         animationProgress.forEachIndexed { index, animatable ->
@@ -69,10 +70,7 @@ fun BarChart(
                 delay(index * 50L)
                 animatable.animateTo(
                     targetValue = 1f,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessLow
-                    )
+                    animationSpec = animationSpec
                 )
             }
         }

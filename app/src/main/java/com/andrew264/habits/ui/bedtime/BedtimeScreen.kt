@@ -1,7 +1,7 @@
 package com.andrew264.habits.ui.bedtime
 
 import android.view.HapticFeedbackConstants
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,7 +11,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,10 +24,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.andrew264.habits.model.UserPresenceState
-import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.ui.common.charts.SleepChart
 import com.andrew264.habits.ui.common.charts.TimelineChart
 import com.andrew264.habits.ui.common.charts.TimelineLabelStrategy
+import com.andrew264.habits.ui.common.components.ScheduleSelector
 import com.andrew264.habits.ui.theme.Dimens
 import java.util.Locale
 
@@ -124,8 +127,12 @@ fun BedtimeScreen(
                         textAlign = TextAlign.Center
                     )
                 } else {
-                    Crossfade(targetState = uiState.selectedTimelineRange.isLinear, label = "ChartCrossfade") { isLinear ->
-                        if (isLinear) {
+                    Column(
+                        modifier = Modifier.animateContentSize(MaterialTheme.motionScheme.fastSpatialSpec()),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(Dimens.PaddingMedium)
+                    ) {
+                        if (uiState.selectedTimelineRange.isLinear) {
                             // Linear Timeline for short ranges
                             val timelineLabelStrategy = remember(uiState.selectedTimelineRange) {
                                 when (uiState.selectedTimelineRange) {
@@ -145,6 +152,7 @@ fun BedtimeScreen(
                                     .fillMaxWidth()
                                     .height(60.dp)
                             )
+                            PresenceLegend()
                         } else {
                             // Sleep Chart for long ranges
                             val sleepSegments = remember(uiState.timelineSegments) {
@@ -163,12 +171,6 @@ fun BedtimeScreen(
                                     .height(300.dp)
                             )
                         }
-                    }
-
-                    Spacer(modifier = Modifier.height(Dimens.PaddingMedium))
-
-                    if (uiState.selectedTimelineRange.isLinear) {
-                        PresenceLegend()
                     }
                 }
             }
@@ -194,7 +196,8 @@ fun BedtimeScreen(
             schedules = uiState.allSchedules,
             selectedSchedule = uiState.selectedSchedule,
             onScheduleSelected = { viewModel.selectSchedule(it.id) },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            label = "Active Sleep Schedule"
         )
 
         uiState.scheduleInfo?.let { info ->
@@ -202,53 +205,6 @@ fun BedtimeScreen(
                 scheduleInfo = info,
                 modifier = Modifier.fillMaxWidth()
             )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ScheduleSelector(
-    schedules: List<Schedule>,
-    selectedSchedule: Schedule,
-    onScheduleSelected: (Schedule) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val view = LocalView.current
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = {
-            expanded = !expanded
-            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-        },
-        modifier = modifier
-    ) {
-        OutlinedTextField(
-            value = selectedSchedule.name,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Active Sleep Schedule") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                .fillMaxWidth()
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            schedules.forEach { schedule ->
-                DropdownMenuItem(
-                    text = { Text(schedule.name) },
-                    onClick = {
-                        onScheduleSelected(schedule)
-                        expanded = false
-                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                    }
-                )
-            }
         }
     }
 }

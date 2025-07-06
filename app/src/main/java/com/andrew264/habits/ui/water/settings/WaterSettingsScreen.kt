@@ -6,13 +6,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.andrew264.habits.model.schedule.Schedule
+import com.andrew264.habits.ui.common.components.ScheduleSelector
 import com.andrew264.habits.ui.theme.Dimens
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -108,58 +110,6 @@ fun WaterSettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = settings.isWaterTrackingEnabled && settings.isWaterReminderEnabled,
                     label = "Reminder Schedule"
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ScheduleSelector(
-    schedules: List<Schedule>,
-    selectedSchedule: Schedule?,
-    onScheduleSelected: (Schedule) -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    label: String = "Active Schedule"
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val view = LocalView.current
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = {
-            if (enabled) {
-                expanded = !expanded
-                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-            }
-        },
-        modifier = modifier
-    ) {
-        OutlinedTextField(
-            value = selectedSchedule?.name ?: "None",
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(label) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                .fillMaxWidth(),
-            enabled = enabled
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            schedules.forEach { schedule ->
-                DropdownMenuItem(
-                    text = { Text(schedule.name) },
-                    onClick = {
-                        onScheduleSelected(schedule)
-                        expanded = false
-                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                    }
                 )
             }
         }
