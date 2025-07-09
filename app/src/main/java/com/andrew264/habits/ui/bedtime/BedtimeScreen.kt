@@ -21,23 +21,70 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.andrew264.habits.domain.analyzer.ScheduleCoverage
 import com.andrew264.habits.model.UserPresenceState
+import com.andrew264.habits.model.schedule.DefaultSchedules
+import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.ui.common.charts.SleepChart
 import com.andrew264.habits.ui.common.charts.TimelineChart
 import com.andrew264.habits.ui.common.charts.TimelineLabelStrategy
+import com.andrew264.habits.ui.common.components.FeatureDisabledContent
 import com.andrew264.habits.ui.common.components.ScheduleSelector
+import com.andrew264.habits.ui.navigation.AppRoute
+import com.andrew264.habits.ui.navigation.MonitoringSettings
 import com.andrew264.habits.ui.theme.Dimens
+import com.andrew264.habits.ui.theme.HabitsTheme
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+
 @Composable
 fun BedtimeScreen(
     modifier: Modifier = Modifier,
-    viewModel: BedtimeViewModel = hiltViewModel()
+    viewModel: BedtimeViewModel = hiltViewModel(),
+    onNavigate: (AppRoute) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    when {
+        uiState.isLoading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+
+        !uiState.isBedtimeTrackingEnabled -> {
+            FeatureDisabledContent(
+                title = "Bedtime Tracking Disabled",
+                description = "This feature uses sleep schedules and the Sleep API to track your sleep patterns. You can enable it in the Monitoring settings.",
+                buttonText = "Go to Settings",
+                onEnableClicked = { onNavigate(MonitoringSettings) }
+            )
+        }
+
+        else -> {
+            BedtimeScreenContent(
+                modifier = modifier,
+                uiState = uiState,
+                onSetTimelineRange = viewModel::setTimelineRange,
+                onSelectSchedule = { viewModel.selectSchedule(it.id) }
+            )
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun BedtimeScreenContent(
+    modifier: Modifier = Modifier,
+    uiState: BedtimeUiState,
+    onSetTimelineRange: (BedtimeChartRange) -> Unit,
+    onSelectSchedule: (Schedule) -> Unit,
+) {
     val view = LocalView.current
 
     Column(
@@ -88,7 +135,7 @@ fun BedtimeScreen(
                                     ElevatedToggleButton(
                                         checked = uiState.selectedTimelineRange == range,
                                         onCheckedChange = {
-                                            viewModel.setTimelineRange(range)
+                                            onSetTimelineRange(range)
                                             view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                                         },
                                         shapes = when (index) {
@@ -104,7 +151,7 @@ fun BedtimeScreen(
                                     DropdownMenuItem(
                                         text = { Text(range.label) },
                                         onClick = {
-                                            viewModel.setTimelineRange(range)
+                                            onSetTimelineRange(range)
                                             menuState.dismiss()
                                         }
                                     )
@@ -117,9 +164,7 @@ fun BedtimeScreen(
                 Spacer(modifier = Modifier.height(Dimens.PaddingLarge))
 
                 // Timeline Visualization
-                if (uiState.isLoading) {
-                    CircularProgressIndicator()
-                } else if (uiState.timelineSegments.isEmpty()) {
+                if (uiState.timelineSegments.isEmpty()) {
                     Text(
                         text = "No presence data available for this time range.",
                         style = MaterialTheme.typography.bodyMedium,
@@ -195,7 +240,7 @@ fun BedtimeScreen(
         ScheduleSelector(
             schedules = uiState.allSchedules,
             selectedSchedule = uiState.selectedSchedule,
-            onScheduleSelected = { viewModel.selectSchedule(it.id) },
+            onScheduleSelected = onSelectSchedule,
             modifier = Modifier.fillMaxWidth(),
             label = "Active Sleep Schedule"
         )
@@ -298,5 +343,91 @@ fun UserPresenceState.toColor(): Color {
         UserPresenceState.AWAKE -> Color(0xFF4CAF50) // Green
         UserPresenceState.SLEEPING -> Color(0xFF3F51B5) // Indigo
         UserPresenceState.UNKNOWN -> Color(0xFF9E9E9E) // Grey
+    }
+}
+
+@Preview(name = "Bedtime Screen - Day View", showBackground = true)
+@Composable
+private fun BedtimeScreenContentDayPreview() {
+    val now = System.currentTimeMillis()
+    val range = BedtimeChartRange.DAY
+    val startTime = now - range.durationMillis
+
+    val segments = remember {
+        listOf(
+            com.andrew264.habits.domain.model.TimelineSegment(startTime, startTime + TimeUnit.HOURS.toMillis(2), UserPresenceState.AWAKE, TimeUnit.HOURS.toMillis(2)),
+            com.andrew264.habits.domain.model.TimelineSegment(startTime + TimeUnit.HOURS.toMillis(2), startTime + TimeUnit.HOURS.toMillis(10), UserPresenceState.SLEEPING, TimeUnit.HOURS.toMillis(8)),
+            com.andrew264.habits.domain.model.TimelineSegment(startTime + TimeUnit.HOURS.toMillis(10), startTime + TimeUnit.HOURS.toMillis(12), UserPresenceState.AWAKE, TimeUnit.HOURS.toMillis(2)),
+            com.andrew264.habits.domain.model.TimelineSegment(startTime + TimeUnit.HOURS.toMillis(12), now, UserPresenceState.UNKNOWN, now - (startTime + TimeUnit.HOURS.toMillis(12)))
+        )
+    }
+
+    HabitsTheme {
+        BedtimeScreenContent(
+            uiState = BedtimeUiState(
+                isLoading = false,
+                isBedtimeTrackingEnabled = true,
+                selectedTimelineRange = range,
+                timelineSegments = segments,
+                viewStartTimeMillis = startTime,
+                viewEndTimeMillis = now,
+                allSchedules = listOf(DefaultSchedules.defaultSleepSchedule),
+                selectedSchedule = DefaultSchedules.defaultSleepSchedule,
+                scheduleInfo = ScheduleInfo(
+                    summary = "Every day: 10:00 PM - 6:00 AM (+1d)",
+                    coverage = ScheduleCoverage(totalHours = 56.0, coveragePercentage = 33.3)
+                )
+            ),
+            onSetTimelineRange = {},
+            onSelectSchedule = {}
+        )
+    }
+}
+
+
+@Preview(name = "Bedtime Screen - Week View", showBackground = true)
+@Composable
+private fun BedtimeScreenContentWeekPreview() {
+    val now = System.currentTimeMillis()
+    val range = BedtimeChartRange.WEEK
+    val startTime = now - range.durationMillis
+
+    val segments = remember {
+        (0..6).flatMap { day ->
+            val dayStart = startTime + TimeUnit.DAYS.toMillis(day.toLong())
+            listOf(
+                com.andrew264.habits.domain.model.TimelineSegment(dayStart + TimeUnit.HOURS.toMillis(22), dayStart + TimeUnit.DAYS.toMillis(1) + TimeUnit.HOURS.toMillis(6), UserPresenceState.SLEEPING, TimeUnit.HOURS.toMillis(8)),
+                com.andrew264.habits.domain.model.TimelineSegment(dayStart + TimeUnit.HOURS.toMillis(6), dayStart + TimeUnit.HOURS.toMillis(22), UserPresenceState.AWAKE, TimeUnit.HOURS.toMillis(16))
+            )
+        }
+    }
+
+    HabitsTheme {
+        BedtimeScreenContent(
+            uiState = BedtimeUiState(
+                isLoading = false,
+                isBedtimeTrackingEnabled = true,
+                selectedTimelineRange = range,
+                timelineSegments = segments,
+                viewStartTimeMillis = startTime,
+                viewEndTimeMillis = now,
+                allSchedules = listOf(DefaultSchedules.defaultSleepSchedule),
+                selectedSchedule = DefaultSchedules.defaultSleepSchedule,
+                scheduleInfo = ScheduleInfo(
+                    summary = "Mon-Fri: 11:00 PM - 7:00 AM (+1d)\nSat, Sun: 12:00 AM - 9:00 AM (+1d)",
+                    coverage = ScheduleCoverage(totalHours = 58.0, coveragePercentage = 34.5)
+                )
+            ),
+            onSetTimelineRange = {},
+            onSelectSchedule = {}
+        )
+    }
+}
+
+@Preview(name = "Bedtime Screen - Feature Disabled", showBackground = true)
+@Composable
+private fun BedtimeScreenFeatureDisabledPreview() {
+    HabitsTheme {
+        BedtimeScreen(onNavigate = {})
     }
 }

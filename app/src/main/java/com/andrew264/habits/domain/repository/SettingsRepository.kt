@@ -5,8 +5,9 @@ import kotlinx.coroutines.flow.Flow
 
 interface SettingsRepository {
     val settingsFlow: Flow<PersistentSettings>
-    suspend fun updateServiceActiveState(isActive: Boolean)
     suspend fun updateSelectedScheduleId(scheduleId: String?)
+    suspend fun updateBedtimeTrackingEnabled(isEnabled: Boolean)
+    suspend fun updateAppUsageTrackingEnabled(isEnabled: Boolean)
     suspend fun updateWaterTrackingEnabled(isEnabled: Boolean)
     suspend fun updateWaterDailyTarget(targetMl: Int)
     suspend fun updateWaterReminderEnabled(isEnabled: Boolean)

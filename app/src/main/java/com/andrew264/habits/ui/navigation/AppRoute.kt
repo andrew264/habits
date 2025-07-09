@@ -38,8 +38,15 @@ data object Schedules : TopLevelRoute {
 }
 
 @Serializable
-data object PermissionSettings : TopLevelRoute {
-    override val title = "Permissions"
+data object Usage : TopLevelRoute {
+    override val title = "Usage"
+    override val selectedIcon = Icons.Filled.Timeline
+    override val unselectedIcon = Icons.Outlined.Timeline
+}
+
+@Serializable
+data object MonitoringSettings : TopLevelRoute {
+    override val title = "Monitoring"
     override val selectedIcon = Icons.Filled.Settings
     override val unselectedIcon = Icons.Outlined.Settings
 }
@@ -57,10 +64,14 @@ data object WaterStats : AppRoute
 @Serializable
 data class ScheduleEditor(val scheduleId: String?) : AppRoute
 
+@Serializable
+data object Whitelist : AppRoute
+
 val railItems: List<TopLevelRoute> = listOf(
     Home,
     Water,
+    Usage,
+    Bedtime,
     Schedules,
-    PermissionSettings,
-    Bedtime
+    MonitoringSettings
 )

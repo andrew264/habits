@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.andrew264.habits.ui.theme.Dimens
@@ -88,4 +89,17 @@ fun HabitsTimePickerDialog(
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview
+@Composable
+fun HabitsTimePickerDialogPreview() {
+    HabitsTimePickerDialog(
+        onDismissRequest = {},
+        onConfirm = { _, _ -> },
+        title = "Select time",
+        initialHour = 10,
+        initialMinute = 30
+    )
 }

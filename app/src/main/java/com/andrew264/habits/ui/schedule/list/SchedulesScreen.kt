@@ -14,9 +14,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.andrew264.habits.model.schedule.Schedule
+import com.andrew264.habits.model.schedule.ScheduleGroup
 import com.andrew264.habits.ui.navigation.AppRoute
 import com.andrew264.habits.ui.navigation.ScheduleEditor
+import com.andrew264.habits.ui.theme.HabitsTheme
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -49,11 +53,29 @@ fun SchedulesScreen(
         }
     }
 
+    SchedulesScreenContent(
+        uiState = uiState,
+        onDeleteSchedule = viewModel::onDeleteSchedule,
+        onEditSchedule = { scheduleId -> onNavigate(ScheduleEditor(scheduleId)) },
+        onCreateSchedule = { onNavigate(ScheduleEditor(scheduleId = null)) }
+    )
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun SchedulesScreenContent(
+    uiState: SchedulesUiState,
+    onDeleteSchedule: suspend (Schedule) -> Boolean,
+    onEditSchedule: (scheduleId: String) -> Unit,
+    onCreateSchedule: () -> Unit,
+) {
+    val view = LocalView.current
+
     Scaffold(
         floatingActionButton = {
             SmallExtendedFloatingActionButton(
                 onClick = {
-                    onNavigate(ScheduleEditor(scheduleId = null))
+                    onCreateSchedule()
                     view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                 },
                 icon = { Icon(Icons.Default.Add, contentDescription = "New Schedule") },
@@ -75,7 +97,7 @@ fun SchedulesScreen(
                 }
             }
 
-            listToShow.isEmpty() -> {
+            listToShow.isEmpty() && pendingDeletionId == null -> {
                 EmptyState(modifier = contentModifier)
             }
 
@@ -84,12 +106,54 @@ fun SchedulesScreen(
                     modifier = contentModifier,
                     schedules = listToShow,
                     pendingDeletionId = pendingDeletionId,
-                    onDelete = viewModel::onDeleteSchedule,
-                    onEdit = { scheduleId ->
-                        onNavigate(ScheduleEditor(scheduleId = scheduleId))
-                    }
+                    onDelete = onDeleteSchedule,
+                    onEdit = onEditSchedule
                 )
             }
         }
+    }
+}
+
+@Preview(name = "Schedules - List", showBackground = true)
+@Composable
+private fun SchedulesScreenListPreview() {
+    val schedules = listOf(
+        Schedule("1", "Work", listOf(ScheduleGroup("g1", "Weekdays", emptySet(), emptyList()))),
+        Schedule("2", "Sleep", listOf(ScheduleGroup("g2", "Every day", emptySet(), emptyList()))),
+        Schedule("3", "Gym", listOf(ScheduleGroup("g3", "Mon, Wed, Fri", emptySet(), emptyList())))
+    )
+    HabitsTheme {
+        SchedulesScreenContent(
+            uiState = SchedulesUiState(schedules = schedules, isLoading = false),
+            onDeleteSchedule = { true },
+            onEditSchedule = {},
+            onCreateSchedule = {}
+        )
+    }
+}
+
+@Preview(name = "Schedules - Empty", showBackground = true)
+@Composable
+private fun SchedulesScreenEmptyPreview() {
+    HabitsTheme {
+        SchedulesScreenContent(
+            uiState = SchedulesUiState(schedules = emptyList(), isLoading = false),
+            onDeleteSchedule = { true },
+            onEditSchedule = {},
+            onCreateSchedule = {}
+        )
+    }
+}
+
+@Preview(name = "Schedules - Loading", showBackground = true)
+@Composable
+private fun SchedulesScreenLoadingPreview() {
+    HabitsTheme {
+        SchedulesScreenContent(
+            uiState = SchedulesUiState(schedules = emptyList(), isLoading = true),
+            onDeleteSchedule = { true },
+            onEditSchedule = {},
+            onCreateSchedule = {}
+        )
     }
 }

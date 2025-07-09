@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.TimeRange
@@ -92,6 +93,17 @@ fun DaySelector(
             }
         }
     }
+}
+
+@Preview
+@Composable
+fun DaySelectorPreview() {
+    val selectedDays = remember { mutableStateOf(setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY)) }
+    DaySelector(
+        selectedDays = selectedDays.value,
+        onDayClick = { day ->
+            selectedDays.value = if (day in selectedDays.value) selectedDays.value - day else selectedDays.value + day
+        })
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -228,4 +240,15 @@ private fun formatTime(minuteOfDay: Int): String {
     val pattern = if (is24Hour) "HH:mm" else "h:mm a"
     val formatter = DateTimeFormatter.ofPattern(pattern, Locale.getDefault())
     return time.format(formatter)
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Preview
+@Composable
+fun TimeRangeRowPreview() {
+    TimeRangeRow(
+        timeRange = TimeRange(fromMinuteOfDay = 9 * 60, toMinuteOfDay = 17 * 60),
+        onDelete = {},
+        onUpdate = {}
+    )
 }

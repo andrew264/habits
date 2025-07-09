@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.andrew264.habits.domain.model.PersistentSettings
@@ -77,6 +78,23 @@ internal fun TargetSettingsDialog(
     }
 }
 
+@Preview
+@Composable
+internal fun TargetSettingsDialogPreview() {
+    val settings = PersistentSettings(
+        selectedScheduleId = null,
+        isBedtimeTrackingEnabled = false,
+        isAppUsageTrackingEnabled = false,
+        isWaterTrackingEnabled = true,
+        waterDailyTargetMl = 2000,
+        isWaterReminderEnabled = false,
+        waterReminderIntervalMinutes = 60,
+        waterReminderSnoozeMinutes = 15,
+        waterReminderScheduleId = null
+    )
+    TargetSettingsDialog(settings = settings, onDismiss = {}, onSave = { _, _ -> })
+}
+
 @Composable
 internal fun ReminderSettingsDialog(
     settings: PersistentSettings,
@@ -113,7 +131,9 @@ internal fun ReminderSettingsDialog(
                             isEnabled = it
                             val feedback = if (it) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
                             view.performHapticFeedback(feedback)
-                        }
+                        },
+                        // You can only enable reminders if the whole water feature is enabled
+                        enabled = settings.isWaterTrackingEnabled
                     )
                 }
                 OutlinedTextField(
@@ -122,7 +142,7 @@ internal fun ReminderSettingsDialog(
                     label = { Text("Interval (minutes)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = isEnabled
+                    enabled = isEnabled && settings.isWaterTrackingEnabled
                 )
                 OutlinedTextField(
                     value = snooze,
@@ -130,14 +150,14 @@ internal fun ReminderSettingsDialog(
                     label = { Text("Snooze (minutes)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = isEnabled
+                    enabled = isEnabled && settings.isWaterTrackingEnabled
                 )
                 ScheduleSelector(
                     schedules = allSchedules,
                     selectedSchedule = selectedSchedule,
                     onScheduleSelected = { selectedSchedule = it },
                     label = "Reminder Schedule",
-                    enabled = isEnabled
+                    enabled = isEnabled && settings.isWaterTrackingEnabled
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -156,4 +176,30 @@ internal fun ReminderSettingsDialog(
             }
         }
     }
+}
+
+@Preview
+@Composable
+internal fun ReminderSettingsDialogPreview() {
+    val settings = PersistentSettings(
+        selectedScheduleId = null,
+        isBedtimeTrackingEnabled = false,
+        isAppUsageTrackingEnabled = false,
+        isWaterTrackingEnabled = true,
+        waterDailyTargetMl = 0,
+        isWaterReminderEnabled = true,
+        waterReminderIntervalMinutes = 60,
+        waterReminderSnoozeMinutes = 15,
+        waterReminderScheduleId = "1"
+    )
+    val allSchedules = listOf(
+        Schedule(id = "1", name = "Schedule 1", groups = emptyList()),
+        Schedule(id = "2", name = "Schedule 2", groups = emptyList())
+    )
+    ReminderSettingsDialog(
+        settings = settings,
+        allSchedules = allSchedules,
+        onDismiss = {},
+        onSave = { _, _, _, _ -> }
+    )
 }

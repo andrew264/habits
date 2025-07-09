@@ -46,7 +46,7 @@ class EvaluateUserPresenceUseCase @Inject constructor(
         val schedule = scheduleRepository.getSchedule(scheduleId).first() ?: DefaultSchedules.defaultSleepSchedule
         val scheduleAnalyzer = ScheduleAnalyzer(schedule.groups)
         val isScheduledTime = scheduleAnalyzer.isCurrentTimeInSchedule()
-        val isSleepApiAvailable = settings.isServiceActive // A proxy for whether we are subscribed
+        val isBedtimeTrackingEnabled = settings.isBedtimeTrackingEnabled
 
         Log.d("EvaluateUserPresenceUseCase", "Evaluating state. Input: ${input::class.simpleName}, Old State: $oldState, Is Scheduled Sleep: $isScheduledTime")
 
@@ -72,14 +72,14 @@ class EvaluateUserPresenceUseCase @Inject constructor(
             }
 
             is PresenceEvaluationInput.ScreenOn, is PresenceEvaluationInput.UserPresent -> {
-                if (!isSleepApiAvailable || !isScheduledTime) {
+                if (!isBedtimeTrackingEnabled || !isScheduledTime) {
                     newState = UserPresenceState.AWAKE
                     reason = "Device interaction outside of scheduled sleep time"
                 }
             }
 
             is PresenceEvaluationInput.ScreenOff, is PresenceEvaluationInput.InitialEvaluation -> {
-                if (!isSleepApiAvailable || input is PresenceEvaluationInput.InitialEvaluation) {
+                if (!isBedtimeTrackingEnabled || input is PresenceEvaluationInput.InitialEvaluation) {
                     if (isScheduledTime) {
                         newState = UserPresenceState.SLEEPING
                         reason = "Heuristic: Scheduled time and screen off/initial evaluation"

@@ -1,6 +1,10 @@
 package com.andrew264.habits.ui.common.charts
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -12,10 +16,13 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.model.UserPresenceState
+import com.andrew264.habits.ui.bedtime.toColor
 import com.andrew264.habits.ui.theme.Dimens
+import com.andrew264.habits.ui.theme.HabitsTheme
 import java.time.*
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
@@ -254,5 +261,37 @@ private fun DrawScope.drawSleepBar(
             topLeft = Offset(barX, y),
             size = Size(barWidth, height)
         )
+    }
+}
+
+@Preview(name = "Sleep Chart", showBackground = true)
+@Composable
+private fun SleepChartPreview() {
+    val now = System.currentTimeMillis()
+    val segments = remember {
+        (0..6).map { day ->
+            val dayStart = now - TimeUnit.DAYS.toMillis(day.toLong())
+            ProcessedSegment(
+                startTimeMillis = dayStart - TimeUnit.HOURS.toMillis(2), // 10 PM previous day
+                endTimeMillis = dayStart + TimeUnit.HOURS.toMillis(6), // 6 AM this day
+                state = UserPresenceState.SLEEPING
+            )
+        }
+    }
+
+    HabitsTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            SleepChart(
+                segments = segments,
+                getStartTimeMillis = { it.startTimeMillis },
+                getEndTimeMillis = { it.endTimeMillis },
+                getState = { it.state },
+                getColorForState = { it.toColor() },
+                rangeInDays = 7,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp)
+            )
+        }
     }
 }

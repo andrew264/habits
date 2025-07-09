@@ -15,7 +15,8 @@ import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.andrew264.habits.MainActivity
 import com.andrew264.habits.R
-import com.andrew264.habits.domain.repository.SettingsRepository
+import com.andrew264.habits.domain.repository.AppUsageRepository
+import com.andrew264.habits.domain.repository.ScreenHistoryRepository
 import com.andrew264.habits.domain.repository.UserPresenceHistoryRepository
 import com.andrew264.habits.domain.usecase.EvaluateUserPresenceUseCase
 import com.andrew264.habits.domain.usecase.PresenceEvaluationInput
@@ -29,7 +30,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -54,13 +54,16 @@ class UserPresenceService : Service() {
     }
 
     @Inject
-    lateinit var settingsRepository: SettingsRepository
-
-    @Inject
     lateinit var userPresenceHistoryRepository: UserPresenceHistoryRepository
 
     @Inject
     lateinit var evaluateUserPresenceUseCase: EvaluateUserPresenceUseCase
+
+    @Inject
+    lateinit var screenHistoryRepository: ScreenHistoryRepository
+
+    @Inject
+    lateinit var appUsageRepository: AppUsageRepository
 
     private val serviceJob = SupervisorJob()
     private val serviceScope = CoroutineScope(Dispatchers.Default + serviceJob)
@@ -73,18 +76,30 @@ class UserPresenceService : Service() {
             context: Context?,
             intent: Intent?
         ) {
+            val timestamp = System.currentTimeMillis()
             serviceScope.launch {
                 when (intent?.action) {
-                    Intent.ACTION_SCREEN_ON -> evaluateUserPresenceUseCase.execute(PresenceEvaluationInput.ScreenOn)
-                    Intent.ACTION_SCREEN_OFF -> evaluateUserPresenceUseCase.execute(PresenceEvaluationInput.ScreenOff)
-                    Intent.ACTION_USER_PRESENT -> evaluateUserPresenceUseCase.execute(PresenceEvaluationInput.UserPresent)
+                    Intent.ACTION_SCREEN_ON -> {
+                        evaluateUserPresenceUseCase.execute(PresenceEvaluationInput.ScreenOn)
+                        screenHistoryRepository.addScreenEvent("SCREEN_ON", timestamp)
+                    }
+
+                    Intent.ACTION_SCREEN_OFF -> {
+                        evaluateUserPresenceUseCase.execute(PresenceEvaluationInput.ScreenOff)
+                        screenHistoryRepository.addScreenEvent("SCREEN_OFF", timestamp)
+                        appUsageRepository.endCurrentUsageSession(timestamp)
+                    }
+
+                    Intent.ACTION_USER_PRESENT -> {
+                        evaluateUserPresenceUseCase.execute(PresenceEvaluationInput.UserPresent)
+                    }
                 }
             }
         }
     }
 
     private var isReceiverRegistered = false
-    private var _isServiceActuallyRunning = false
+    private var isServiceRunning = false
 
     private var currentPresenceState = UserPresenceState.UNKNOWN
 
@@ -99,22 +114,6 @@ class UserPresenceService : Service() {
                 updateNotificationContentOnly()
             }
         }
-
-        serviceScope.launch {
-            settingsRepository.settingsFlow.collect { settings ->
-                Log.d(
-                    TAG,
-                    "Settings loaded/changed: Active=${settings.isServiceActive}, ScheduleId=${settings.selectedScheduleId}"
-                )
-                if (settings.isServiceActive && !_isServiceActuallyRunning) {
-                    Log.d(TAG, "Service persisted as active, and not running. Starting monitoring logic.")
-                    startAllMonitoringLogic()
-                } else if (!settings.isServiceActive && _isServiceActuallyRunning) {
-                    Log.d(TAG, "Service persisted as inactive, but monitoring logic is running. Stopping.")
-                    stopAllMonitoringLogic()
-                }
-            }
-        }
     }
 
     override fun onStartCommand(
@@ -124,46 +123,39 @@ class UserPresenceService : Service() {
     ): Int {
         Log.d(TAG, "onStartCommand with action: ${intent?.action}")
 
-        serviceScope.launch {
-            when (intent?.action) {
-                ACTION_START_SERVICE -> {
-                    if (!settingsRepository.settingsFlow.first().isServiceActive) {
-                        Log.i(TAG, "ACTION_START_SERVICE: Persisting active state.")
-                        settingsRepository.updateServiceActiveState(true)
-                    } else if (!_isServiceActuallyRunning) {
-                        Log.i(TAG, "ACTION_START_SERVICE: Already persisted as active, but not running. Starting logic.")
-                        startAllMonitoringLogic()
-                    } else {
-                        Log.d(TAG, "ACTION_START_SERVICE: Service already active and running.")
-                    }
-                }
+        when (intent?.action) {
+            ACTION_START_SERVICE -> {
+                startAllMonitoringLogic()
+            }
 
-                ACTION_PROCESS_SLEEP_SEGMENT_EVENTS -> {
-                    val events: ArrayList<SleepSegmentEvent>? = intent.getParcelableArrayListExtra(EXTRA_SLEEP_SEGMENTS, SleepSegmentEvent::class.java)
+            ACTION_PROCESS_SLEEP_SEGMENT_EVENTS -> {
+                val events: ArrayList<SleepSegmentEvent>? = intent.getParcelableArrayListExtra(EXTRA_SLEEP_SEGMENTS, SleepSegmentEvent::class.java)
+                serviceScope.launch {
                     events?.forEach { event -> evaluateUserPresenceUseCase.execute(PresenceEvaluationInput.SleepApiSegment(event)) }
                 }
+            }
 
-                ACTION_PROCESS_SLEEP_CLASSIFY_EVENTS -> {
-                    val events: ArrayList<SleepClassifyEvent>? = intent.getParcelableArrayListExtra(EXTRA_SLEEP_CLASSIFY_EVENTS, SleepClassifyEvent::class.java)
+            ACTION_PROCESS_SLEEP_CLASSIFY_EVENTS -> {
+                val events: ArrayList<SleepClassifyEvent>? = intent.getParcelableArrayListExtra(EXTRA_SLEEP_CLASSIFY_EVENTS, SleepClassifyEvent::class.java)
+                serviceScope.launch {
                     events?.forEach { event -> evaluateUserPresenceUseCase.execute(PresenceEvaluationInput.SleepApiClassify(event)) }
                 }
+            }
 
-                ACTION_STOP_SERVICE -> {
-                    Log.d(TAG, "ACTION_STOP_SERVICE received. Persisting inactive state.")
-                    settingsRepository.updateServiceActiveState(false)
-                }
+            ACTION_STOP_SERVICE -> {
+                stopAllMonitoringLogic()
             }
         }
-        return if (intent?.action == ACTION_STOP_SERVICE && !_isServiceActuallyRunning) START_NOT_STICKY else START_STICKY
+        return START_STICKY
     }
 
     private fun startAllMonitoringLogic() {
-        if (_isServiceActuallyRunning) {
+        if (isServiceRunning) {
             Log.d(TAG, "Start logic called, but service monitoring is already active.")
             return
         }
         Log.i(TAG, "Starting all monitoring service logic.")
-        _isServiceActuallyRunning = true
+        isServiceRunning = true
 
         isSleepApiAvailable = ContextCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED
         Log.d(TAG, "Sleep API available: $isSleepApiAvailable")
@@ -187,17 +179,12 @@ class UserPresenceService : Service() {
     }
 
     private fun stopAllMonitoringLogic() {
-        if (!_isServiceActuallyRunning) {
+        if (!isServiceRunning) {
             Log.d(TAG, "Stop logic called, but service monitoring is not active.")
-            if (userPresenceHistoryRepository.userPresenceState.value != UserPresenceState.UNKNOWN) {
-                updateUserPresenceStateInternal(UserPresenceState.UNKNOWN, "Service Monitoring Stopped")
-            }
-            stopForeground(STOP_FOREGROUND_REMOVE)
-            stopSelf()
             return
         }
         Log.i(TAG, "Stopping all monitoring service logic.")
-        _isServiceActuallyRunning = false
+        isServiceRunning = false
 
         if (isSleepApiAvailable) {
             unsubscribeFromSleepUpdates()
@@ -220,7 +207,7 @@ class UserPresenceService : Service() {
     }
 
     private fun updateNotificationContentOnly() {
-        if (_isServiceActuallyRunning) {
+        if (isServiceRunning) {
             val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.notify(NOTIFICATION_ID, createNotification())
         }
@@ -329,7 +316,7 @@ class UserPresenceService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "Service Destroying. Cleaning up all resources.")
-        if (_isServiceActuallyRunning) {
+        if (isServiceRunning) {
             updateUserPresenceStateInternal(UserPresenceState.UNKNOWN, "Service Destroyed")
             stopAllMonitoringLogic()
         }

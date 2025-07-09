@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import com.andrew264.habits.domain.repository.AppUsageRepository
 import com.andrew264.habits.domain.repository.SettingsRepository
 import com.andrew264.habits.domain.scheduler.WaterAlarmScheduler
 import com.andrew264.habits.domain.usecase.StartPresenceMonitoringUseCase
@@ -30,6 +31,9 @@ class BootReceiver : BroadcastReceiver() {
     @Inject
     lateinit var startPresenceMonitoringUseCase: StartPresenceMonitoringUseCase
 
+    @Inject
+    lateinit var appUsageRepository: AppUsageRepository
+
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
 
@@ -47,8 +51,11 @@ class BootReceiver : BroadcastReceiver() {
                 try {
                     val settings = settingsRepository.settingsFlow.first()
 
+                    // End any dangling session from before the reboot
+                    appUsageRepository.endCurrentUsageSession(System.currentTimeMillis())
+
                     // Restart presence service if it was active
-                    if (settings.isServiceActive) {
+                    if (settings.isBedtimeTrackingEnabled) {
                         Log.d(TAG, "Service was persisted as active. Attempting to start UserPresenceService.")
                         startPresenceMonitoringUseCase.execute()
                     } else {

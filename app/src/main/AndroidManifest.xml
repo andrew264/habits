@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- For querying all installed apps (Android 11+) -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
     <!-- For Sleep API -->
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
 
@@ -57,7 +61,6 @@
         <receiver
             android:name=".receiver.SleepReceiver"
             android:exported="false">
-            <!-- No intent filter needed here if PendingIntent is explicit -->
         </receiver>
 
         <receiver android:name=".receiver.WaterReminderReceiver" android:exported="false" />
@@ -68,6 +71,19 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
             </intent-filter>
         </receiver>
+
+        <service
+            android:name=".service.AppUsageAccessibilityService"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
     </application>
 
 </manifest>

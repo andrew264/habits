@@ -1,13 +1,7 @@
 package com.andrew264.habits.di
 
-import com.andrew264.habits.data.repository.ScheduleRepositoryImpl
-import com.andrew264.habits.data.repository.SettingsRepositoryImpl
-import com.andrew264.habits.data.repository.UserPresenceHistoryRepositoryImpl
-import com.andrew264.habits.data.repository.WaterRepositoryImpl
-import com.andrew264.habits.domain.repository.ScheduleRepository
-import com.andrew264.habits.domain.repository.SettingsRepository
-import com.andrew264.habits.domain.repository.UserPresenceHistoryRepository
-import com.andrew264.habits.domain.repository.WaterRepository
+import com.andrew264.habits.data.repository.*
+import com.andrew264.habits.domain.repository.*
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -41,4 +35,22 @@ abstract class RepositoryModule {
     abstract fun bindWaterRepository(
         waterRepositoryImpl: WaterRepositoryImpl
     ): WaterRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindScreenHistoryRepository(
+        screenHistoryRepositoryImpl: ScreenHistoryRepositoryImpl
+    ): ScreenHistoryRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAppUsageRepository(
+        appUsageRepositoryImpl: AppUsageRepositoryImpl
+    ): AppUsageRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindWhitelistRepository(
+        whitelistRepositoryImpl: WhitelistRepositoryImpl
+    ): WhitelistRepository
 }

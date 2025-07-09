@@ -5,8 +5,9 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 
 object DataStoreKeys {
-    val IS_SERVICE_ACTIVE = booleanPreferencesKey("is_service_active")
     val SELECTED_SCHEDULE_ID = stringPreferencesKey("selected_schedule_id")
+    val BEDTIME_TRACKING_ENABLED = booleanPreferencesKey("bedtime_tracking_enabled")
+    val APP_USAGE_TRACKING_ENABLED = booleanPreferencesKey("app_usage_tracking_enabled")
 
     // Water Tracking Feature
     val WATER_TRACKING_ENABLED = booleanPreferencesKey("water_tracking_enabled")

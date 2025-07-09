@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Habits</string>
+    <string name="accessibility_service_description">This service is used to detect which application is currently in the foreground. This allows Habits to track your application usage time and display it on a timeline. The service does not read or store any content from your screen.</string>
 </resources>

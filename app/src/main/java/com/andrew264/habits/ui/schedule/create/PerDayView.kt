@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.TimeRange
@@ -29,8 +30,10 @@ import java.util.Locale
 @Composable
 fun PerDayView(
     perDayRepresentation: Map<DayOfWeek, List<TimeRange>>,
-    viewModel: ScheduleViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onAddTimeRangeToDay: (day: DayOfWeek, timeRange: TimeRange) -> Unit,
+    onUpdateTimeRangeInDay: (day: DayOfWeek, updatedTimeRange: TimeRange) -> Unit,
+    onDeleteTimeRangeFromDay: (day: DayOfWeek, timeRange: TimeRange) -> Unit,
 ) {
     var expandedDays by rememberSaveable { mutableStateOf(emptySet<DayOfWeek>()) }
     val view = LocalView.current
@@ -130,13 +133,13 @@ fun PerDayView(
                                             TimeRangeRow(
                                                 timeRange = timeRange,
                                                 onDelete = {
-                                                    viewModel.deleteTimeRangeFromDay(
+                                                    onDeleteTimeRangeFromDay(
                                                         day,
                                                         timeRange
                                                     )
                                                 },
                                                 onUpdate = { newTimeRange ->
-                                                    viewModel.updateTimeRangeInDay(
+                                                    onUpdateTimeRangeInDay(
                                                         day,
                                                         newTimeRange
                                                     )
@@ -173,7 +176,7 @@ fun PerDayView(
                             // Add Time Button
                             FilledTonalButton(
                                 onClick = {
-                                    viewModel.addTimeRangeToDay(day, TimeRange(fromMinuteOfDay = 540, toMinuteOfDay = 600))
+                                    onAddTimeRangeToDay(day, TimeRange(fromMinuteOfDay = 540, toMinuteOfDay = 600))
                                     view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                                 },
                                 modifier = Modifier.align(Alignment.End),
@@ -195,4 +198,26 @@ fun PerDayView(
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Preview
+@Composable
+fun PerDayViewPreview() {
+    val perDayRepresentation = mapOf(
+        DayOfWeek.MONDAY to listOf(
+            TimeRange(fromMinuteOfDay = 540, toMinuteOfDay = 600),
+            TimeRange(fromMinuteOfDay = 720, toMinuteOfDay = 780)
+        ),
+        DayOfWeek.TUESDAY to emptyList(),
+        DayOfWeek.WEDNESDAY to listOf(
+            TimeRange(fromMinuteOfDay = 600, toMinuteOfDay = 660)
+        )
+    )
+    PerDayView(
+        perDayRepresentation = perDayRepresentation,
+        onAddTimeRangeToDay = { _, _ -> },
+        onUpdateTimeRangeInDay = { _, _ -> },
+        onDeleteTimeRangeFromDay = { _, _ -> }
+    )
 }

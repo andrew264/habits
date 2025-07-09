@@ -1,9 +1,5 @@
 package com.andrew264.habits.ui.navigation
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,20 +16,15 @@ import androidx.navigation3.runtime.entry
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.andrew264.habits.ui.bedtime.BedtimeScreen
-import com.andrew264.habits.ui.permissions.UserPresenceControlScreen
 import com.andrew264.habits.ui.schedule.create.ScheduleEditorScreen
 import com.andrew264.habits.ui.schedule.create.ScheduleViewModel
 import com.andrew264.habits.ui.schedule.list.SchedulesScreen
+import com.andrew264.habits.ui.settings.MonitoringSettingsScreen
+import com.andrew264.habits.ui.usage.UsageTimelineScreen
+import com.andrew264.habits.ui.usage.whitelist.WhitelistScreen
 import com.andrew264.habits.ui.water.home.WaterHomeScreen
 import com.andrew264.habits.ui.water.home.WaterHomeViewModel
 import com.andrew264.habits.ui.water.stats.WaterStatsScreen
-
-// Constants for Shared Axis transition, based on Material Design guidelines.
-private const val TRANSITION_DURATION = 300
-private const val SLIDE_DISTANCE_PERCENT = 0.2f // A 20% slide distance.
-private const val FADE_OUT_DURATION = 90
-private const val FADE_IN_DELAY = FADE_OUT_DURATION
-private const val FADE_IN_DURATION = TRANSITION_DURATION - FADE_IN_DELAY
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -77,14 +68,17 @@ fun AppNavDisplay(
                     snackbarHostState = snackbarHostState
                 )
             }
-            entry<PermissionSettings> {
-                UserPresenceControlScreen(
+            entry<MonitoringSettings> {
+                MonitoringSettingsScreen(
                     onRequestPermissions = onRequestPermissions,
                     onOpenAppSettings = onOpenAppSettings
                 )
             }
+            entry<Usage> {
+                UsageTimelineScreen(onNavigate = onNavigate)
+            }
             entry<Bedtime> {
-                BedtimeScreen()
+                BedtimeScreen(onNavigate = onNavigate)
             }
             entry<ScheduleEditor> { route ->
                 val viewModel: ScheduleViewModel = hiltViewModel(
@@ -98,69 +92,12 @@ fun AppNavDisplay(
                     onNavigateUp = onBack
                 )
             }
+            entry<Whitelist> {
+                WhitelistScreen()
+            }
         },
-        transitionSpec = {
-            // Shared Axis X forward
-            fadeIn(
-                animationSpec = tween(
-                    durationMillis = FADE_IN_DURATION,
-                    delayMillis = FADE_IN_DELAY,
-                    easing = LinearEasing
-                )
-            ) + slideInHorizontally(
-                animationSpec = tween(durationMillis = TRANSITION_DURATION, easing = FastOutSlowInEasing),
-                initialOffsetX = { (it * SLIDE_DISTANCE_PERCENT).toInt() }
-            ) togetherWith fadeOut(
-                animationSpec = tween(
-                    durationMillis = FADE_OUT_DURATION,
-                    easing = LinearEasing
-                )
-            ) + slideOutHorizontally(
-                animationSpec = tween(durationMillis = TRANSITION_DURATION, easing = FastOutSlowInEasing),
-                targetOffsetX = { -(it * SLIDE_DISTANCE_PERCENT).toInt() }
-            )
-        },
-        popTransitionSpec = {
-            // Shared Axis X backward
-            fadeIn(
-                animationSpec = tween(
-                    durationMillis = FADE_IN_DURATION,
-                    delayMillis = FADE_IN_DELAY,
-                    easing = LinearEasing
-                )
-            ) + slideInHorizontally(
-                animationSpec = tween(durationMillis = TRANSITION_DURATION, easing = FastOutSlowInEasing),
-                initialOffsetX = { -(it * SLIDE_DISTANCE_PERCENT).toInt() }
-            ) togetherWith fadeOut(
-                animationSpec = tween(
-                    durationMillis = FADE_OUT_DURATION,
-                    easing = LinearEasing
-                )
-            ) + slideOutHorizontally(
-                animationSpec = tween(durationMillis = TRANSITION_DURATION, easing = FastOutSlowInEasing),
-                targetOffsetX = { (it * SLIDE_DISTANCE_PERCENT).toInt() }
-            )
-        },
-        predictivePopTransitionSpec = {
-            // Shared Axis X backward for predictive pop
-            fadeIn(
-                animationSpec = tween(
-                    durationMillis = FADE_IN_DURATION,
-                    delayMillis = FADE_IN_DELAY,
-                    easing = LinearEasing
-                )
-            ) + slideInHorizontally(
-                animationSpec = tween(durationMillis = TRANSITION_DURATION, easing = FastOutSlowInEasing),
-                initialOffsetX = { -(it * SLIDE_DISTANCE_PERCENT).toInt() }
-            ) togetherWith fadeOut(
-                animationSpec = tween(
-                    durationMillis = FADE_OUT_DURATION,
-                    easing = LinearEasing
-                )
-            ) + slideOutHorizontally(
-                animationSpec = tween(durationMillis = TRANSITION_DURATION, easing = FastOutSlowInEasing),
-                targetOffsetX = { (it * SLIDE_DISTANCE_PERCENT).toInt() }
-            )
-        }
+        transitionSpec = { sharedAxisX(forward = true) },
+        popTransitionSpec = { sharedAxisX(forward = false) },
+        predictivePopTransitionSpec = { sharedAxisX(forward = false) }
     )
 }

@@ -4,6 +4,10 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
@@ -18,9 +22,11 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.ui.theme.Dimens
+import com.andrew264.habits.ui.theme.HabitsTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.ceil
@@ -227,5 +233,46 @@ private fun DrawScope.drawXAxis(
             textLayoutResult = textLayoutResult,
             topLeft = Offset(x, chartAreaHeight + Dimens.PaddingSmall.toPx())
         )
+    }
+}
+
+@Preview(name = "Bar Chart", showBackground = true)
+@Composable
+private fun BarChartPreview() {
+    val sampleEntries = remember {
+        listOf(
+            BarChartEntry(2500f, "Mon"),
+            BarChartEntry(1800f, "Tue"),
+            BarChartEntry(3100f, "Wed"),
+            BarChartEntry(2200f, "Thu"),
+            BarChartEntry(2800f, "Fri"),
+            BarChartEntry(1500f, "Sat"),
+            BarChartEntry(2000f, "Sun")
+        )
+    }
+    HabitsTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            BarChart(
+                entries = sampleEntries,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(250.dp)
+            )
+        }
+    }
+}
+
+@Preview(name = "Bar Chart - Empty", showBackground = true)
+@Composable
+private fun BarChartEmptyPreview() {
+    HabitsTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            BarChart(
+                entries = emptyList(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(250.dp)
+            )
+        }
     }
 }

@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class WaterHomeUiState(
-    val settings: PersistentSettings = PersistentSettings(false, null, false, 2500, false, 60, 15, null),
+    val settings: PersistentSettings = PersistentSettings(selectedScheduleId = null, isBedtimeTrackingEnabled = false, isAppUsageTrackingEnabled = false, isWaterTrackingEnabled = false, waterDailyTargetMl = 2500, isWaterReminderEnabled = false, waterReminderIntervalMinutes = 60, waterReminderSnoozeMinutes = 15, waterReminderScheduleId = null),
     val allSchedules: List<Schedule> = emptyList(),
     val todaysIntakeMl: Int = 0,
     val progress: Float = 0f

@@ -2,29 +2,26 @@ package com.andrew264.habits.data.repository
 
 import com.andrew264.habits.data.dao.UserPresenceEventDao
 import com.andrew264.habits.data.entity.UserPresenceEvent
-import com.andrew264.habits.domain.repository.SettingsRepository
 import com.andrew264.habits.domain.repository.UserPresenceHistoryRepository
 import com.andrew264.habits.model.UserPresenceState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class UserPresenceHistoryRepositoryImpl @Inject constructor(
-    private val eventDao: UserPresenceEventDao,
-    private val settingsRepository: SettingsRepository
+    private val eventDao: UserPresenceEventDao
 ) : UserPresenceHistoryRepository {
     private val repositoryScope = CoroutineScope(Dispatchers.IO)
 
     private val _userPresenceStateFlow = MutableStateFlow(UserPresenceState.UNKNOWN)
     override val userPresenceState: StateFlow<UserPresenceState> = _userPresenceStateFlow.asStateFlow()
-
-    override val isServiceActive: StateFlow<Boolean> = settingsRepository.settingsFlow
-        .map { it.isServiceActive }
-        .stateIn(repositoryScope, SharingStarted.WhileSubscribed(5000), false)
 
     override fun updateUserPresenceState(newState: UserPresenceState) {
         if (_userPresenceStateFlow.value != newState) {
@@ -32,12 +29,6 @@ class UserPresenceHistoryRepositoryImpl @Inject constructor(
             repositoryScope.launch {
                 addPresenceEvent(newState, System.currentTimeMillis())
             }
-        }
-    }
-
-    override fun updateServiceActiveState(isActive: Boolean) {
-        repositoryScope.launch {
-            settingsRepository.updateServiceActiveState(isActive)
         }
     }
 

@@ -16,19 +16,36 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.andrew264.habits.domain.analyzer.DailyWaterIntake
+import com.andrew264.habits.domain.analyzer.HourlyWaterIntake
 import com.andrew264.habits.ui.common.charts.BarChart
 import com.andrew264.habits.ui.common.charts.BarChartEntry
 import com.andrew264.habits.ui.theme.Dimens
+import com.andrew264.habits.ui.theme.HabitsTheme
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun WaterStatsScreen(
     viewModel: WaterStatsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    WaterStatsScreenContent(
+        uiState = uiState,
+        onSetTimeRange = viewModel::setTimeRange
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun WaterStatsScreenContent(
+    uiState: WaterStatsUiState,
+    onSetTimeRange: (StatsTimeRange) -> Unit,
+) {
     val view = LocalView.current
 
     Column(
@@ -57,7 +74,7 @@ fun WaterStatsScreen(
                             ElevatedToggleButton(
                                 checked = uiState.selectedRange == range,
                                 onCheckedChange = {
-                                    viewModel.setTimeRange(range)
+                                    onSetTimeRange(range)
                                     view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                                 },
                                 shapes = when (index) {
@@ -73,7 +90,7 @@ fun WaterStatsScreen(
                             DropdownMenuItem(
                                 text = { Text(range.label) },
                                 onClick = {
-                                    viewModel.setTimeRange(range)
+                                    onSetTimeRange(range)
                                     menuState.dismiss()
                                 }
                             )
@@ -214,6 +231,51 @@ fun EmptyStatsState() {
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Preview(name = "Water Stats - With Data", showBackground = true)
+@Composable
+private fun WaterStatsScreenWithDataPreview() {
+    val today = LocalDate.now()
+    val fakeStats = com.andrew264.habits.domain.analyzer.WaterStatistics(
+        dailyIntakes = (0..6).map {
+            DailyWaterIntake(today.minusDays(it.toLong()), (1500..2800).random())
+        }.reversed(),
+        hourlyBreakdown = (8..22).map {
+            HourlyWaterIntake(it, (100..400).random())
+        },
+        dailyAverage = 2150,
+        totalDays = 7,
+        daysGoalMet = 4
+    )
+    HabitsTheme {
+        WaterStatsScreenContent(
+            uiState = WaterStatsUiState(isLoading = false, stats = fakeStats),
+            onSetTimeRange = {}
+        )
+    }
+}
+
+@Preview(name = "Water Stats - Empty", showBackground = true)
+@Composable
+private fun WaterStatsScreenEmptyPreview() {
+    HabitsTheme {
+        WaterStatsScreenContent(
+            uiState = WaterStatsUiState(isLoading = false, stats = null),
+            onSetTimeRange = {}
+        )
+    }
+}
+
+@Preview(name = "Water Stats - Loading", showBackground = true)
+@Composable
+private fun WaterStatsScreenLoadingPreview() {
+    HabitsTheme {
+        WaterStatsScreenContent(
+            uiState = WaterStatsUiState(isLoading = true, stats = null),
+            onSetTimeRange = {}
         )
     }
 }

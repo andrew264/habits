@@ -17,6 +17,7 @@ import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -37,9 +38,9 @@ import kotlinx.coroutines.launch
     ExperimentalMaterial3WindowSizeClassApi::class
 )
 @Composable
-fun ContainerScreen(
+fun MainScreen(
     viewModel: MainViewModel,
-    onRequestPermissions: () -> Unit,
+    onRequestInitialPermissions: () -> Unit,
     onOpenAppSettings: () -> Unit
 ) {
     val topLevelBackStack = remember { TopLevelBackStack(Home) }
@@ -67,7 +68,7 @@ fun ContainerScreen(
     // Handle initial permission check
     LaunchedEffect(Unit) {
         if (viewModel.needsInitialPermissionCheck()) {
-            onRequestPermissions()
+            onRequestInitialPermissions()
         }
     }
 
@@ -103,9 +104,44 @@ fun ContainerScreen(
                 ),
                 snackbarHostState = snackbarHostState,
                 onNavigate = { topLevelBackStack.add(it) },
-                onRequestPermissions = onRequestPermissions,
+                onRequestPermissions = onRequestInitialPermissions,
                 onOpenAppSettings = onOpenAppSettings,
                 waterHomeViewModel = waterHomeViewModel
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Preview
+@Composable
+private fun AppNavigationRailPreview() {
+    val topLevelBackStack = remember { TopLevelBackStack(Home) }
+    val state = rememberWideNavigationRailState()
+    val scope = rememberCoroutineScope()
+    AppNavigationRail(
+        topLevelBackStack = topLevelBackStack,
+        state = state,
+        isCompact = false,
+        scope = scope
+    )
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Preview
+@Composable
+private fun AppNavigationRailContentPreview() {
+    val topLevelBackStack = remember { TopLevelBackStack(Home) }
+    val railState = rememberWideNavigationRailState()
+    val scope = rememberCoroutineScope()
+    MaterialTheme {
+        Surface {
+            AppNavigationRailContent(
+                topLevelBackStack = topLevelBackStack,
+                railState = railState,
+                isRailExpanded = true,
+                isCompact = false,
+                scope = scope
             )
         }
     }

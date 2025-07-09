@@ -7,10 +7,8 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface UserPresenceHistoryRepository {
     val userPresenceState: StateFlow<UserPresenceState>
-    val isServiceActive: StateFlow<Boolean>
 
     fun updateUserPresenceState(newState: UserPresenceState)
-    fun updateServiceActiveState(isActive: Boolean)
     fun getPresenceHistoryFlow(startTime: Long): Flow<List<UserPresenceEvent>>
     fun getPresenceHistoryInRangeFlow(
         startTime: Long,

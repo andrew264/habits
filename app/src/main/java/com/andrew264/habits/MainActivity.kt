@@ -1,6 +1,8 @@
 package com.andrew264.habits
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
@@ -8,7 +10,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import com.andrew264.habits.ui.ContainerScreen
+import androidx.core.content.ContextCompat
+import com.andrew264.habits.ui.MainScreen
 import com.andrew264.habits.ui.MainViewModel
 import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.util.PermissionHandler
@@ -27,15 +30,23 @@ class MainActivity : ComponentActivity() {
         viewModel.handleIntent(intent)
 
         permissionHandler =
-            PermissionHandler(this) { activityRecognitionGranted, notificationsGranted ->
-                viewModel.handlePermissionResults(activityRecognitionGranted, notificationsGranted)
+            PermissionHandler(this) { permissions ->
+                viewModel.handlePermissionResults(
+                    activityRecognitionGranted = permissions[Manifest.permission.ACTIVITY_RECOGNITION] ?: false,
+                    notificationsGranted = permissions[Manifest.permission.POST_NOTIFICATIONS] ?: false
+                )
             }
 
         setContent {
             HabitsTheme {
-                ContainerScreen(
+                MainScreen(
                     viewModel = viewModel,
-                    onRequestPermissions = { permissionHandler.requestRelevantPermissions() },
+                    onRequestInitialPermissions = {
+                        val pnPermission = Manifest.permission.POST_NOTIFICATIONS
+                        if (ContextCompat.checkSelfPermission(this, pnPermission) != PackageManager.PERMISSION_GRANTED) {
+                            permissionHandler.requestPermissions(listOf(pnPermission))
+                        }
+                    },
                     onOpenAppSettings = { openAppSettings() }
                 )
             }

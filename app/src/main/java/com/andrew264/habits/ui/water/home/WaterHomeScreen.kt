@@ -27,9 +27,12 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import com.andrew264.habits.domain.model.PersistentSettings
 import com.andrew264.habits.ui.theme.Dimens
+import com.andrew264.habits.ui.theme.HabitsTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
@@ -61,11 +64,11 @@ fun WaterHomeScreen(
     }
 
     if (!uiState.settings.isWaterTrackingEnabled) {
-        FeatureDisabledContent(
+        WaterFeatureDisabledContent(
             onEnableClicked = viewModel::onShowTargetDialog
         )
     } else {
-        WaterTrackingContent(
+        WaterHomeScreenContent(
             uiState = uiState,
             onLogWater = viewModel::logWater,
             onEditTarget = viewModel::onShowTargetDialog
@@ -75,7 +78,7 @@ fun WaterHomeScreen(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class, ExperimentalTextApi::class)
 @Composable
-private fun WaterTrackingContent(
+internal fun WaterHomeScreenContent(
     modifier: Modifier = Modifier,
     uiState: WaterHomeUiState,
     onLogWater: (Int) -> Unit,
@@ -285,7 +288,7 @@ private fun WaterTrackingContent(
 
 
 @Composable
-private fun FeatureDisabledContent(
+private fun WaterFeatureDisabledContent(
     modifier: Modifier = Modifier,
     onEnableClicked: () -> Unit
 ) {
@@ -323,5 +326,47 @@ private fun FeatureDisabledContent(
         }) {
             Text("Enable Water Tracking")
         }
+    }
+}
+
+@Preview(name = "Water Home - Halfway", showBackground = true)
+@Composable
+private fun WaterHomeScreenContentHalfwayPreview() {
+    val settings = PersistentSettings(isWaterTrackingEnabled = true, waterDailyTargetMl = 2500, selectedScheduleId = null, isBedtimeTrackingEnabled = false, isAppUsageTrackingEnabled = false, isWaterReminderEnabled = false, waterReminderIntervalMinutes = 60, waterReminderSnoozeMinutes = 15, waterReminderScheduleId = null)
+    HabitsTheme {
+        WaterHomeScreenContent(
+            uiState = WaterHomeUiState(
+                settings = settings,
+                todaysIntakeMl = 1250,
+                progress = 0.5f
+            ),
+            onLogWater = {},
+            onEditTarget = {}
+        )
+    }
+}
+
+@Preview(name = "Water Home - Complete", showBackground = true)
+@Composable
+private fun WaterHomeScreenContentCompletePreview() {
+    val settings = PersistentSettings(isWaterTrackingEnabled = true, waterDailyTargetMl = 2000, selectedScheduleId = null, isBedtimeTrackingEnabled = false, isAppUsageTrackingEnabled = false, isWaterReminderEnabled = false, waterReminderIntervalMinutes = 60, waterReminderSnoozeMinutes = 15, waterReminderScheduleId = null)
+    HabitsTheme {
+        WaterHomeScreenContent(
+            uiState = WaterHomeUiState(
+                settings = settings,
+                todaysIntakeMl = 2400,
+                progress = 1.0f // Progress caps at 1.0
+            ),
+            onLogWater = {},
+            onEditTarget = {}
+        )
+    }
+}
+
+@Preview(name = "Water Home - Disabled", showBackground = true)
+@Composable
+private fun WaterFeatureDisabledContentPreview() {
+    HabitsTheme {
+        WaterFeatureDisabledContent(onEnableClicked = {})
     }
 }

@@ -14,17 +14,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.Schedule
+import com.andrew264.habits.model.schedule.ScheduleGroup
 import com.andrew264.habits.model.schedule.TimeRange
 import com.andrew264.habits.ui.theme.Dimens
+import com.andrew264.habits.ui.theme.HabitsTheme
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun GroupedView(
     schedule: Schedule,
-    viewModel: ScheduleViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onUpdateGroupName: (groupId: String, newName: String) -> Unit,
+    onDeleteGroup: (groupId: String) -> Unit,
+    onToggleDayInGroup: (groupId: String, day: DayOfWeek) -> Unit,
+    onAddTimeRangeToGroup: (groupId: String, timeRange: TimeRange) -> Unit,
+    onUpdateTimeRangeInGroup: (groupId: String, updatedTimeRange: TimeRange) -> Unit,
+    onDeleteTimeRangeFromGroup: (groupId: String, timeRange: TimeRange) -> Unit,
 ) {
     val view = LocalView.current
 
@@ -82,7 +91,7 @@ fun GroupedView(
                         ) {
                             OutlinedTextField(
                                 value = group.name,
-                                onValueChange = { newName -> viewModel.updateGroupName(group.id, newName) },
+                                onValueChange = { newName -> onUpdateGroupName(group.id, newName) },
                                 label = { Text("Group Name") },
                                 modifier = Modifier.weight(1f),
                                 singleLine = true
@@ -90,7 +99,7 @@ fun GroupedView(
 
                             IconButton(
                                 onClick = {
-                                    viewModel.deleteGroup(group.id)
+                                    onDeleteGroup(group.id)
                                     view.performHapticFeedback(HapticFeedbackConstants.REJECT)
                                 },
                                 shapes = IconButtonDefaults.shapes()
@@ -106,7 +115,7 @@ fun GroupedView(
                         // Day Selector
                         DaySelector(
                             selectedDays = group.days,
-                            onDayClick = { day -> viewModel.toggleDayInGroup(group.id, day) }
+                            onDayClick = { day -> onToggleDayInGroup(group.id, day) }
                         )
 
                         // Time Ranges Section
@@ -124,10 +133,10 @@ fun GroupedView(
                                         TimeRangeRow(
                                             timeRange = timeRange,
                                             onDelete = {
-                                                viewModel.deleteTimeRangeFromGroup(group.id, timeRange)
+                                                onDeleteTimeRangeFromGroup(group.id, timeRange)
                                             },
                                             onUpdate = { newTimeRange ->
-                                                viewModel.updateTimeRangeInGroup(group.id, newTimeRange)
+                                                onUpdateTimeRangeInGroup(group.id, newTimeRange)
                                             }
                                         )
                                     }
@@ -138,7 +147,7 @@ fun GroupedView(
                         // Add Time Button
                         FilledTonalButton(
                             onClick = {
-                                viewModel.addTimeRangeToGroup(group.id, TimeRange(fromMinuteOfDay = 540, toMinuteOfDay = 600))
+                                onAddTimeRangeToGroup(group.id, TimeRange(fromMinuteOfDay = 540, toMinuteOfDay = 600))
                                 view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                             },
                             modifier = Modifier.align(Alignment.End),
@@ -156,5 +165,61 @@ fun GroupedView(
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Preview
+@Composable
+fun GroupedViewPreview() {
+    HabitsTheme {
+        GroupedView(
+            schedule = Schedule(
+                id = "1",
+                name = "Morning Routine",
+                groups = listOf(
+                    ScheduleGroup(
+                        id = "group1",
+                        name = "Weekdays",
+                        days = setOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY),
+                        timeRanges = listOf(
+                            TimeRange(fromMinuteOfDay = 480, toMinuteOfDay = 540), // 8:00 - 9:00
+                            TimeRange(fromMinuteOfDay = 600, toMinuteOfDay = 660)  // 10:00 - 11:00
+                        )
+                    ),
+                    ScheduleGroup(
+                        id = "group2",
+                        name = "Weekends",
+                        days = setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY),
+                        timeRanges = listOf(
+                            TimeRange(fromMinuteOfDay = 720, toMinuteOfDay = 780) // 12:00 - 13:00
+                        )
+                    )
+                )
+            ),
+            onUpdateGroupName = { _, _ -> },
+            onDeleteGroup = { _ -> },
+            onToggleDayInGroup = { _, _ -> },
+            onAddTimeRangeToGroup = { _, _ -> },
+            onUpdateTimeRangeInGroup = { _, _ -> },
+            onDeleteTimeRangeFromGroup = { _, _ -> }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Preview
+@Composable
+fun GroupedViewEmptyPreview() {
+    HabitsTheme {
+        GroupedView(
+            schedule = Schedule(id = "2", name = "Empty Schedule", groups = emptyList()),
+            onUpdateGroupName = { _, _ -> },
+            onDeleteGroup = { _ -> },
+            onToggleDayInGroup = { _, _ -> },
+            onAddTimeRangeToGroup = { _, _ -> },
+            onUpdateTimeRangeInGroup = { _, _ -> },
+            onDeleteTimeRangeFromGroup = { _, _ -> }
+        )
     }
 }

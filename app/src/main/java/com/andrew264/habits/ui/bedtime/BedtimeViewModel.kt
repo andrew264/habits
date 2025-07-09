@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andrew264.habits.domain.analyzer.ScheduleCoverage
 import com.andrew264.habits.domain.model.TimelineSegment
+import com.andrew264.habits.domain.repository.SettingsRepository
 import com.andrew264.habits.domain.usecase.GetBedtimeScreenDataUseCase
 import com.andrew264.habits.domain.usecase.SetSleepScheduleUseCase
 import com.andrew264.habits.model.schedule.DefaultSchedules
@@ -39,35 +40,37 @@ data class BedtimeUiState(
     val scheduleInfo: ScheduleInfo? = null,
     val viewStartTimeMillis: Long = 0,
     val viewEndTimeMillis: Long = 0,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val isBedtimeTrackingEnabled: Boolean = true
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class BedtimeViewModel @Inject constructor(
     private val getBedtimeScreenDataUseCase: GetBedtimeScreenDataUseCase,
-    private val setSleepScheduleUseCase: SetSleepScheduleUseCase
+    private val setSleepScheduleUseCase: SetSleepScheduleUseCase,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val _selectedTimelineRange = MutableStateFlow(BedtimeChartRange.DAY)
-    private val _uiState = MutableStateFlow(BedtimeUiState())
-    val uiState = _uiState.asStateFlow()
 
-    init {
-        viewModelScope.launch {
-            _selectedTimelineRange.flatMapLatest { range ->
-                // Every time range changes, we get a new flow of timeline segments
-                getBedtimeScreenDataUseCase.getTimelineSegments(range)
-                    .combine(getBedtimeScreenDataUseCase.allSchedules) { segments, allSchedules ->
-                        Pair(segments, allSchedules)
-                    }
-                    .combine(getBedtimeScreenDataUseCase.selectedSchedule) { (segments, allSchedules), selected ->
-                        Triple(segments, allSchedules, selected)
-                    }
-                    .combine(getBedtimeScreenDataUseCase.scheduleInfo) { (segments, allSchedules, selected), info ->
-                        val endTime = System.currentTimeMillis()
-                        _uiState.update {
-                            it.copy(
+    val uiState: StateFlow<BedtimeUiState> = settingsRepository.settingsFlow
+        .flatMapLatest { settings ->
+            if (!settings.isBedtimeTrackingEnabled) {
+                flowOf(BedtimeUiState(isLoading = false, isBedtimeTrackingEnabled = false))
+            } else {
+                _selectedTimelineRange.flatMapLatest { range ->
+                    getBedtimeScreenDataUseCase.getTimelineSegments(range)
+                        .combine(getBedtimeScreenDataUseCase.allSchedules) { segments, allSchedules ->
+                            Pair(segments, allSchedules)
+                        }
+                        .combine(getBedtimeScreenDataUseCase.selectedSchedule) { (segments, allSchedules), selected ->
+                            Triple(segments, allSchedules, selected)
+                        }
+                        .combine(getBedtimeScreenDataUseCase.scheduleInfo) { (segments, allSchedules, selected), info ->
+                            val endTime = System.currentTimeMillis()
+                            BedtimeUiState(
+                                isBedtimeTrackingEnabled = true,
                                 selectedTimelineRange = range,
                                 timelineSegments = segments,
                                 allSchedules = allSchedules,
@@ -78,10 +81,14 @@ class BedtimeViewModel @Inject constructor(
                                 isLoading = false
                             )
                         }
-                    }
-            }.collect()
-        }
-    }
+                }
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = BedtimeUiState()
+        )
+
 
     fun setTimelineRange(range: BedtimeChartRange) {
         _selectedTimelineRange.value = range

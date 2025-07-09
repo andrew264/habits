@@ -6,7 +6,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.tooling.preview.Preview
 import com.andrew264.habits.model.schedule.Schedule
+import com.andrew264.habits.model.schedule.ScheduleGroup
+import com.andrew264.habits.ui.theme.HabitsTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,5 +60,34 @@ fun ScheduleSelector(
                 )
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview
+@Composable
+fun ScheduleSelectorPreview() {
+    val schedules = listOf(
+        Schedule(
+            id = "1",
+            name = "Schedule 1",
+            groups = listOf(
+                ScheduleGroup(id = "1", name = "Group 1", days = setOf(), timeRanges = listOf())
+            )
+        ),
+        Schedule(
+            id = "2",
+            name = "Schedule 2",
+            groups = listOf(
+                ScheduleGroup(id = "2", name = "Group 2", days = setOf(), timeRanges = listOf())
+            )
+        )
+    )
+    var selectedSchedule by remember { mutableStateOf<Schedule?>(null) }
+    HabitsTheme {
+        ScheduleSelector(
+            schedules = schedules,
+            selectedSchedule = selectedSchedule,
+            onScheduleSelected = { selectedSchedule = it })
     }
 }

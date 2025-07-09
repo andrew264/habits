@@ -31,21 +31,24 @@ class SettingsRepositoryImpl @Inject constructor(@param:ApplicationContext priva
             }
         }
         .map { preferences ->
-            val isServiceActive = preferences[DataStoreKeys.IS_SERVICE_ACTIVE] == true
             val selectedScheduleId = preferences[DataStoreKeys.SELECTED_SCHEDULE_ID]
+            val isBedtimeTrackingEnabled = preferences[DataStoreKeys.BEDTIME_TRACKING_ENABLED] ?: false
+            val isAppUsageTrackingEnabled = preferences[DataStoreKeys.APP_USAGE_TRACKING_ENABLED] ?: false
+
 
             // Water Tracking Settings
-            val isWaterTrackingEnabled = preferences[DataStoreKeys.WATER_TRACKING_ENABLED] == true
+            val isWaterTrackingEnabled = preferences[DataStoreKeys.WATER_TRACKING_ENABLED] ?: false
             val waterDailyTargetMl = preferences[DataStoreKeys.WATER_DAILY_TARGET_ML] ?: 2500
-            val isWaterReminderEnabled = preferences[DataStoreKeys.WATER_REMINDER_ENABLED] == true
+            val isWaterReminderEnabled = preferences[DataStoreKeys.WATER_REMINDER_ENABLED] ?: false
             val waterReminderIntervalMinutes = preferences[DataStoreKeys.WATER_REMINDER_INTERVAL_MINUTES] ?: 60
             val waterReminderSnoozeMinutes = preferences[DataStoreKeys.WATER_REMINDER_SNOOZE_MINUTES] ?: 15
             val waterReminderScheduleId = preferences[DataStoreKeys.WATER_REMINDER_SCHEDULE_ID]
 
 
             PersistentSettings(
-                isServiceActive = isServiceActive,
                 selectedScheduleId = selectedScheduleId,
+                isBedtimeTrackingEnabled = isBedtimeTrackingEnabled,
+                isAppUsageTrackingEnabled = isAppUsageTrackingEnabled,
                 isWaterTrackingEnabled = isWaterTrackingEnabled,
                 waterDailyTargetMl = waterDailyTargetMl,
                 isWaterReminderEnabled = isWaterReminderEnabled,
@@ -55,12 +58,6 @@ class SettingsRepositoryImpl @Inject constructor(@param:ApplicationContext priva
             )
         }
 
-    override suspend fun updateServiceActiveState(isActive: Boolean) {
-        context.dataStore.edit { settings ->
-            settings[DataStoreKeys.IS_SERVICE_ACTIVE] = isActive
-        }
-    }
-
     override suspend fun updateSelectedScheduleId(scheduleId: String?) {
         context.dataStore.edit { settings ->
             if (scheduleId != null) {
@@ -68,6 +65,18 @@ class SettingsRepositoryImpl @Inject constructor(@param:ApplicationContext priva
             } else {
                 settings.remove(DataStoreKeys.SELECTED_SCHEDULE_ID)
             }
+        }
+    }
+
+    override suspend fun updateBedtimeTrackingEnabled(isEnabled: Boolean) {
+        context.dataStore.edit { settings ->
+            settings[DataStoreKeys.BEDTIME_TRACKING_ENABLED] = isEnabled
+        }
+    }
+
+    override suspend fun updateAppUsageTrackingEnabled(isEnabled: Boolean) {
+        context.dataStore.edit { settings ->
+            settings[DataStoreKeys.APP_USAGE_TRACKING_ENABLED] = isEnabled
         }
     }
 
