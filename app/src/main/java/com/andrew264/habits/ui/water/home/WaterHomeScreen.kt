@@ -30,6 +30,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.andrew264.habits.domain.model.PersistentSettings
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
@@ -45,6 +47,15 @@ fun WaterHomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val showTargetDialog by viewModel.showTargetDialog.collectAsState()
     val showReminderDialog by viewModel.showReminderDialog.collectAsState()
+    val isInitialComposition = remember { mutableStateOf(true) }
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        if (isInitialComposition.value) {
+            isInitialComposition.value = false
+        } else {
+            viewModel.refresh()
+        }
+    }
 
     if (showTargetDialog) {
         TargetSettingsDialog(

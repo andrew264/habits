@@ -53,7 +53,10 @@ class WhitelistViewModel @Inject constructor(
         val filteredApps = fiveFlowsResult.allApps.filter { appInfo ->
             (fiveFlowsResult.showSystemApps || !appInfo.isSystemApp) &&
                     (fiveFlowsResult.searchText.isBlank() || appInfo.friendlyName.contains(fiveFlowsResult.searchText, ignoreCase = true))
-        }.sortedBy { it.friendlyName.lowercase() }
+        }.sortedWith(
+            compareBy<InstalledAppInfo> { !whitelistedMap.containsKey(it.packageName) }
+                .thenBy { it.friendlyName.lowercase() }
+        )
 
         WhitelistUiState(
             isLoading = fiveFlowsResult.isLoading,
@@ -80,13 +83,19 @@ class WhitelistViewModel @Inject constructor(
             val pm = context.packageManager
             val allApps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
             val appInfos = allApps.mapNotNull { appInfo ->
-                // Ignore our own app
-                if (appInfo.packageName == context.packageName) return@mapNotNull null
+                // Ignore our own app and common system packages
+                if (appInfo.packageName == context.packageName || appInfo.packageName.startsWith("com.android.")) {
+                    return@mapNotNull null
+                }
 
                 InstalledAppInfo(
                     packageName = appInfo.packageName,
                     friendlyName = appInfo.loadLabel(pm).toString(),
-                    icon = try { appInfo.loadIcon(pm) } catch (_: Exception) { null },
+                    icon = try {
+                        appInfo.loadIcon(pm)
+                    } catch (_: Exception) {
+                        null
+                    },
                     isSystemApp = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
                 )
             }
@@ -103,7 +112,10 @@ class WhitelistViewModel @Inject constructor(
         _showSystemApps.value = show
     }
 
-    fun onToggleWhitelist(app: InstalledAppInfo, isCurrentlyWhitelisted: Boolean) {
+    fun onToggleWhitelist(
+        app: InstalledAppInfo,
+        isCurrentlyWhitelisted: Boolean
+    ) {
         viewModelScope.launch {
             if (isCurrentlyWhitelisted) {
                 whitelistRepository.unWhitelistApp(app.packageName)
@@ -113,7 +125,10 @@ class WhitelistViewModel @Inject constructor(
         }
     }
 
-    fun onColorSelected(packageName: String, color: String) {
+    fun onColorSelected(
+        packageName: String,
+        color: String
+    ) {
         viewModelScope.launch {
             // Default color is white, which is a bit hard to see. Let's pick a default.
             val finalColor = if (color == "#FFFFFF") "#9E9E9E" else color

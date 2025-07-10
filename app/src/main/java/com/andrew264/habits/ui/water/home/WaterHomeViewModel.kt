@@ -9,6 +9,7 @@ import com.andrew264.habits.domain.usecase.UpdateWaterSettingsUseCase
 import com.andrew264.habits.domain.usecase.WaterSettingsUpdate
 import com.andrew264.habits.model.schedule.Schedule
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -20,6 +21,7 @@ data class WaterHomeUiState(
     val progress: Float = 0f
 )
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class WaterHomeViewModel @Inject constructor(
     getWaterHomeUiStateUseCase: GetWaterHomeUiStateUseCase,
@@ -33,12 +35,19 @@ class WaterHomeViewModel @Inject constructor(
     private val _showReminderDialog = MutableStateFlow(false)
     val showReminderDialog = _showReminderDialog.asStateFlow()
 
-    val uiState: StateFlow<WaterHomeUiState> = getWaterHomeUiStateUseCase.execute()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = WaterHomeUiState()
-        )
+    private val refreshTrigger = MutableStateFlow(0)
+
+    val uiState: StateFlow<WaterHomeUiState> = refreshTrigger.flatMapLatest {
+        getWaterHomeUiStateUseCase.execute()
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = WaterHomeUiState()
+    )
+
+    fun refresh() {
+        refreshTrigger.value++
+    }
 
     fun logWater(amountMl: Int) {
         viewModelScope.launch {

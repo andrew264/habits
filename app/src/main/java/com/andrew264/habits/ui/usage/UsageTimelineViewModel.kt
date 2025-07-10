@@ -45,7 +45,7 @@ class UsageTimelineViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val getUsageTimelineUseCase: GetUsageTimelineUseCase,
     private val whitelistRepository: WhitelistRepository,
-    private val settingsRepository: SettingsRepository
+    settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val packageManager = context.packageManager
@@ -53,91 +53,96 @@ class UsageTimelineViewModel @Inject constructor(
 
     private val _selectedRange = MutableStateFlow(BedtimeChartRange.DAY)
     private val _appForColorPicker = MutableStateFlow<AppDetails?>(null)
+    private val refreshTrigger = MutableStateFlow(0)
 
-    val uiState: StateFlow<UsageTimelineUiState> = settingsRepository.settingsFlow
-        .flatMapLatest { settings ->
-            if (!settings.isAppUsageTrackingEnabled) {
-                flowOf(UsageTimelineUiState(isLoading = false, isAppUsageTrackingEnabled = false))
-            } else {
-                combine(
-                    _selectedRange.flatMapLatest { range ->
-                        val endTime = System.currentTimeMillis()
-                        val startTime = endTime - range.durationMillis
-                        getUsageTimelineUseCase.execute(startTime, endTime)
-                    },
-                    _appForColorPicker,
-                    whitelistRepository.getWhitelistedAppsMap()
-                ) { timelineModel, appForPicker, whitelistedAppsMap ->
-                    val whitelistedPackageNames = whitelistedAppsMap.keys
-                    val shouldFilter = whitelistedPackageNames.isNotEmpty()
+    val uiState: StateFlow<UsageTimelineUiState> = combine(
+        settingsRepository.settingsFlow,
+        _selectedRange,
+        refreshTrigger
+    ) { settings, range, _ ->
+        Triple(settings, range, System.currentTimeMillis())
+    }.flatMapLatest { (settings, range, now) ->
+        if (!settings.isAppUsageTrackingEnabled) {
+            flowOf(UsageTimelineUiState(isLoading = false, isAppUsageTrackingEnabled = false))
+        } else {
+            val startTime = now - range.durationMillis
+            combine(
+                getUsageTimelineUseCase.execute(startTime, now),
+                _appForColorPicker,
+                whitelistRepository.getWhitelistedAppsMap()
+            ) { timelineModel, appForPicker, whitelistedAppsMap ->
+                val totalScreenOnTime = timelineModel.totalScreenOnTime
+                val aggregatedUsage = aggregateAppUsage(timelineModel)
 
-                    // Filter app segments if the whitelist is not empty
-                    val filteredScreenOnPeriods = if (shouldFilter) {
-                        timelineModel.screenOnPeriods.map { period ->
-                            period.copy(appSegments = period.appSegments.filter { segment ->
-                                whitelistedPackageNames.contains(segment.packageName)
-                            })
-                        }
-                    } else {
-                        timelineModel.screenOnPeriods
-                    }
-                    val filteredTimelineModel = timelineModel.copy(screenOnPeriods = filteredScreenOnPeriods)
-
-                    val aggregatedUsage = aggregateAppUsage(timelineModel)
-                    val totalScreenOnTime = timelineModel.totalScreenOnTime
-
-                    val appDetails = aggregatedUsage.mapNotNull { (pkg, usageStats) ->
-                        if (shouldFilter && !whitelistedPackageNames.contains(pkg)) {
-                            null
-                        } else {
-                            val (totalUsage, sessionCount) = usageStats
-                            val details = getAppDetails(pkg)
-                            val usagePercentage = if (totalScreenOnTime > 0) {
-                                totalUsage.toFloat() / totalScreenOnTime.toFloat()
-                            } else {
-                                0f
-                            }
-
-                            AppDetails(
-                                packageName = pkg,
-                                friendlyName = details.first,
-                                icon = details.second,
-                                color = whitelistedAppsMap[pkg] ?: "#808080", // Default grey for non-whitelisted
-                                totalUsageMillis = totalUsage,
-                                sessionCount = sessionCount,
-                                usagePercentage = usagePercentage
-                            )
-                        }
+                val appDetails = if (whitelistedAppsMap.isEmpty()) {
+                    // If whitelist is empty, show all apps with usage
+                    aggregatedUsage.map { (pkg, usageStats) ->
+                        val (totalUsage, sessionCount) = usageStats
+                        val details = getAppDetails(pkg)
+                        val usagePercentage = if (totalScreenOnTime > 0) totalUsage.toFloat() / totalScreenOnTime.toFloat() else 0f
+                        AppDetails(
+                            packageName = pkg,
+                            friendlyName = details.first,
+                            icon = details.second,
+                            color = "#808080", // Default color for non-whitelisted apps
+                            totalUsageMillis = totalUsage,
+                            usagePercentage = usagePercentage,
+                            sessionCount = sessionCount
+                        )
                     }.sortedByDescending { it.totalUsageMillis }
-
-                    val averageSessionMillis = if (timelineModel.pickupCount > 0) {
-                        totalScreenOnTime / timelineModel.pickupCount
-                    } else {
-                        0L
-                    }
-
-                    UsageTimelineUiState(
-                        isLoading = false,
-                        isAppUsageTrackingEnabled = true,
-                        selectedRange = _selectedRange.value,
-                        timelineModel = filteredTimelineModel,
-                        appDetails = appDetails,
-                        appForColorPicker = appForPicker,
-                        totalScreenOnTime = totalScreenOnTime,
-                        pickupCount = timelineModel.pickupCount,
-                        averageSessionMillis = averageSessionMillis
-                    )
+                } else {
+                    // If whitelist exists, show all whitelisted apps
+                    whitelistedAppsMap.map { (pkg, color) ->
+                        val usageStats = aggregatedUsage[pkg] ?: Pair(0L, 0)
+                        val (totalUsage, sessionCount) = usageStats
+                        val details = getAppDetails(pkg)
+                        val usagePercentage = if (totalScreenOnTime > 0) totalUsage.toFloat() / totalScreenOnTime.toFloat() else 0f
+                        AppDetails(
+                            packageName = pkg,
+                            friendlyName = details.first,
+                            icon = details.second,
+                            color = color,
+                            totalUsageMillis = totalUsage,
+                            usagePercentage = usagePercentage,
+                            sessionCount = sessionCount
+                        )
+                    }.sortedByDescending { it.totalUsageMillis }
                 }
+
+                val averageSessionMillis = if (timelineModel.pickupCount > 0) {
+                    totalScreenOnTime / timelineModel.pickupCount
+                } else {
+                    0L
+                }
+
+                UsageTimelineUiState(
+                    isLoading = false,
+                    isAppUsageTrackingEnabled = true,
+                    selectedRange = range,
+                    timelineModel = timelineModel,
+                    appDetails = appDetails,
+                    appForColorPicker = appForPicker,
+                    totalScreenOnTime = totalScreenOnTime,
+                    pickupCount = timelineModel.pickupCount,
+                    averageSessionMillis = averageSessionMillis
+                )
+            }.onStart {
+                emit(uiState.value.copy(isLoading = true))
             }
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = UsageTimelineUiState()
-        )
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = UsageTimelineUiState()
+    )
 
 
     fun setTimeRange(range: BedtimeChartRange) {
         _selectedRange.value = range
+    }
+
+    fun refresh() {
+        refreshTrigger.value++
     }
 
     fun showColorPickerForApp(app: AppDetails) {

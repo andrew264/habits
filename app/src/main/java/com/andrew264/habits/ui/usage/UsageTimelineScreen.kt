@@ -5,14 +5,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.Icons.Filled
 import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.PlaylistAddCheck
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
@@ -21,6 +18,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.andrew264.habits.domain.model.AppSegment
 import com.andrew264.habits.domain.model.ScreenOnPeriod
 import com.andrew264.habits.domain.model.UsageTimelineModel
@@ -38,15 +37,27 @@ import com.andrew264.habits.ui.usage.components.ColorPickerDialog
 import com.andrew264.habits.ui.usage.components.StatisticsSummaryCard
 import java.util.concurrent.TimeUnit
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UsageTimelineScreen(
     viewModel: UsageTimelineViewModel = hiltViewModel(),
     onNavigate: (AppRoute) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isInitialComposition = remember { mutableStateOf(true) }
+
+    // Refresh data automatically when the screen becomes visible again
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        if (isInitialComposition.value) {
+            isInitialComposition.value = false
+        } else {
+            viewModel.refresh()
+        }
+    }
 
     when {
-        uiState.isLoading -> {
+        // Show a loading spinner only on initial load, not on refresh
+        uiState.isLoading && uiState.timelineModel == null -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
@@ -65,6 +76,7 @@ fun UsageTimelineScreen(
             UsageTimelineContent(
                 uiState = uiState,
                 onSetTimeRange = viewModel::setTimeRange,
+                onRefresh = viewModel::refresh,
                 onShowColorPicker = viewModel::showColorPickerForApp,
                 onDismissColorPicker = viewModel::dismissColorPicker,
                 onSetAppColor = viewModel::setAppColor,
@@ -79,6 +91,7 @@ fun UsageTimelineScreen(
 private fun UsageTimelineContent(
     uiState: UsageTimelineUiState,
     onSetTimeRange: (BedtimeChartRange) -> Unit,
+    onRefresh: () -> Unit,
     onShowColorPicker: (AppDetails) -> Unit,
     onDismissColorPicker: () -> Unit,
     onSetAppColor: (packageName: String, colorHex: String) -> Unit,
@@ -99,126 +112,141 @@ private fun UsageTimelineContent(
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(Dimens.PaddingLarge),
-        verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
+    PullToRefreshBox(
+        isRefreshing = uiState.isLoading && uiState.timelineModel != null,
+        onRefresh = onRefresh
     ) {
-        // Time Range Selector
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(Dimens.PaddingLarge),
+            verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
         ) {
-            val ranges = BedtimeChartRange.entries.filter { it.isLinear }
-            ButtonGroup(
-                overflowIndicator = { menuState ->
-                    IconButton(onClick = { menuState.show() }) {
-                        Icon(Icons.Default.MoreVert, "More options")
-                    }
-                },
-                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+            // Time Range Selector
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
             ) {
-                ranges.forEachIndexed { index, range ->
-                    customItem(
-                        buttonGroupContent = {
-                            ElevatedToggleButton(
-                                checked = uiState.selectedRange == range,
-                                onCheckedChange = {
-                                    onSetTimeRange(range)
-                                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                                },
-                                shapes = when (index) {
-                                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                                    ranges.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                                }
-                            ) {
-                                Text(range.label)
-                            }
-                        },
-                        menuContent = { menuState ->
-                            DropdownMenuItem(
-                                text = { Text(range.label) },
-                                onClick = {
-                                    onSetTimeRange(range)
-                                    menuState.dismiss()
-                                }
-                            )
+                val ranges = BedtimeChartRange.entries.filter { it.isLinear }
+                ButtonGroup(
+                    overflowIndicator = { menuState ->
+                        IconButton(onClick = { menuState.show() }) {
+                            Icon(Icons.Default.MoreVert, "More options")
                         }
-                    )
-                }
-            }
-        }
-
-        // Summary Stats
-        StatisticsSummaryCard(
-            totalScreenOnTime = uiState.totalScreenOnTime,
-            pickupCount = uiState.pickupCount,
-            averageSessionMillis = uiState.averageSessionMillis
-        )
-
-        FilledTonalButton(onClick = { onNavigate(Whitelist) }, modifier = Modifier.fillMaxWidth()) {
-            Icon(Icons.AutoMirrored.Filled.PlaylistAddCheck, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
-            Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-            Text("Manage Whitelisted Apps")
-        }
-
-        // Chart
-        if (uiState.timelineModel != null) {
-            Card {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(Dimens.PaddingLarge)
+                    },
+                    horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
                 ) {
-                    Text("Timeline", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Spacer(Modifier.height(Dimens.PaddingSmall))
-                    AppUsageTimelineChart(
-                        model = uiState.timelineModel,
-                        labelStrategy = if (uiState.selectedRange == BedtimeChartRange.TWELVE_HOURS) TimelineLabelStrategy.TWELVE_HOURS else TimelineLabelStrategy.DAY,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(60.dp)
-                    )
+                    ranges.forEachIndexed { index, range ->
+                        customItem(
+                            buttonGroupContent = {
+                                ElevatedToggleButton(
+                                    checked = uiState.selectedRange == range,
+                                    onCheckedChange = {
+                                        onSetTimeRange(range)
+                                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                                    },
+                                    shapes = when (index) {
+                                        0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                                        ranges.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                        else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                                    },
+                                ) {
+                                    Text(range.label)
+                                }
+                            },
+                            menuContent = { menuState ->
+                                DropdownMenuItem(
+                                    text = { Text(range.label) },
+                                    onClick = {
+                                        onSetTimeRange(range)
+                                        menuState.dismiss()
+                                    }
+                                )
+                            }
+                        )
+                    }
                 }
             }
-        }
 
-        // App List
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = "App Breakdown",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(bottom = Dimens.PaddingSmall, top = Dimens.PaddingSmall)
+            // Summary Stats
+            StatisticsSummaryCard(
+                totalScreenOnTime = uiState.totalScreenOnTime,
+                pickupCount = uiState.pickupCount,
+                averageSessionMillis = uiState.averageSessionMillis
             )
 
-            // If the whitelist is empty, show a prompt to manage it.
-            if (uiState.appDetails.isEmpty() && uiState.timelineModel?.screenOnPeriods?.any { it.appSegments.isNotEmpty() } == true) {
-                Card(modifier = Modifier.fillMaxWidth(), onClick = { onNavigate(Whitelist) }) {
-                    Text(
-                        "No whitelisted apps with usage in this period. Tap 'Manage Whitelisted Apps' to add some.",
-                        modifier = Modifier.padding(Dimens.PaddingLarge),
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+            FilledTonalButton(
+                onClick = { onNavigate(Whitelist) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.PlaylistAddCheck,
+                    contentDescription = null,
+                    modifier = Modifier.size(ButtonDefaults.IconSize)
+                )
+                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                Text("Manage Whitelisted Apps")
+            }
+
+            // Chart
+            if (uiState.timelineModel != null) {
+                Card {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Dimens.PaddingLarge)
+                    ) {
+                        Text(
+                            "Timeline",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(Modifier.height(Dimens.PaddingSmall))
+                        AppUsageTimelineChart(
+                            model = uiState.timelineModel,
+                            labelStrategy = if (uiState.selectedRange == BedtimeChartRange.TWELVE_HOURS) TimelineLabelStrategy.TWELVE_HOURS else TimelineLabelStrategy.DAY,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(60.dp)
+                        )
+                    }
                 }
             }
 
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(Dimens.PaddingExtraSmall)
-            ) {
-                items(uiState.appDetails, key = { it.packageName }) { app ->
-                    AppListItem(
-                        appDetails = app,
-                        onColorSwatchClick = {
-                            onShowColorPicker(app)
-                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                        }
-                    )
+            // App List
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "App Breakdown",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(bottom = Dimens.PaddingSmall, top = Dimens.PaddingSmall)
+                )
+
+                if (uiState.appDetails.isEmpty() && uiState.timelineModel?.screenOnPeriods?.any { it.appSegments.isNotEmpty() } == true) {
+                    Card(modifier = Modifier.fillMaxWidth(), onClick = { onNavigate(Whitelist) }) {
+                        Text(
+                            "No whitelisted apps with usage in this period. Tap 'Manage Whitelisted Apps' to add some.",
+                            modifier = Modifier.padding(Dimens.PaddingLarge),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.PaddingExtraSmall)
+                ) {
+                    items(uiState.appDetails, key = { it.packageName }) { app ->
+                        AppListItem(
+                            appDetails = app,
+                            onColorSwatchClick = {
+                                onShowColorPicker(app)
+                                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -239,15 +267,30 @@ private fun UsageTimelineContentPreview() {
                 startTimestamp = startTime,
                 endTimestamp = startTime + TimeUnit.HOURS.toMillis(2),
                 appSegments = listOf(
-                    AppSegment("com.android.chrome", startTime, startTime + TimeUnit.HOURS.toMillis(1), "#4CAF50"),
-                    AppSegment("com.google.android.gm", startTime + TimeUnit.HOURS.toMillis(1), startTime + TimeUnit.HOURS.toMillis(2), "#F44336")
+                    AppSegment(
+                        "com.android.chrome",
+                        startTime,
+                        startTime + TimeUnit.HOURS.toMillis(1),
+                        "#4CAF50"
+                    ),
+                    AppSegment(
+                        "com.google.android.gm",
+                        startTime + TimeUnit.HOURS.toMillis(1),
+                        startTime + TimeUnit.HOURS.toMillis(2),
+                        "#F44336"
+                    )
                 )
             ),
             ScreenOnPeriod(
                 startTimestamp = startTime + TimeUnit.HOURS.toMillis(4),
                 endTimestamp = startTime + TimeUnit.HOURS.toMillis(6),
                 appSegments = listOf(
-                    AppSegment("com.twitter.android", startTime + TimeUnit.HOURS.toMillis(4), startTime + TimeUnit.HOURS.toMillis(6), "#2196F3")
+                    AppSegment(
+                        "com.twitter.android",
+                        startTime + TimeUnit.HOURS.toMillis(4),
+                        startTime + TimeUnit.HOURS.toMillis(6),
+                        "#2196F3"
+                    )
                 )
             )
         ),
@@ -256,9 +299,33 @@ private fun UsageTimelineContentPreview() {
     )
 
     val fakeAppDetails = listOf(
-        AppDetails("com.android.chrome", "Chrome", null, "#4CAF50", TimeUnit.HOURS.toMillis(1), 0.25f, 1),
-        AppDetails("com.google.android.gm", "Gmail", null, "#F44336", TimeUnit.HOURS.toMillis(1), 0.25f, 1),
-        AppDetails("com.twitter.android", "Twitter", null, "#2196F3", TimeUnit.HOURS.toMillis(2), 0.5f, 1),
+        AppDetails(
+            "com.android.chrome",
+            "Chrome",
+            null,
+            "#4CAF50",
+            TimeUnit.HOURS.toMillis(1),
+            0.25f,
+            1
+        ),
+        AppDetails(
+            "com.google.android.gm",
+            "Gmail",
+            null,
+            "#F44336",
+            TimeUnit.HOURS.toMillis(1),
+            0.25f,
+            1
+        ),
+        AppDetails(
+            "com.twitter.android",
+            "Twitter",
+            null,
+            "#2196F3",
+            TimeUnit.HOURS.toMillis(2),
+            0.5f,
+            1
+        ),
     )
 
     HabitsTheme {
@@ -273,6 +340,7 @@ private fun UsageTimelineContentPreview() {
                 averageSessionMillis = fakeTimelineModel.totalScreenOnTime / fakeTimelineModel.pickupCount
             ),
             onSetTimeRange = {},
+            onRefresh = {},
             onShowColorPicker = {},
             onDismissColorPicker = {},
             onSetAppColor = { _, _ -> },

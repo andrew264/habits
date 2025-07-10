@@ -53,35 +53,37 @@ class BedtimeViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _selectedTimelineRange = MutableStateFlow(BedtimeChartRange.DAY)
+    private val refreshTrigger = MutableStateFlow(0)
 
     val uiState: StateFlow<BedtimeUiState> = settingsRepository.settingsFlow
         .flatMapLatest { settings ->
             if (!settings.isBedtimeTrackingEnabled) {
                 flowOf(BedtimeUiState(isLoading = false, isBedtimeTrackingEnabled = false))
             } else {
-                _selectedTimelineRange.flatMapLatest { range ->
-                    getBedtimeScreenDataUseCase.getTimelineSegments(range)
-                        .combine(getBedtimeScreenDataUseCase.allSchedules) { segments, allSchedules ->
-                            Pair(segments, allSchedules)
-                        }
-                        .combine(getBedtimeScreenDataUseCase.selectedSchedule) { (segments, allSchedules), selected ->
-                            Triple(segments, allSchedules, selected)
-                        }
-                        .combine(getBedtimeScreenDataUseCase.scheduleInfo) { (segments, allSchedules, selected), info ->
-                            val endTime = System.currentTimeMillis()
-                            BedtimeUiState(
-                                isBedtimeTrackingEnabled = true,
-                                selectedTimelineRange = range,
-                                timelineSegments = segments,
-                                allSchedules = allSchedules,
-                                selectedSchedule = selected,
-                                scheduleInfo = info,
-                                viewEndTimeMillis = endTime,
-                                viewStartTimeMillis = endTime - range.durationMillis,
-                                isLoading = false
-                            )
-                        }
-                }
+                combine(_selectedTimelineRange, refreshTrigger) { range, _ -> range }
+                    .flatMapLatest { range ->
+                        getBedtimeScreenDataUseCase.getTimelineSegments(range)
+                            .combine(getBedtimeScreenDataUseCase.allSchedules) { segments, allSchedules ->
+                                Pair(segments, allSchedules)
+                            }
+                            .combine(getBedtimeScreenDataUseCase.selectedSchedule) { (segments, allSchedules), selected ->
+                                Triple(segments, allSchedules, selected)
+                            }
+                            .combine(getBedtimeScreenDataUseCase.scheduleInfo) { (segments, allSchedules, selected), info ->
+                                val endTime = System.currentTimeMillis()
+                                BedtimeUiState(
+                                    isBedtimeTrackingEnabled = true,
+                                    selectedTimelineRange = range,
+                                    timelineSegments = segments,
+                                    allSchedules = allSchedules,
+                                    selectedSchedule = selected,
+                                    scheduleInfo = info,
+                                    viewEndTimeMillis = endTime,
+                                    viewStartTimeMillis = endTime - range.durationMillis,
+                                    isLoading = false
+                                )
+                            }
+                    }
             }
         }.stateIn(
             scope = viewModelScope,
@@ -98,5 +100,9 @@ class BedtimeViewModel @Inject constructor(
         viewModelScope.launch {
             setSleepScheduleUseCase.execute(scheduleId)
         }
+    }
+
+    fun refresh() {
+        refreshTrigger.value++
     }
 }

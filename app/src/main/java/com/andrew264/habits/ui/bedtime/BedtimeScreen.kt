@@ -11,10 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,6 +21,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.andrew264.habits.domain.analyzer.ScheduleCoverage
 import com.andrew264.habits.model.UserPresenceState
 import com.andrew264.habits.model.schedule.DefaultSchedules
@@ -41,6 +40,7 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun BedtimeScreen(
     modifier: Modifier = Modifier,
@@ -48,11 +48,20 @@ fun BedtimeScreen(
     onNavigate: (AppRoute) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isInitialComposition = remember { mutableStateOf(true) }
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        if (isInitialComposition.value) {
+            isInitialComposition.value = false
+        } else {
+            viewModel.refresh()
+        }
+    }
 
     when {
         uiState.isLoading -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                LoadingIndicator()
             }
         }
 
