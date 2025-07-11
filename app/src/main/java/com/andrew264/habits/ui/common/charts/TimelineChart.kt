@@ -9,11 +9,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.*
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -28,26 +28,10 @@ import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.time.temporal.ChronoUnit
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
-
-/**
- * Defines the labeling strategy for the timeline chart based on the total duration being displayed.
- * @param timeIncrement The interval between each label in milliseconds.
- * @param formatterPattern The date format pattern for `SimpleDateFormat`.
- * @param chronoUnit The unit to which the start time should be truncated for alignment.
- */
-enum class TimelineLabelStrategy(
-    val timeIncrement: Long,
-    val formatterPattern: String,
-    val chronoUnit: ChronoUnit
-) {
-    TWELVE_HOURS(TimeUnit.HOURS.toMillis(2), "ha", ChronoUnit.HOURS),
-    DAY(TimeUnit.HOURS.toMillis(4), "ha", ChronoUnit.HOURS)
-}
 
 /**
  * A generic composable to display a horizontal timeline with colored segments.
@@ -70,7 +54,7 @@ fun <T> TimelineChart(
     segments: List<T>,
     getStartTimeMillis: (T) -> Long,
     getEndTimeMillis: (T) -> Long,
-    getColor: (T) -> Color,
+    getColor: @Composable (T) -> Color,
     viewStartTimeMillis: Long,
     viewEndTimeMillis: Long,
     labelStrategy: TimelineLabelStrategy,
@@ -80,7 +64,7 @@ fun <T> TimelineChart(
     tickHeight: Dp = Dimens.PaddingExtraSmall
 ) {
     val textMeasurer = rememberTextMeasurer()
-    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f)
     val labelTextStyle = MaterialTheme.typography.labelSmall.copy(color = labelColor)
     val tickColor = MaterialTheme.colorScheme.outline
 
@@ -92,6 +76,9 @@ fun <T> TimelineChart(
         SimpleDateFormat(labelStrategy.formatterPattern, Locale.getDefault())
     }
 
+    // Since getColor is now a composable, we need to resolve colors before drawing
+    val resolvedColors = segments.map { getColor(it) }
+
     Canvas(modifier = modifier) {
         val canvasWidth = size.width
         val canvasHeight = size.height
@@ -101,38 +88,45 @@ fun <T> TimelineChart(
 
         if (totalDurationMillis <= 0) return@Canvas
 
-        // Draw background
-        drawRoundRect(
-            color = barBackgroundColor,
-            topLeft = Offset(0f, barTopY),
-            size = Size(canvasWidth, mainBarHeightPx),
-            cornerRadius = cornerRadius
-        )
+        val mainBarRect = Rect(Offset(0f, barTopY), Size(canvasWidth, mainBarHeightPx))
+        val roundedRectPath = Path().apply {
+            addRoundRect(RoundRect(mainBarRect, cornerRadius))
+        }
 
-        // Draw segments
-        segments.forEach { segment ->
-            val segmentStartTime = getStartTimeMillis(segment)
-            val segmentEndTime = getEndTimeMillis(segment)
+        // Draw the segments clipped to the rounded shape
+        clipPath(path = roundedRectPath) {
+            // Draw a base background color first. This will be visible for any gaps.
+            drawRect(
+                color = barBackgroundColor,
+                topLeft = mainBarRect.topLeft,
+                size = mainBarRect.size
+            )
 
-            val startOffset = max(0L, segmentStartTime - viewStartTimeMillis)
-            val endOffset = segmentEndTime - viewStartTimeMillis
-            val segmentWidth = ((endOffset - startOffset).toFloat() / totalDurationMillis.toFloat()) * canvasWidth
-            val currentX = (startOffset.toFloat() / totalDurationMillis.toFloat()) * canvasWidth
+            // Draw the actual segments
+            segments.forEachIndexed { index, segment ->
+                val segmentStartTime = getStartTimeMillis(segment)
+                val segmentEndTime = getEndTimeMillis(segment)
 
-            if (segmentWidth > 0f) {
-                drawRect(
-                    color = getColor(segment),
-                    topLeft = Offset(currentX, barTopY),
-                    size = Size(segmentWidth, mainBarHeightPx)
-                )
+                val startOffset = max(0L, segmentStartTime - viewStartTimeMillis)
+                val endOffset = segmentEndTime - viewStartTimeMillis
+                val segmentWidth = ((endOffset - startOffset).toFloat() / totalDurationMillis.toFloat()) * canvasWidth
+                val currentX = (startOffset.toFloat() / totalDurationMillis.toFloat()) * canvasWidth
+
+                if (segmentWidth > 0f) {
+                    drawRect(
+                        color = resolvedColors[index],
+                        topLeft = Offset(currentX, barTopY),
+                        size = Size(segmentWidth, mainBarHeightPx)
+                    )
+                }
             }
         }
 
-        // Clip drawing to the rounded rectangle shape for the outline
+        // Draw the outline over the clipped content
         drawRoundRect(
             color = barOutlineColor,
-            topLeft = Offset(0f, barTopY),
-            size = Size(canvasWidth, mainBarHeightPx),
+            topLeft = mainBarRect.topLeft,
+            size = mainBarRect.size,
             cornerRadius = cornerRadius,
             style = Stroke(width = 1.dp.toPx())
         )

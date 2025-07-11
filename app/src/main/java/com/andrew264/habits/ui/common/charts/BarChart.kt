@@ -43,7 +43,7 @@ fun BarChart(
     entries: List<BarChartEntry>,
     modifier: Modifier = Modifier,
     barColor: Color = MaterialTheme.colorScheme.primary,
-    gridColor: Color = MaterialTheme.colorScheme.outlineVariant
+    gridColor: Color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f)
 ) {
     if (entries.isEmpty()) {
         return

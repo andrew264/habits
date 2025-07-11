@@ -9,6 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -28,6 +29,7 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import kotlin.math.ceil
 import kotlin.math.max
+import kotlin.math.min
 
 private const val DAY_START_HOUR = 18 // 6 PM
 
@@ -58,7 +60,7 @@ fun <T> SleepChart(
     if (segments.isEmpty()) return
 
     val textMeasurer = rememberTextMeasurer()
-    val gridColor = MaterialTheme.colorScheme.outlineVariant
+    val gridColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f)
 
     val timeFormatter = remember { DateTimeFormatter.ofPattern("ha") }
     val groupedSegments = remember(segments, rangeInDays) {
@@ -130,23 +132,53 @@ private data class ProcessedSegment(
     val state: UserPresenceState
 )
 
+/**
+ * Processes raw segments, splitting any that cross the 6 PM display day boundary.
+ * This ensures that a single sleep period is correctly represented across multiple columns if necessary.
+ */
 private fun <T> processAndGroupSegments(
     segments: List<T>,
     getStartTimeMillis: (T) -> Long,
     getEndTimeMillis: (T) -> Long,
     getState: (T) -> UserPresenceState,
 ): Map<LocalDate, List<ProcessedSegment>> {
-    return segments
-        .map {
-            ProcessedSegment(
-                startTimeMillis = getStartTimeMillis(it),
-                endTimeMillis = getEndTimeMillis(it),
-                state = getState(it)
-            )
+    val grouped = mutableMapOf<LocalDate, MutableList<ProcessedSegment>>()
+
+    val initialProcessed = segments.map {
+        ProcessedSegment(
+            startTimeMillis = getStartTimeMillis(it),
+            endTimeMillis = getEndTimeMillis(it),
+            state = getState(it)
+        )
+    }
+
+    initialProcessed.forEach { segment ->
+        var currentStartMillis = segment.startTimeMillis
+        val segmentEndMillis = segment.endTimeMillis
+
+        while (currentStartMillis < segmentEndMillis) {
+            val displayDay = getDisplayDayForTimestamp(currentStartMillis)
+
+            // A display day runs for 24 hours starting at 6 PM.
+            val displayDayEndMillis = getDisplayDayStartMillis(displayDay) + TimeUnit.HOURS.toMillis(24)
+
+            val partEndMillis = min(segmentEndMillis, displayDayEndMillis)
+
+            val list = grouped.getOrPut(displayDay) { mutableListOf() }
+            if (partEndMillis > currentStartMillis) { // Avoid adding zero-duration segments
+                list.add(ProcessedSegment(currentStartMillis, partEndMillis, segment.state))
+            }
+
+            currentStartMillis = partEndMillis
         }
-        .groupBy { getDisplayDayForTimestamp(it.startTimeMillis) }
+    }
+    return grouped
 }
 
+/**
+ * Determines which "display day" a timestamp belongs to. A display day starts at 6 PM.
+ * For example, 5 AM on May 2nd belongs to the display day of May 1st.
+ */
 private fun getDisplayDayForTimestamp(timestamp: Long): LocalDate {
     val ldt = LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.systemDefault())
     return if (ldt.hour < DAY_START_HOUR) {
@@ -156,6 +188,9 @@ private fun getDisplayDayForTimestamp(timestamp: Long): LocalDate {
     }
 }
 
+/**
+ * Gets the start timestamp (in milliseconds) for a given display day, which is 6 PM on that calendar date.
+ */
 private fun getDisplayDayStartMillis(date: LocalDate): Long {
     val ldt = date.atTime(DAY_START_HOUR, 0)
     return ldt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
@@ -256,10 +291,11 @@ private fun DrawScope.drawSleepBar(
     val height = ((endOffsetMillis - startOffsetMillis).toFloat() / fullDayMillis) * chartAreaHeight
 
     if (height > 0) {
-        drawRect(
+        drawRoundRect(
             color = color,
             topLeft = Offset(barX, y),
-            size = Size(barWidth, height)
+            size = Size(barWidth, height),
+            cornerRadius = CornerRadius(barWidth / 4),
         )
     }
 }

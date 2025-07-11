@@ -16,7 +16,6 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -24,6 +23,7 @@ import com.andrew264.habits.domain.model.AppSegment
 import com.andrew264.habits.domain.model.ScreenOnPeriod
 import com.andrew264.habits.domain.model.UsageTimelineModel
 import com.andrew264.habits.ui.bedtime.BedtimeChartRange
+import com.andrew264.habits.ui.common.charts.DualTrackTimelineChart
 import com.andrew264.habits.ui.common.charts.TimelineLabelStrategy
 import com.andrew264.habits.ui.common.components.FeatureDisabledContent
 import com.andrew264.habits.ui.navigation.AppRoute
@@ -32,7 +32,6 @@ import com.andrew264.habits.ui.navigation.Whitelist
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.ui.usage.components.AppListItem
-import com.andrew264.habits.ui.usage.components.AppUsageTimelineChart
 import com.andrew264.habits.ui.usage.components.ColorPickerDialog
 import com.andrew264.habits.ui.usage.components.StatisticsSummaryCard
 import java.util.concurrent.TimeUnit
@@ -175,6 +174,29 @@ private fun UsageTimelineContent(
                 averageSessionMillis = uiState.averageSessionMillis
             )
 
+            // Chart
+            if (uiState.timelineModel != null) {
+                Card {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Dimens.PaddingLarge),
+                        verticalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
+                    ) {
+                        Text(
+                            "Timeline",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        DualTrackTimelineChart(
+                            model = uiState.timelineModel,
+                            labelStrategy = if (uiState.selectedRange == BedtimeChartRange.TWELVE_HOURS) TimelineLabelStrategy.TWELVE_HOURS else TimelineLabelStrategy.DAY,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+
             FilledTonalButton(
                 onClick = { onNavigate(Whitelist) },
                 modifier = Modifier.fillMaxWidth()
@@ -186,31 +208,6 @@ private fun UsageTimelineContent(
                 )
                 Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                 Text("Manage Whitelisted Apps")
-            }
-
-            // Chart
-            if (uiState.timelineModel != null) {
-                Card {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(Dimens.PaddingLarge)
-                    ) {
-                        Text(
-                            "Timeline",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Spacer(Modifier.height(Dimens.PaddingSmall))
-                        AppUsageTimelineChart(
-                            model = uiState.timelineModel,
-                            labelStrategy = if (uiState.selectedRange == BedtimeChartRange.TWELVE_HOURS) TimelineLabelStrategy.TWELVE_HOURS else TimelineLabelStrategy.DAY,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(60.dp)
-                        )
-                    }
-                }
             }
 
             // App List
