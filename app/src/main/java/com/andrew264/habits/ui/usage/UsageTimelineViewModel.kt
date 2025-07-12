@@ -10,6 +10,7 @@ import com.andrew264.habits.domain.repository.SettingsRepository
 import com.andrew264.habits.domain.repository.WhitelistRepository
 import com.andrew264.habits.domain.usecase.GetUsageTimelineUseCase
 import com.andrew264.habits.ui.bedtime.BedtimeChartRange
+import com.andrew264.habits.util.AccessibilityUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -30,6 +31,7 @@ data class AppDetails(
 data class UsageTimelineUiState(
     val isLoading: Boolean = true,
     val isAppUsageTrackingEnabled: Boolean = true,
+    val isAccessibilityServiceEnabled: Boolean = false,
     val selectedRange: BedtimeChartRange = BedtimeChartRange.DAY,
     val timelineModel: UsageTimelineModel? = null,
     val appDetails: List<AppDetails> = emptyList(),
@@ -54,20 +56,33 @@ class UsageTimelineViewModel @Inject constructor(
     private val _selectedRange = MutableStateFlow(BedtimeChartRange.DAY)
     private val _appForColorPicker = MutableStateFlow<AppDetails?>(null)
     private val refreshTrigger = MutableStateFlow(0)
+    private val _isAccessibilityEnabled = MutableStateFlow(false)
 
     val uiState: StateFlow<UsageTimelineUiState> = combine(
         settingsRepository.settingsFlow,
         _selectedRange,
-        refreshTrigger
-    ) { settings, range, _ ->
-        Triple(settings, range, System.currentTimeMillis())
-    }.flatMapLatest { (settings, range, now) ->
-        if (!settings.isAppUsageTrackingEnabled) {
-            flowOf(UsageTimelineUiState(isLoading = false, isAppUsageTrackingEnabled = false))
+        refreshTrigger,
+        _isAccessibilityEnabled
+    ) { settings, range, _, isAccessibilityEnabled ->
+        object {
+            val settings = settings
+            val range = range
+            val isAccessibilityEnabled = isAccessibilityEnabled
+            val now = System.currentTimeMillis()
+        }
+    }.flatMapLatest { captured ->
+        if (!captured.settings.isAppUsageTrackingEnabled) {
+            flowOf(
+                UsageTimelineUiState(
+                    isLoading = false,
+                    isAppUsageTrackingEnabled = false,
+                    isAccessibilityServiceEnabled = captured.isAccessibilityEnabled
+                )
+            )
         } else {
-            val startTime = now - range.durationMillis
+            val startTime = captured.now - captured.range.durationMillis
             combine(
-                getUsageTimelineUseCase.execute(startTime, now),
+                getUsageTimelineUseCase.execute(startTime, captured.now),
                 _appForColorPicker,
                 whitelistRepository.getWhitelistedAppsMap()
             ) { timelineModel, appForPicker, whitelistedAppsMap ->
@@ -118,7 +133,8 @@ class UsageTimelineViewModel @Inject constructor(
                 UsageTimelineUiState(
                     isLoading = false,
                     isAppUsageTrackingEnabled = true,
-                    selectedRange = range,
+                    isAccessibilityServiceEnabled = captured.isAccessibilityEnabled,
+                    selectedRange = captured.range,
                     timelineModel = timelineModel,
                     appDetails = appDetails,
                     appForColorPicker = appForPicker,
@@ -136,12 +152,16 @@ class UsageTimelineViewModel @Inject constructor(
         initialValue = UsageTimelineUiState()
     )
 
+    init {
+        updateAccessibilityStatus()
+    }
 
     fun setTimeRange(range: BedtimeChartRange) {
         _selectedRange.value = range
     }
 
     fun refresh() {
+        updateAccessibilityStatus()
         refreshTrigger.value++
     }
 
@@ -184,5 +204,9 @@ class UsageTimelineViewModel @Inject constructor(
                 val sessionCount = segments.size
                 Pair(totalUsage, sessionCount)
             }
+    }
+
+    private fun updateAccessibilityStatus() {
+        _isAccessibilityEnabled.value = AccessibilityUtils.isAccessibilityServiceEnabled(context)
     }
 }

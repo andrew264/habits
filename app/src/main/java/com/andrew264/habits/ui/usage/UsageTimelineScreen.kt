@@ -1,18 +1,24 @@
 package com.andrew264.habits.ui.usage
 
+import android.content.Intent
+import android.provider.Settings
 import android.view.HapticFeedbackConstants
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -47,8 +53,9 @@ fun UsageTimelineScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isInitialComposition = remember { mutableStateOf(true) }
+    val context = LocalContext.current
 
-    // Refresh data automatically when the screen becomes visible again
+    // Refresh data automaticall
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         if (isInitialComposition.value) {
             isInitialComposition.value = false
@@ -82,7 +89,11 @@ fun UsageTimelineScreen(
                 onShowColorPicker = viewModel::showColorPickerForApp,
                 onDismissColorPicker = viewModel::dismissColorPicker,
                 onSetAppColor = viewModel::setAppColor,
-                onNavigate = onNavigate
+                onNavigateToWhitelist = { onNavigate(Whitelist) },
+                onOpenAccessibilitySettings = {
+                    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                    context.startActivity(intent)
+                }
             )
         }
     }
@@ -97,7 +108,8 @@ private fun UsageTimelineContent(
     onShowColorPicker: (AppDetails) -> Unit,
     onDismissColorPicker: () -> Unit,
     onSetAppColor: (packageName: String, colorHex: String) -> Unit,
-    onNavigate: (AppRoute) -> Unit
+    onNavigateToWhitelist: () -> Unit,
+    onOpenAccessibilitySettings: () -> Unit,
 ) {
     val view = LocalView.current
 
@@ -178,6 +190,40 @@ private fun UsageTimelineContent(
                 averageSessionMillis = uiState.averageSessionMillis
             )
 
+            // Warning message for accessibility service status
+            AnimatedVisibility(visible = uiState.isAppUsageTrackingEnabled && !uiState.isAccessibilityServiceEnabled) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            onOpenAccessibilitySettings()
+                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                        },
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(Dimens.PaddingLarge),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Warning,
+                            contentDescription = "Warning",
+                            tint = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Text(
+                            text = "Usage tracking service is not running. Tap here to fix it.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
+                }
+            }
+
+
             // Chart
             if (uiState.timelineModel != null) {
                 Card {
@@ -202,7 +248,7 @@ private fun UsageTimelineContent(
             }
 
             FilledTonalButton(
-                onClick = { onNavigate(Whitelist) },
+                onClick = { onNavigateToWhitelist() },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(
@@ -224,7 +270,7 @@ private fun UsageTimelineContent(
                 )
 
                 if (uiState.appDetails.isEmpty() && uiState.timelineModel?.screenOnPeriods?.any { it.appSegments.isNotEmpty() } == true) {
-                    Card(modifier = Modifier.fillMaxWidth(), onClick = { onNavigate(Whitelist) }) {
+                    Card(modifier = Modifier.fillMaxWidth(), onClick = { onNavigateToWhitelist() }) {
                         Text(
                             "No whitelisted apps with usage in this period. Tap 'Manage Whitelisted Apps' to add some.",
                             modifier = Modifier.padding(Dimens.PaddingLarge),
@@ -334,6 +380,7 @@ private fun UsageTimelineContentPreview() {
             uiState = UsageTimelineUiState(
                 isLoading = false,
                 isAppUsageTrackingEnabled = true,
+                isAccessibilityServiceEnabled = false,
                 timelineModel = fakeTimelineModel,
                 appDetails = fakeAppDetails,
                 totalScreenOnTime = fakeTimelineModel.totalScreenOnTime,
@@ -345,7 +392,8 @@ private fun UsageTimelineContentPreview() {
             onShowColorPicker = {},
             onDismissColorPicker = {},
             onSetAppColor = { _, _ -> },
-            onNavigate = {}
+            onNavigateToWhitelist = {},
+            onOpenAccessibilitySettings = {}
         )
     }
 }
@@ -354,6 +402,19 @@ private fun UsageTimelineContentPreview() {
 @Composable
 private fun UsageTimelineFeatureDisabledPreview() {
     HabitsTheme {
-        UsageTimelineScreen(onNavigate = {})
+        UsageTimelineContent(
+            uiState = UsageTimelineUiState(
+                isLoading = false,
+                isAppUsageTrackingEnabled = true,
+                isAccessibilityServiceEnabled = false,
+            ),
+            onSetTimeRange = {},
+            onRefresh = {},
+            onShowColorPicker = {},
+            onDismissColorPicker = {},
+            onSetAppColor = { _, _ -> },
+            onNavigateToWhitelist = {},
+            onOpenAccessibilitySettings = {}
+        )
     }
 }
