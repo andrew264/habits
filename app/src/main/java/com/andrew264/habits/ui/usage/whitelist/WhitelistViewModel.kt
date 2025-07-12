@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.math.abs
 
 data class WhitelistUiState(
     val isLoading: Boolean = true,
@@ -19,7 +20,6 @@ data class WhitelistUiState(
     val showSystemApps: Boolean = false,
     val apps: List<InstalledAppInfo> = emptyList(),
     val whitelistedPackageNames: Set<String> = emptySet(),
-    val appPendingColorSelection: InstalledAppInfo? = null
 )
 
 @HiltViewModel
@@ -32,39 +32,34 @@ class WhitelistViewModel @Inject constructor(
     private val _searchText = MutableStateFlow("")
     private val _showSystemApps = MutableStateFlow(false)
     private val _isLoading = MutableStateFlow(true)
-    private val _appPendingColorSelection = MutableStateFlow<InstalledAppInfo?>(null)
 
     val uiState: StateFlow<WhitelistUiState> = combine(
         _searchText,
         _showSystemApps,
         _allApps,
         _isLoading,
-        _appPendingColorSelection
-    ) { searchText, showSystemApps, allApps, isLoading, pendingApp ->
-        // Create an intermediate anonymous object to pass the results to the next combine
+    ) { searchText, showSystemApps, allApps, isLoading ->
         object {
             val searchText = searchText
             val showSystemApps = showSystemApps
             val allApps = allApps
             val isLoading = isLoading
-            val pendingApp = pendingApp
         }
-    }.combine(whitelistRepository.getWhitelistedAppsMap()) { fiveFlowsResult, whitelistedMap ->
-        val filteredApps = fiveFlowsResult.allApps.filter { appInfo ->
-            (fiveFlowsResult.showSystemApps || !appInfo.isSystemApp) &&
-                    (fiveFlowsResult.searchText.isBlank() || appInfo.friendlyName.contains(fiveFlowsResult.searchText, ignoreCase = true))
+    }.combine(whitelistRepository.getWhitelistedAppsMap()) { fourFlowsResult, whitelistedMap ->
+        val filteredApps = fourFlowsResult.allApps.filter { appInfo ->
+            (fourFlowsResult.showSystemApps || !appInfo.isSystemApp) &&
+                    (fourFlowsResult.searchText.isBlank() || appInfo.friendlyName.contains(fourFlowsResult.searchText, ignoreCase = true))
         }.sortedWith(
             compareBy<InstalledAppInfo> { !whitelistedMap.containsKey(it.packageName) }
                 .thenBy { it.friendlyName.lowercase() }
         )
 
         WhitelistUiState(
-            isLoading = fiveFlowsResult.isLoading,
-            searchText = fiveFlowsResult.searchText,
-            showSystemApps = fiveFlowsResult.showSystemApps,
+            isLoading = fourFlowsResult.isLoading,
+            searchText = fourFlowsResult.searchText,
+            showSystemApps = fourFlowsResult.showSystemApps,
             apps = filteredApps,
-            whitelistedPackageNames = whitelistedMap.keys,
-            appPendingColorSelection = fiveFlowsResult.pendingApp
+            whitelistedPackageNames = whitelistedMap.keys
         )
     }.stateIn(
         scope = viewModelScope,
@@ -120,24 +115,22 @@ class WhitelistViewModel @Inject constructor(
             if (isCurrentlyWhitelisted) {
                 whitelistRepository.unWhitelistApp(app.packageName)
             } else {
-                _appPendingColorSelection.value = app
+                val assignedColor = assignColorForPackage(app.packageName)
+                whitelistRepository.whitelistApp(app.packageName, assignedColor)
             }
         }
     }
+}
 
-    fun onColorSelected(
-        packageName: String,
-        color: String
-    ) {
-        viewModelScope.launch {
-            // Default color is white, which is a bit hard to see. Let's pick a default.
-            val finalColor = if (color == "#FFFFFF") "#9E9E9E" else color
-            whitelistRepository.whitelistApp(packageName, finalColor)
-            _appPendingColorSelection.value = null
-        }
-    }
+private val appColorPalette = listOf(
+    "#F44336", "#E91E63", "#9C27B0", "#673AB7", "#3F51B5",
+    "#2196F3", "#03A9F4", "#00BCD4", "#009688", "#4CAF50",
+    "#8BC34A", "#FFC107", "#FF9800", "#FF5722", "#795548",
+    "#607D8B"
+)
 
-    fun onDismissColorPicker() {
-        _appPendingColorSelection.value = null
-    }
+
+fun assignColorForPackage(packageName: String): String {
+    val index = abs(packageName.hashCode()) % appColorPalette.size
+    return appColorPalette[index]
 }

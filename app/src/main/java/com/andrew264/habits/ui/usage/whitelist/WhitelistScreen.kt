@@ -17,7 +17,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.andrew264.habits.ui.common.components.DrawableImage
 import com.andrew264.habits.ui.theme.Dimens
-import com.andrew264.habits.ui.usage.components.ColorPickerDialog
 
 @Composable
 fun WhitelistScreen(
@@ -25,17 +24,6 @@ fun WhitelistScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val view = LocalView.current
-
-    if (uiState.appPendingColorSelection != null) {
-        ColorPickerDialog(
-            dialogTitle = "Select color for ${uiState.appPendingColorSelection!!.friendlyName}",
-            selectedColorHex = null, // No initial color for new app
-            onDismissRequest = viewModel::onDismissColorPicker,
-            onColorSelected = { colorHex ->
-                viewModel.onColorSelected(uiState.appPendingColorSelection!!.packageName, colorHex)
-            }
-        )
-    }
 
     Column(
         modifier = Modifier

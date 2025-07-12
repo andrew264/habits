@@ -33,7 +33,6 @@ import kotlinx.coroutines.flow.collectLatest
 fun MonitoringSettingsScreen(
     modifier: Modifier = Modifier,
     viewModel: MonitoringSettingsViewModel = hiltViewModel(),
-    // These are now unused but kept for placeholder, can be removed.
     onRequestPermissions: () -> Unit,
     onOpenAppSettings: () -> Unit
 ) {

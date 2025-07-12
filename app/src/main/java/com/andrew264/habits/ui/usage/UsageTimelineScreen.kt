@@ -12,6 +12,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -25,6 +26,9 @@ import com.andrew264.habits.domain.model.UsageTimelineModel
 import com.andrew264.habits.ui.bedtime.BedtimeChartRange
 import com.andrew264.habits.ui.common.charts.DualTrackTimelineChart
 import com.andrew264.habits.ui.common.charts.TimelineLabelStrategy
+import com.andrew264.habits.ui.common.color_picker.ColorPickerDialog
+import com.andrew264.habits.ui.common.color_picker.utils.toColorOrNull
+import com.andrew264.habits.ui.common.color_picker.utils.toHexCode
 import com.andrew264.habits.ui.common.components.FeatureDisabledContent
 import com.andrew264.habits.ui.navigation.AppRoute
 import com.andrew264.habits.ui.navigation.MonitoringSettings
@@ -32,7 +36,6 @@ import com.andrew264.habits.ui.navigation.Whitelist
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.ui.usage.components.AppListItem
-import com.andrew264.habits.ui.usage.components.ColorPickerDialog
 import com.andrew264.habits.ui.usage.components.StatisticsSummaryCard
 import java.util.concurrent.TimeUnit
 
@@ -101,13 +104,14 @@ private fun UsageTimelineContent(
     if (uiState.appForColorPicker != null) {
         val app = uiState.appForColorPicker
         ColorPickerDialog(
-            dialogTitle = "Select color for ${app.friendlyName}",
-            selectedColorHex = app.color,
+            title = "Select color for ${app.friendlyName}",
+            initialColor = app.color.toColorOrNull() ?: Color.Gray,
             onDismissRequest = onDismissColorPicker,
-            onColorSelected = { colorHex ->
-                onSetAppColor(app.packageName, colorHex)
+            onConfirmation = { newColor ->
+                onSetAppColor(app.packageName, newColor.toHexCode())
                 onDismissColorPicker()
-            }
+            },
+            showAlphaSlider = false
         )
     }
 
