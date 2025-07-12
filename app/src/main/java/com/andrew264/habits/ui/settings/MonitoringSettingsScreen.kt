@@ -6,9 +6,12 @@ import android.provider.Settings
 import android.view.HapticFeedbackConstants
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -134,6 +138,30 @@ private fun MonitoringSettingsScreenContent(
                     checked = uiState.settings.isAppUsageTrackingEnabled,
                     onCheckedChange = onUsageToggled
                 )
+
+                // Warning message for accessibility service status
+                AnimatedVisibility(visible = uiState.settings.isAppUsageTrackingEnabled && !uiState.isAccessibilityServiceEnabled) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = Dimens.PaddingExtraSmall),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Warning,
+                            contentDescription = "Warning",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = "Service is not running. Please re-enable it in system settings.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+
                 SettingsRow(
                     text = "Water Tracking",
                     description = "Track daily water intake and set reminders.",
@@ -219,6 +247,34 @@ private fun MonitoringSettingsScreenAllEnabledPreview() {
             uiState = MonitoringSettingsUiState(
                 settings = settings,
                 isAccessibilityServiceEnabled = true
+            ),
+            onBedtimeToggled = {},
+            onUsageToggled = {},
+            onWaterToggled = {},
+            onOpenAppSettings = {}
+        )
+    }
+}
+
+@Preview(name = "Settings - Accessibility Warning", showBackground = true)
+@Composable
+private fun MonitoringSettingsScreenWarningPreview() {
+    val settings = PersistentSettings(
+        selectedScheduleId = null,
+        isBedtimeTrackingEnabled = true,
+        isAppUsageTrackingEnabled = true,
+        isWaterTrackingEnabled = true,
+        waterDailyTargetMl = 2500,
+        isWaterReminderEnabled = true,
+        waterReminderIntervalMinutes = 60,
+        waterReminderSnoozeMinutes = 15,
+        waterReminderScheduleId = null
+    )
+    HabitsTheme {
+        MonitoringSettingsScreenContent(
+            uiState = MonitoringSettingsUiState(
+                settings = settings,
+                isAccessibilityServiceEnabled = false // This triggers the warning
             ),
             onBedtimeToggled = {},
             onUsageToggled = {},
