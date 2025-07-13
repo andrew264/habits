@@ -41,7 +41,7 @@ fun DualTrackTimelineChart(
     model: UsageTimelineModel,
     modifier: Modifier = Modifier,
     labelStrategy: TimelineLabelStrategy = TimelineLabelStrategy.DAY,
-    trackHeight: Dp = 40.dp,
+    trackHeight: Dp = 128.dp,
     labelAreaHeight: Dp = 24.dp,
 ) {
     val textMeasurer = rememberTextMeasurer()
@@ -70,7 +70,7 @@ fun DualTrackTimelineChart(
             val totalDurationMillis = model.viewEnd - model.viewStart
             if (totalDurationMillis <= 0) return@Canvas
 
-            val trackCornerRadius = CornerRadius(trackHeightPx / 4)
+            val trackCornerRadius = CornerRadius(trackHeightPx / 16)
 
             // 1. Draw the base "screen off" track
             drawRoundRect(
@@ -81,9 +81,9 @@ fun DualTrackTimelineChart(
             )
 
             // 2. Draw screen-on periods
-            val screenOnTrackHeight = trackHeightPx * 0.75f
+            val screenOnTrackHeight = trackHeightPx * 0.8f
             val screenOnTrackY = (trackHeightPx - screenOnTrackHeight) / 2f
-            val screenOnCornerRadius = CornerRadius(screenOnTrackHeight / 4)
+            val screenOnCornerRadius = CornerRadius(screenOnTrackHeight / 16)
 
             model.screenOnPeriods.forEach { period ->
                 val startOffset = max(0L, period.startTimestamp - model.viewStart)
@@ -102,9 +102,9 @@ fun DualTrackTimelineChart(
             }
 
             // 3. Draw the app usage segments
-            val appTrackHeight = trackHeightPx / 2.5f
+            val appTrackHeight = trackHeightPx * 0.7f
             val appTrackY = (trackHeightPx - appTrackHeight) / 2
-            val appTrackCornerRadius = CornerRadius(appTrackHeight / 4)
+            val appTrackCornerRadius = CornerRadius(appTrackHeight / 16)
 
             model.screenOnPeriods.forEach { period ->
                 period.appSegments.forEach { segment ->

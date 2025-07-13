@@ -79,7 +79,7 @@ class WhitelistViewModel @Inject constructor(
             val allApps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
             val appInfos = allApps.mapNotNull { appInfo ->
                 // Ignore our own app and common system packages
-                if (appInfo.packageName == context.packageName || appInfo.packageName.startsWith("com.android.")) {
+                if (appInfo.packageName == context.packageName) {
                     return@mapNotNull null
                 }
 

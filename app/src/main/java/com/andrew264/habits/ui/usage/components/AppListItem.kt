@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,6 +50,15 @@ fun AppListItem(
                 text = "$percentageText • $sessionText",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(Dimens.PaddingExtraSmall))
+            LinearProgressIndicator(
+                progress = { appDetails.usagePercentage },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp),
+                color = Color(appDetails.color.toColorInt()),
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
         }
         Text(
