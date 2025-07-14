@@ -20,7 +20,7 @@ import com.andrew264.habits.ui.schedule.create.ScheduleEditorScreen
 import com.andrew264.habits.ui.schedule.create.ScheduleViewModel
 import com.andrew264.habits.ui.schedule.list.SchedulesScreen
 import com.andrew264.habits.ui.settings.MonitoringSettingsScreen
-import com.andrew264.habits.ui.usage.UsageTimelineScreen
+import com.andrew264.habits.ui.usage.UsageStatsScreen
 import com.andrew264.habits.ui.usage.whitelist.WhitelistScreen
 import com.andrew264.habits.ui.water.home.WaterHomeScreen
 import com.andrew264.habits.ui.water.home.WaterHomeViewModel
@@ -75,7 +75,7 @@ fun AppNavDisplay(
                 )
             }
             entry<Usage> {
-                UsageTimelineScreen(onNavigate = onNavigate)
+                UsageStatsScreen(onNavigate = onNavigate)
             }
             entry<Bedtime> {
                 BedtimeScreen(onNavigate = onNavigate)

@@ -5,11 +5,10 @@ import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.andrew264.habits.domain.model.UsageTimelineModel
+import com.andrew264.habits.domain.model.UsageStatistics
 import com.andrew264.habits.domain.repository.SettingsRepository
 import com.andrew264.habits.domain.repository.WhitelistRepository
-import com.andrew264.habits.domain.usecase.GetUsageTimelineUseCase
-import com.andrew264.habits.ui.bedtime.BedtimeChartRange
+import com.andrew264.habits.domain.usecase.GetUsageStatisticsUseCase
 import com.andrew264.habits.util.AccessibilityUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -28,24 +27,23 @@ data class AppDetails(
     val sessionCount: Int,
 )
 
-data class UsageTimelineUiState(
+data class UsageStatsUiState(
     val isLoading: Boolean = true,
     val isAppUsageTrackingEnabled: Boolean = true,
     val isAccessibilityServiceEnabled: Boolean = false,
-    val selectedRange: BedtimeChartRange = BedtimeChartRange.DAY,
-    val timelineModel: UsageTimelineModel? = null,
+    val selectedRange: UsageTimeRange = UsageTimeRange.DAY,
+    val stats: UsageStatistics? = null,
+    val whitelistedAppColors: Map<String, String> = emptyMap(),
     val appDetails: List<AppDetails> = emptyList(),
     val appForColorPicker: AppDetails? = null,
-    val totalScreenOnTime: Long = 0,
-    val pickupCount: Int = 0,
     val averageSessionMillis: Long = 0
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
-class UsageTimelineViewModel @Inject constructor(
+class UsageStatsViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val getUsageTimelineUseCase: GetUsageTimelineUseCase,
+    private val getUsageStatisticsUseCase: GetUsageStatisticsUseCase,
     private val whitelistRepository: WhitelistRepository,
     settingsRepository: SettingsRepository
 ) : ViewModel() {
@@ -53,65 +51,56 @@ class UsageTimelineViewModel @Inject constructor(
     private val packageManager = context.packageManager
     private val appDetailsCache = mutableMapOf<String, Pair<String, Drawable?>>()
 
-    private val _selectedRange = MutableStateFlow(BedtimeChartRange.DAY)
+    private val _selectedRange = MutableStateFlow(UsageTimeRange.DAY)
     private val _appForColorPicker = MutableStateFlow<AppDetails?>(null)
     private val refreshTrigger = MutableStateFlow(0)
     private val _isAccessibilityEnabled = MutableStateFlow(false)
 
-    val uiState: StateFlow<UsageTimelineUiState> = combine(
+    val uiState: StateFlow<UsageStatsUiState> = combine(
         settingsRepository.settingsFlow,
         _selectedRange,
         refreshTrigger,
         _isAccessibilityEnabled
     ) { settings, range, _, isAccessibilityEnabled ->
-        object {
-            val settings = settings
-            val range = range
-            val isAccessibilityEnabled = isAccessibilityEnabled
-            val now = System.currentTimeMillis()
-        }
-    }.flatMapLatest { captured ->
-        if (!captured.settings.isAppUsageTrackingEnabled) {
+        Triple(settings, range, isAccessibilityEnabled)
+    }.flatMapLatest { (settings, range, isAccessibilityEnabled) ->
+        if (!settings.isAppUsageTrackingEnabled) {
             flowOf(
-                UsageTimelineUiState(
+                UsageStatsUiState(
                     isLoading = false,
                     isAppUsageTrackingEnabled = false,
-                    isAccessibilityServiceEnabled = captured.isAccessibilityEnabled
+                    isAccessibilityServiceEnabled = isAccessibilityEnabled
                 )
             )
         } else {
-            val startTime = captured.now - captured.range.durationMillis
             combine(
-                getUsageTimelineUseCase.execute(startTime, captured.now),
-                _appForColorPicker,
-                whitelistRepository.getWhitelistedAppsMap()
-            ) { timelineModel, appForPicker, whitelistedAppsMap ->
-                val totalScreenOnTime = timelineModel.totalScreenOnTime
-                val aggregatedUsage = aggregateAppUsage(timelineModel)
-
-                val appDetails = if (whitelistedAppsMap.isEmpty()) {
+                getUsageStatisticsUseCase.execute(range),
+                whitelistRepository.getWhitelistedAppsMap(),
+                _appForColorPicker
+            ) { stats, whitelistedApps, appForPicker ->
+                val appDetails = if (whitelistedApps.isEmpty()) {
                     // If whitelist is empty, show all apps with usage
-                    aggregatedUsage.map { (pkg, usageStats) ->
-                        val (totalUsage, sessionCount) = usageStats
+                    stats.totalUsagePerApp.map { (pkg, totalUsage) ->
                         val details = getAppDetails(pkg)
-                        val usagePercentage = if (totalScreenOnTime > 0) totalUsage.toFloat() / totalScreenOnTime.toFloat() else 0f
+                        val sessionCount = stats.timeBins.count { it.appUsage.containsKey(pkg) }
+                        val usagePercentage = if (stats.totalScreenOnTime > 0) totalUsage.toFloat() / stats.totalScreenOnTime.toFloat() else 0f
                         AppDetails(
                             packageName = pkg,
                             friendlyName = details.first,
                             icon = details.second,
-                            color = "#808080", // Default color for non-whitelisted apps
+                            color = "#808080", // Default color
                             totalUsageMillis = totalUsage,
                             usagePercentage = usagePercentage,
                             sessionCount = sessionCount
                         )
                     }.sortedByDescending { it.totalUsageMillis }
                 } else {
-                    // If whitelist exists, show all whitelisted apps
-                    whitelistedAppsMap.map { (pkg, color) ->
-                        val usageStats = aggregatedUsage[pkg] ?: Pair(0L, 0)
-                        val (totalUsage, sessionCount) = usageStats
+                    // If whitelist has items, show only those apps (even if usage is zero)
+                    whitelistedApps.map { (pkg, color) ->
+                        val totalUsage = stats.totalUsagePerApp[pkg] ?: 0L
                         val details = getAppDetails(pkg)
-                        val usagePercentage = if (totalScreenOnTime > 0) totalUsage.toFloat() / totalScreenOnTime.toFloat() else 0f
+                        val sessionCount = stats.timeBins.count { it.appUsage.containsKey(pkg) }
+                        val usagePercentage = if (stats.totalScreenOnTime > 0) totalUsage.toFloat() / stats.totalScreenOnTime.toFloat() else 0f
                         AppDetails(
                             packageName = pkg,
                             friendlyName = details.first,
@@ -124,22 +113,21 @@ class UsageTimelineViewModel @Inject constructor(
                     }.sortedByDescending { it.totalUsageMillis }
                 }
 
-                val averageSessionMillis = if (timelineModel.pickupCount > 0) {
-                    totalScreenOnTime / timelineModel.pickupCount
+                val averageSessionMillis = if (stats.pickupCount > 0) {
+                    stats.totalScreenOnTime / stats.pickupCount
                 } else {
                     0L
                 }
 
-                UsageTimelineUiState(
+                UsageStatsUiState(
                     isLoading = false,
                     isAppUsageTrackingEnabled = true,
-                    isAccessibilityServiceEnabled = captured.isAccessibilityEnabled,
-                    selectedRange = captured.range,
-                    timelineModel = timelineModel,
+                    isAccessibilityServiceEnabled = isAccessibilityEnabled,
+                    selectedRange = range,
+                    stats = stats,
+                    whitelistedAppColors = whitelistedApps,
                     appDetails = appDetails,
                     appForColorPicker = appForPicker,
-                    totalScreenOnTime = totalScreenOnTime,
-                    pickupCount = timelineModel.pickupCount,
                     averageSessionMillis = averageSessionMillis
                 )
             }.onStart {
@@ -149,14 +137,14 @@ class UsageTimelineViewModel @Inject constructor(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = UsageTimelineUiState()
+        initialValue = UsageStatsUiState()
     )
 
     init {
         updateAccessibilityStatus()
     }
 
-    fun setTimeRange(range: BedtimeChartRange) {
+    fun setTimeRange(range: UsageTimeRange) {
         _selectedRange.value = range
     }
 
@@ -193,17 +181,6 @@ class UsageTimelineViewModel @Inject constructor(
                 Pair(packageName, null)
             }
         }
-    }
-
-    private fun aggregateAppUsage(model: UsageTimelineModel): Map<String, Pair<Long, Int>> {
-        return model.screenOnPeriods
-            .flatMap { it.appSegments }
-            .groupBy { it.packageName }
-            .mapValues { (_, segments) ->
-                val totalUsage = segments.sumOf { it.endTimestamp - it.startTimestamp }
-                val sessionCount = segments.size
-                Pair(totalUsage, sessionCount)
-            }
     }
 
     private fun updateAccessibilityStatus() {

@@ -29,12 +29,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import com.andrew264.habits.domain.model.AppSegment
-import com.andrew264.habits.domain.model.ScreenOnPeriod
-import com.andrew264.habits.domain.model.UsageTimelineModel
-import com.andrew264.habits.ui.bedtime.BedtimeChartRange
-import com.andrew264.habits.ui.common.charts.DualTrackTimelineChart
-import com.andrew264.habits.ui.common.charts.TimelineLabelStrategy
+import com.andrew264.habits.domain.model.UsageStatistics
+import com.andrew264.habits.domain.model.UsageTimeBin
+import com.andrew264.habits.ui.common.charts.StackedBarChart
 import com.andrew264.habits.ui.common.color_picker.ColorPickerDialog
 import com.andrew264.habits.ui.common.color_picker.utils.toColorOrNull
 import com.andrew264.habits.ui.common.color_picker.utils.toHexCode
@@ -50,15 +47,14 @@ import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UsageTimelineScreen(
-    viewModel: UsageTimelineViewModel = hiltViewModel(),
+fun UsageStatsScreen(
+    viewModel: UsageStatsViewModel = hiltViewModel(),
     onNavigate: (AppRoute) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isInitialComposition = remember { mutableStateOf(true) }
     val context = LocalContext.current
 
-    // Refresh data automaticall
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         if (isInitialComposition.value) {
             isInitialComposition.value = false
@@ -68,8 +64,7 @@ fun UsageTimelineScreen(
     }
 
     when {
-        // Show a loading spinner only on initial load, not on refresh
-        uiState.isLoading && uiState.timelineModel == null -> {
+        uiState.isLoading && uiState.stats == null -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
@@ -85,7 +80,7 @@ fun UsageTimelineScreen(
         }
 
         else -> {
-            UsageTimelineContent(
+            UsageStatsContent(
                 uiState = uiState,
                 onSetTimeRange = viewModel::setTimeRange,
                 onRefresh = viewModel::refresh,
@@ -107,9 +102,9 @@ fun UsageTimelineScreen(
     ExperimentalFoundationApi::class
 )
 @Composable
-private fun UsageTimelineContent(
-    uiState: UsageTimelineUiState,
-    onSetTimeRange: (BedtimeChartRange) -> Unit,
+private fun UsageStatsContent(
+    uiState: UsageStatsUiState,
+    onSetTimeRange: (UsageTimeRange) -> Unit,
     onRefresh: () -> Unit,
     onShowColorPicker: (AppDetails) -> Unit,
     onDismissColorPicker: () -> Unit,
@@ -134,7 +129,7 @@ private fun UsageTimelineContent(
     }
 
     PullToRefreshBox(
-        isRefreshing = uiState.isLoading && uiState.timelineModel != null,
+        isRefreshing = uiState.isLoading && uiState.stats != null,
         onRefresh = onRefresh
     ) {
         LazyColumn(
@@ -147,7 +142,7 @@ private fun UsageTimelineContent(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    val ranges = BedtimeChartRange.entries.filter { it.isLinear }
+                    val ranges = UsageTimeRange.entries
                     ButtonGroup(
                         overflowIndicator = { menuState ->
                             IconButton(onClick = { menuState.show() }) {
@@ -189,12 +184,14 @@ private fun UsageTimelineContent(
                 }
             }
 
-            item {
-                StatisticsSummaryCard(
-                    totalScreenOnTime = uiState.totalScreenOnTime,
-                    pickupCount = uiState.pickupCount,
-                    averageSessionMillis = uiState.averageSessionMillis
-                )
+            uiState.stats?.let { stats ->
+                item {
+                    StatisticsSummaryCard(
+                        totalScreenOnTime = stats.totalScreenOnTime,
+                        pickupCount = stats.pickupCount,
+                        averageSessionMillis = uiState.averageSessionMillis
+                    )
+                }
             }
 
             item {
@@ -231,28 +228,16 @@ private fun UsageTimelineContent(
                 }
             }
 
-            if (uiState.timelineModel != null) {
+            if (uiState.stats != null) {
                 item {
-                    Card {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(Dimens.PaddingLarge),
-                            verticalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
-                        ) {
-                            Text(
-                                "Timeline",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            DualTrackTimelineChart(
-                                model = uiState.timelineModel,
-                                labelStrategy = if (uiState.selectedRange == BedtimeChartRange.TWELVE_HOURS) TimelineLabelStrategy.TWELVE_HOURS else TimelineLabelStrategy.DAY,
-                                modifier = Modifier.fillMaxWidth(),
-                                trackHeight = 96.dp,
-                            )
-                        }
-                    }
+                    StackedBarChart(
+                        bins = uiState.stats.timeBins,
+                        range = uiState.selectedRange,
+                        whitelistedAppColors = uiState.whitelistedAppColors,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                    )
                 }
             }
 
@@ -283,7 +268,7 @@ private fun UsageTimelineContent(
                 )
             }
 
-            if (uiState.appDetails.isEmpty() && uiState.timelineModel?.screenOnPeriods?.any { it.appSegments.isNotEmpty() } == true) {
+            if (uiState.appDetails.isEmpty() && uiState.stats?.totalUsagePerApp?.isNotEmpty() == true) {
                 item {
                     Card(modifier = Modifier.fillMaxWidth(), onClick = { onNavigateToWhitelist() }) {
                         Text(
@@ -312,111 +297,24 @@ private fun UsageTimelineContent(
 
 @Preview(showBackground = true)
 @Composable
-private fun UsageTimelineContentPreview() {
-    val now = System.currentTimeMillis()
-    val startTime = now - TimeUnit.HOURS.toMillis(12)
-
-    val fakeTimelineModel = UsageTimelineModel(
-        viewStart = startTime,
-        viewEnd = now,
-        screenOnPeriods = listOf(
-            ScreenOnPeriod(
-                startTimestamp = startTime,
-                endTimestamp = startTime + TimeUnit.HOURS.toMillis(2),
-                appSegments = listOf(
-                    AppSegment(
-                        "com.android.chrome",
-                        startTime,
-                        startTime + TimeUnit.HOURS.toMillis(1),
-                        "#4CAF50"
-                    ),
-                    AppSegment(
-                        "com.google.android.gm",
-                        startTime + TimeUnit.HOURS.toMillis(1),
-                        startTime + TimeUnit.HOURS.toMillis(2),
-                        "#F44336"
-                    )
-                )
-            ),
-            ScreenOnPeriod(
-                startTimestamp = startTime + TimeUnit.HOURS.toMillis(4),
-                endTimestamp = startTime + TimeUnit.HOURS.toMillis(6),
-                appSegments = listOf(
-                    AppSegment(
-                        "com.twitter.android",
-                        startTime + TimeUnit.HOURS.toMillis(4),
-                        startTime + TimeUnit.HOURS.toMillis(6),
-                        "#2196F3"
-                    )
-                )
-            )
-        ),
-        pickupCount = 2,
-        totalScreenOnTime = TimeUnit.HOURS.toMillis(4)
-    )
-
-    val fakeAppDetails = listOf(
-        AppDetails(
-            "com.android.chrome",
-            "Chrome",
-            null,
-            "#4CAF50",
-            TimeUnit.HOURS.toMillis(1),
-            0.25f,
-            1
-        ),
-        AppDetails(
-            "com.google.android.gm",
-            "Gmail",
-            null,
-            "#F44336",
-            TimeUnit.HOURS.toMillis(1),
-            0.25f,
-            1
-        ),
-        AppDetails(
-            "com.twitter.android",
-            "Twitter",
-            null,
-            "#2196F3",
-            TimeUnit.HOURS.toMillis(2),
-            0.5f,
-            1
-        ),
+private fun UsageStatsContentPreview() {
+    val fakeStats = UsageStatistics(
+        timeBins = (0..23).map {
+            UsageTimeBin(0, 0, (10..60).random() * 60_000L, emptyMap())
+        },
+        totalScreenOnTime = TimeUnit.HOURS.toMillis(4) + TimeUnit.MINUTES.toMillis(32),
+        pickupCount = 58,
+        totalUsagePerApp = emptyMap()
     )
 
     HabitsTheme {
-        UsageTimelineContent(
-            uiState = UsageTimelineUiState(
+        UsageStatsContent(
+            uiState = UsageStatsUiState(
                 isLoading = false,
                 isAppUsageTrackingEnabled = true,
                 isAccessibilityServiceEnabled = true,
-                timelineModel = fakeTimelineModel,
-                appDetails = fakeAppDetails,
-                totalScreenOnTime = fakeTimelineModel.totalScreenOnTime,
-                pickupCount = fakeTimelineModel.pickupCount,
-                averageSessionMillis = fakeTimelineModel.totalScreenOnTime / fakeTimelineModel.pickupCount
-            ),
-            onSetTimeRange = {},
-            onRefresh = {},
-            onShowColorPicker = {},
-            onDismissColorPicker = {},
-            onSetAppColor = { _, _ -> },
-            onNavigateToWhitelist = {},
-            onOpenAccessibilitySettings = {}
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun UsageTimelineFeatureDisabledPreview() {
-    HabitsTheme {
-        UsageTimelineContent(
-            uiState = UsageTimelineUiState(
-                isLoading = false,
-                isAppUsageTrackingEnabled = true,
-                isAccessibilityServiceEnabled = false,
+                stats = fakeStats,
+                averageSessionMillis = fakeStats.totalScreenOnTime / fakeStats.pickupCount
             ),
             onSetTimeRange = {},
             onRefresh = {},
