@@ -6,15 +6,22 @@ import android.graphics.drawable.Drawable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andrew264.habits.domain.model.UsageStatistics
+import com.andrew264.habits.domain.model.UsageTimeBin
 import com.andrew264.habits.domain.repository.SettingsRepository
 import com.andrew264.habits.domain.repository.WhitelistRepository
 import com.andrew264.habits.domain.usecase.GetUsageStatisticsUseCase
+import com.andrew264.habits.ui.common.charts.BarChartEntry
 import com.andrew264.habits.util.AccessibilityUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
+import java.util.Locale
 import javax.inject.Inject
 
 data class AppDetails(
@@ -25,6 +32,9 @@ data class AppDetails(
     val totalUsageMillis: Long,
     val usagePercentage: Float,
     val sessionCount: Int,
+    val averageSessionMillis: Long,
+    val peakUsageTimeLabel: String,
+    val historicalData: List<BarChartEntry>
 )
 
 data class UsageStatsUiState(
@@ -35,7 +45,6 @@ data class UsageStatsUiState(
     val stats: UsageStatistics? = null,
     val whitelistedAppColors: Map<String, String> = emptyMap(),
     val appDetails: List<AppDetails> = emptyList(),
-    val appForColorPicker: AppDetails? = null,
     val averageSessionMillis: Long = 0
 )
 
@@ -52,7 +61,6 @@ class UsageStatsViewModel @Inject constructor(
     private val appDetailsCache = mutableMapOf<String, Pair<String, Drawable?>>()
 
     private val _selectedRange = MutableStateFlow(UsageTimeRange.DAY)
-    private val _appForColorPicker = MutableStateFlow<AppDetails?>(null)
     private val refreshTrigger = MutableStateFlow(0)
     private val _isAccessibilityEnabled = MutableStateFlow(false)
 
@@ -76,42 +84,57 @@ class UsageStatsViewModel @Inject constructor(
             combine(
                 getUsageStatisticsUseCase.execute(range),
                 whitelistRepository.getWhitelistedAppsMap(),
-                _appForColorPicker
-            ) { stats, whitelistedApps, appForPicker ->
-                val appDetails = if (whitelistedApps.isEmpty()) {
-                    // If whitelist is empty, show all apps with usage
-                    stats.totalUsagePerApp.map { (pkg, totalUsage) ->
-                        val details = getAppDetails(pkg)
-                        val sessionCount = stats.timeBins.count { it.appUsage.containsKey(pkg) }
-                        val usagePercentage = if (stats.totalScreenOnTime > 0) totalUsage.toFloat() / stats.totalScreenOnTime.toFloat() else 0f
-                        AppDetails(
-                            packageName = pkg,
-                            friendlyName = details.first,
-                            icon = details.second,
-                            color = "#808080", // Default color
-                            totalUsageMillis = totalUsage,
-                            usagePercentage = usagePercentage,
-                            sessionCount = sessionCount
-                        )
-                    }.sortedByDescending { it.totalUsageMillis }
-                } else {
-                    // If whitelist has items, show only those apps (even if usage is zero)
-                    whitelistedApps.map { (pkg, color) ->
-                        val totalUsage = stats.totalUsagePerApp[pkg] ?: 0L
-                        val details = getAppDetails(pkg)
-                        val sessionCount = stats.timeBins.count { it.appUsage.containsKey(pkg) }
-                        val usagePercentage = if (stats.totalScreenOnTime > 0) totalUsage.toFloat() / stats.totalScreenOnTime.toFloat() else 0f
-                        AppDetails(
-                            packageName = pkg,
-                            friendlyName = details.first,
-                            icon = details.second,
-                            color = color,
-                            totalUsageMillis = totalUsage,
-                            usagePercentage = usagePercentage,
-                            sessionCount = sessionCount
-                        )
-                    }.sortedByDescending { it.totalUsageMillis }
-                }
+            ) { stats, whitelistedApps ->
+                val allAppUsage = stats.totalUsagePerApp
+                val appListSource = if (whitelistedApps.isEmpty()) allAppUsage.keys else whitelistedApps.keys
+
+                val appDetails = appListSource.map { pkg ->
+                    val totalUsage = allAppUsage[pkg] ?: 0L
+                    val details = getAppDetails(pkg)
+                    val sessionCount = stats.timeBins.count { it.appUsage.containsKey(pkg) }
+                    val usagePercentage = if (stats.totalScreenOnTime > 0) totalUsage.toFloat() / stats.totalScreenOnTime.toFloat() else 0f
+                    val averageSessionMillis = if (sessionCount > 0) totalUsage / sessionCount else 0L
+
+                    var peakUsage = 0L
+                    var peakBin: UsageTimeBin? = null
+                    val historicalData = stats.timeBins.mapNotNull { bin ->
+                        val usageInBin = bin.appUsage[pkg] ?: 0L
+                        if (usageInBin > peakUsage) {
+                            peakUsage = usageInBin
+                            peakBin = bin
+                        }
+                        if (usageInBin > 0) {
+                            val label = when (range) {
+                                UsageTimeRange.DAY -> formatHourLabel(bin.startTime)
+                                UsageTimeRange.WEEK -> formatDayLabel(bin.startTime)
+                            }
+                            BarChartEntry(value = usageInBin.toFloat(), label = label)
+                        } else {
+                            null
+                        }
+                    }
+
+                    val peakUsageTimeLabel = peakBin?.let {
+                        when (range) {
+                            UsageTimeRange.DAY -> "Most used around ${formatHour(it.startTime)}"
+                            UsageTimeRange.WEEK -> "Most used on ${formatDay(it.startTime)}"
+                        }
+                    } ?: "Not used in this period"
+
+                    AppDetails(
+                        packageName = pkg,
+                        friendlyName = details.first,
+                        icon = details.second,
+                        color = whitelistedApps[pkg] ?: "#808080",
+                        totalUsageMillis = totalUsage,
+                        usagePercentage = usagePercentage,
+                        sessionCount = sessionCount,
+                        averageSessionMillis = averageSessionMillis,
+                        peakUsageTimeLabel = peakUsageTimeLabel,
+                        historicalData = historicalData
+                    )
+                }.sortedByDescending { it.totalUsageMillis }
+
 
                 val averageSessionMillis = if (stats.pickupCount > 0) {
                     stats.totalScreenOnTime / stats.pickupCount
@@ -127,7 +150,6 @@ class UsageStatsViewModel @Inject constructor(
                     stats = stats,
                     whitelistedAppColors = whitelistedApps,
                     appDetails = appDetails,
-                    appForColorPicker = appForPicker,
                     averageSessionMillis = averageSessionMillis
                 )
             }.onStart {
@@ -151,14 +173,6 @@ class UsageStatsViewModel @Inject constructor(
     fun refresh() {
         updateAccessibilityStatus()
         refreshTrigger.value++
-    }
-
-    fun showColorPickerForApp(app: AppDetails) {
-        _appForColorPicker.value = app
-    }
-
-    fun dismissColorPicker() {
-        _appForColorPicker.value = null
     }
 
     fun setAppColor(
@@ -185,5 +199,31 @@ class UsageStatsViewModel @Inject constructor(
 
     private fun updateAccessibilityStatus() {
         _isAccessibilityEnabled.value = AccessibilityUtils.isAccessibilityServiceEnabled(context)
+    }
+
+    private fun formatHour(millis: Long): String {
+        val dateTime = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
+        return dateTime.format(DateTimeFormatter.ofPattern("ha", Locale.getDefault()).withLocale(Locale.US))
+    }
+
+    private fun formatHourLabel(millis: Long): String {
+        val dateTime = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
+        val hour = dateTime.hour
+        return when {
+            hour == 0 -> "12a"
+            hour == 12 -> "12p"
+            hour < 12 -> "${hour}a"
+            else -> "${hour - 12}p"
+        }
+    }
+
+    private fun formatDay(millis: Long): String {
+        val dateTime = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
+        return dateTime.format(DateTimeFormatter.ofPattern("EEEE", Locale.getDefault()))
+    }
+
+    private fun formatDayLabel(millis: Long): String {
+        val dateTime = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
+        return dateTime.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
     }
 }

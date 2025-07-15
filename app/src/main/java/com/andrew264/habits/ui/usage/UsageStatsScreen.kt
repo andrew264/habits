@@ -4,9 +4,7 @@ import android.content.Intent
 import android.provider.Settings
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,6 +13,11 @@ import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.*
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.layout.AnimatedPane
+import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
+import androidx.compose.material3.adaptive.navigation.NavigableListDetailPaneScaffold
+import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,23 +32,26 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import com.andrew264.habits.domain.model.UsageStatistics
-import com.andrew264.habits.domain.model.UsageTimeBin
-import com.andrew264.habits.ui.common.charts.StackedBarChart
-import com.andrew264.habits.ui.common.color_picker.ColorPickerDialog
+import com.andrew264.habits.ui.common.charts.BarChart
+import com.andrew264.habits.ui.common.charts.BarChartEntry
+import com.andrew264.habits.ui.common.color_picker.ColorPicker
+import com.andrew264.habits.ui.common.color_picker.ColorPickerState
+import com.andrew264.habits.ui.common.color_picker.utils.toColor
 import com.andrew264.habits.ui.common.color_picker.utils.toColorOrNull
-import com.andrew264.habits.ui.common.color_picker.utils.toHexCode
+import com.andrew264.habits.ui.common.components.DrawableImage
 import com.andrew264.habits.ui.common.components.FeatureDisabledContent
 import com.andrew264.habits.ui.navigation.AppRoute
 import com.andrew264.habits.ui.navigation.MonitoringSettings
 import com.andrew264.habits.ui.navigation.Whitelist
 import com.andrew264.habits.ui.theme.Dimens
-import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.ui.usage.components.AppListItem
 import com.andrew264.habits.ui.usage.components.StatisticsSummaryCard
+import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
+import kotlin.math.ceil
+import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun UsageStatsScreen(
     viewModel: UsageStatsViewModel = hiltViewModel(),
@@ -54,6 +60,8 @@ fun UsageStatsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val isInitialComposition = remember { mutableStateOf(true) }
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val scaffoldNavigator = rememberListDetailPaneScaffoldNavigator<UsageSelection>()
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         if (isInitialComposition.value) {
@@ -80,17 +88,57 @@ fun UsageStatsScreen(
         }
 
         else -> {
-            UsageStatsContent(
-                uiState = uiState,
-                onSetTimeRange = viewModel::setTimeRange,
-                onRefresh = viewModel::refresh,
-                onShowColorPicker = viewModel::showColorPickerForApp,
-                onDismissColorPicker = viewModel::dismissColorPicker,
-                onSetAppColor = viewModel::setAppColor,
-                onNavigateToWhitelist = { onNavigate(Whitelist) },
-                onOpenAccessibilitySettings = {
-                    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-                    context.startActivity(intent)
+            NavigableListDetailPaneScaffold(
+                navigator = scaffoldNavigator,
+                listPane = {
+                    AnimatedPane {
+                        UsageListContent(
+                            uiState = uiState,
+                            onSetTimeRange = viewModel::setTimeRange,
+                            onRefresh = viewModel::refresh,
+                            onAppSelected = { app ->
+                                scope.launch {
+                                    scaffoldNavigator.navigateTo(
+                                        ListDetailPaneScaffoldRole.Detail,
+                                        UsageSelection(app.packageName)
+                                    )
+                                }
+                            },
+                            onNavigateToWhitelist = { onNavigate(Whitelist) },
+                            onOpenAccessibilitySettings = {
+                                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                                context.startActivity(intent)
+                            }
+                        )
+                    }
+                },
+                detailPane = {
+                    AnimatedPane {
+                        val selection = scaffoldNavigator.currentDestination?.contentKey
+                        if (selection?.packageName != null) {
+                            val selectedApp = uiState.appDetails.find { it.packageName == selection.packageName }
+                            if (selectedApp != null) {
+                                UsageDetailContent(
+                                    app = selectedApp,
+                                    onSetAppColor = viewModel::setAppColor
+                                )
+                            }
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(Dimens.PaddingLarge),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    "Select an app to see its details and set a color.",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    }
                 }
             )
         }
@@ -98,36 +146,18 @@ fun UsageStatsScreen(
 }
 
 @OptIn(
-    ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class,
+    ExperimentalMaterial3Api::class,
     ExperimentalFoundationApi::class
 )
 @Composable
-private fun UsageStatsContent(
+private fun UsageListContent(
     uiState: UsageStatsUiState,
     onSetTimeRange: (UsageTimeRange) -> Unit,
     onRefresh: () -> Unit,
-    onShowColorPicker: (AppDetails) -> Unit,
-    onDismissColorPicker: () -> Unit,
-    onSetAppColor: (packageName: String, colorHex: String) -> Unit,
+    onAppSelected: (AppDetails) -> Unit,
     onNavigateToWhitelist: () -> Unit,
     onOpenAccessibilitySettings: () -> Unit,
 ) {
-    val view = LocalView.current
-
-    if (uiState.appForColorPicker != null) {
-        val app = uiState.appForColorPicker
-        ColorPickerDialog(
-            title = "Select color for ${app.friendlyName}",
-            initialColor = app.color.toColorOrNull() ?: Color.Gray,
-            onDismissRequest = onDismissColorPicker,
-            onConfirmation = { newColor ->
-                onSetAppColor(app.packageName, newColor.toHexCode())
-                onDismissColorPicker()
-            },
-            showAlphaSlider = false
-        )
-    }
-
     PullToRefreshBox(
         isRefreshing = uiState.isLoading && uiState.stats != null,
         onRefresh = onRefresh
@@ -142,45 +172,10 @@ private fun UsageStatsContent(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    val ranges = UsageTimeRange.entries
-                    ButtonGroup(
-                        overflowIndicator = { menuState ->
-                            IconButton(onClick = { menuState.show() }) {
-                                Icon(Icons.Default.MoreVert, "More options")
-                            }
-                        },
-                        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
-                    ) {
-                        ranges.forEachIndexed { index, range ->
-                            customItem(
-                                buttonGroupContent = {
-                                    ElevatedToggleButton(
-                                        checked = uiState.selectedRange == range,
-                                        onCheckedChange = {
-                                            onSetTimeRange(range)
-                                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                                        },
-                                        shapes = when (index) {
-                                            0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                                            ranges.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                                            else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                                        },
-                                    ) {
-                                        Text(range.label)
-                                    }
-                                },
-                                menuContent = { menuState ->
-                                    DropdownMenuItem(
-                                        text = { Text(range.label) },
-                                        onClick = {
-                                            onSetTimeRange(range)
-                                            menuState.dismiss()
-                                        }
-                                    )
-                                }
-                            )
-                        }
-                    }
+                    TimeRangeButtonGroup(
+                        selectedRange = uiState.selectedRange,
+                        onSetTimeRange = onSetTimeRange
+                    )
                 }
             }
 
@@ -196,41 +191,13 @@ private fun UsageStatsContent(
 
             item {
                 AnimatedVisibility(visible = uiState.isAppUsageTrackingEnabled && !uiState.isAccessibilityServiceEnabled) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                onOpenAccessibilitySettings()
-                                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                            },
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(Dimens.PaddingLarge),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Warning,
-                                contentDescription = "Warning",
-                                tint = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                            Text(
-                                text = "Usage tracking service is not running. Tap here to fix it.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                        }
-                    }
+                    AccessibilityWarningCard(onOpenAccessibilitySettings)
                 }
             }
 
             if (uiState.stats != null) {
                 item {
-                    StackedBarChart(
+                    com.andrew264.habits.ui.common.charts.StackedBarChart(
                         bins = uiState.stats.timeBins,
                         range = uiState.selectedRange,
                         whitelistedAppColors = uiState.whitelistedAppColors,
@@ -243,7 +210,7 @@ private fun UsageStatsContent(
 
             item {
                 FilledTonalButton(
-                    onClick = { onNavigateToWhitelist() },
+                    onClick = onNavigateToWhitelist,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(
@@ -270,7 +237,7 @@ private fun UsageStatsContent(
 
             if (uiState.appDetails.isEmpty() && uiState.stats?.totalUsagePerApp?.isNotEmpty() == true) {
                 item {
-                    Card(modifier = Modifier.fillMaxWidth(), onClick = { onNavigateToWhitelist() }) {
+                    Card(modifier = Modifier.fillMaxWidth(), onClick = onNavigateToWhitelist) {
                         Text(
                             "No whitelisted apps with usage in this period. Tap 'Manage Whitelisted Apps' to add some.",
                             modifier = Modifier.padding(Dimens.PaddingLarge),
@@ -285,44 +252,309 @@ private fun UsageStatsContent(
             items(uiState.appDetails, key = { it.packageName }) { app ->
                 AppListItem(
                     appDetails = app,
-                    onColorSwatchClick = {
-                        onShowColorPicker(app)
-                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                    }
+                    modifier = Modifier.clickable { onAppSelected(app) }
                 )
             }
         }
     }
 }
 
+@Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
+private fun TimeRangeButtonGroup(
+    selectedRange: UsageTimeRange,
+    onSetTimeRange: (UsageTimeRange) -> Unit
+) {
+    val view = LocalView.current
+    val ranges = UsageTimeRange.entries
+    ButtonGroup(
+        overflowIndicator = { menuState ->
+            IconButton(onClick = { menuState.show() }) {
+                Icon(Icons.Default.MoreVert, "More options")
+            }
+        },
+        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+    ) {
+        ranges.forEachIndexed { index, range ->
+            customItem(
+                buttonGroupContent = {
+                    ElevatedToggleButton(
+                        checked = selectedRange == range,
+                        onCheckedChange = {
+                            onSetTimeRange(range)
+                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                        },
+                        shapes = when (index) {
+                            0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                            ranges.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                            else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                        },
+                    ) {
+                        Text(range.label)
+                    }
+                },
+                menuContent = { menuState ->
+                    DropdownMenuItem(
+                        text = { Text(range.label) },
+                        onClick = {
+                            onSetTimeRange(range)
+                            menuState.dismiss()
+                        }
+                    )
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun AccessibilityWarningCard(onOpenAccessibilitySettings: () -> Unit) {
+    val view = LocalView.current
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                onOpenAccessibilitySettings()
+                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            },
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(Dimens.PaddingLarge),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Warning,
+                contentDescription = "Warning",
+                tint = MaterialTheme.colorScheme.onErrorContainer
+            )
+            Text(
+                text = "Usage tracking service is not running. Tap here to fix it.",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+        }
+    }
+}
+
+@Composable
+private fun UsageDetailContent(
+    app: AppDetails,
+    onSetAppColor: (packageName: String, colorHex: String) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(Dimens.PaddingLarge),
+        verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
+    ) {
+        // --- Header Card ---
+        Card {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(Dimens.PaddingLarge),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
+            ) {
+                DrawableImage(drawable = app.icon, contentDescription = null, modifier = Modifier.size(56.dp))
+                Column {
+                    Text(app.friendlyName, style = MaterialTheme.typography.headlineSmall)
+                    Text(
+                        app.packageName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        // --- Key Metrics Card ---
+        Card {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(Dimens.PaddingLarge),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                StatItem(label = "Total Time", value = formatDuration(app.totalUsageMillis))
+                StatItem(label = "Avg. Session", value = formatDuration(app.averageSessionMillis))
+                StatItem(label = "Sessions", value = app.sessionCount.toString())
+            }
+        }
+
+        // --- Usage Trend Card ---
+        if (app.historicalData.isNotEmpty()) {
+            val maxUsageMillis = app.historicalData.maxOfOrNull { it.value } ?: 0f
+            val maxUsageMinutes = ceil(maxUsageMillis / 60000f).toInt()
+            val topValueMinutes = when {
+                maxUsageMinutes <= 1 -> 1
+                maxUsageMinutes <= 2 -> 2
+                maxUsageMinutes <= 5 -> 5
+                maxUsageMinutes <= 10 -> 10
+                maxUsageMinutes <= 15 -> 15
+                maxUsageMinutes <= 30 -> 30
+                maxUsageMinutes <= 45 -> 45
+                maxUsageMinutes <= 60 -> 60
+                else -> (ceil(maxUsageMinutes / 60f).toInt() * 60)
+            }
+            val topValueMillis = topValueMinutes * 60000f
+
+            val yAxisLabelFormatter: (Float) -> String = { valueInMillis ->
+                val minutes = (valueInMillis / 60000f).roundToInt()
+                "${minutes}m"
+            }
+
+            Card {
+                Column(
+                    modifier = Modifier.padding(Dimens.PaddingLarge),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Usage Trend",
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(
+                        text = app.peakUsageTimeLabel,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = Dimens.PaddingLarge)
+                    )
+                    BarChart(
+                        entries = app.historicalData,
+                        barColor = app.color.toColorOrNull() ?: MaterialTheme.colorScheme.primary,
+                        topValue = topValueMillis,
+                        yAxisLabelFormatter = yAxisLabelFormatter,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                    )
+                }
+            }
+        }
+
+        // --- Color Configuration Card ---
+        ColorConfigurationCard(
+            app = app,
+            onSetAppColor = onSetAppColor
+        )
+    }
+}
+
+@Composable
+private fun ColorConfigurationCard(
+    app: AppDetails,
+    onSetAppColor: (packageName: String, colorHex: String) -> Unit
+) {
+    var isExpanded by remember { mutableStateOf(false) }
+    val colorPickerState = remember(app.packageName, app.color) {
+        ColorPickerState(initialColor = app.color.toColorOrNull() ?: Color.Gray)
+    }
+    val view = LocalView.current
+    var hasChanges by remember { mutableStateOf(false) }
+
+    // Track if color has changed from initial
+    LaunchedEffect(colorPickerState.hsvColor) {
+        hasChanges = app.color.toColorOrNull() != colorPickerState.hsvColor.toColor()
+    }
+
+    Card {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Dimens.PaddingLarge)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Display Color", style = MaterialTheme.typography.titleMedium)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .background(
+                                color = colorPickerState.hsvColor.toColor(),
+                                shape = MaterialTheme.shapes.small
+                            )
+                    )
+                    Spacer(modifier = Modifier.width(Dimens.PaddingMedium))
+                    TextButton(onClick = { isExpanded = !isExpanded }) {
+                        Text(if (isExpanded) "Cancel" else "Change")
+                    }
+                }
+            }
+            AnimatedVisibility(visible = isExpanded) {
+                Column(
+                    modifier = Modifier.padding(top = Dimens.PaddingLarge),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
+                ) {
+                    ColorPicker(state = colorPickerState)
+                    Button(
+                        onClick = {
+                            onSetAppColor(app.packageName, colorPickerState.hexCode)
+                            view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                            isExpanded = false
+                        },
+                        enabled = colorPickerState.isValidHex && hasChanges,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Set Color")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatItem(
+    label: String,
+    value: String
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = value, style = MaterialTheme.typography.titleLarge)
+        Text(text = label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+private fun formatDuration(millis: Long): String {
+    if (millis <= 0) return "0m"
+    val totalMinutes = TimeUnit.MILLISECONDS.toMinutes(millis)
+    if (totalMinutes < 1) return "<1m"
+    if (totalMinutes < 60) return "${totalMinutes}m"
+    val hours = totalMinutes / 60
+    val minutes = totalMinutes % 60
+    return if (minutes == 0L) "${hours}h" else "${hours}h ${minutes}m"
+}
+
 @Preview(showBackground = true)
 @Composable
-private fun UsageStatsContentPreview() {
-    val fakeStats = UsageStatistics(
-        timeBins = (0..23).map {
-            UsageTimeBin(0, 0, (10..60).random() * 60_000L, emptyMap())
-        },
-        totalScreenOnTime = TimeUnit.HOURS.toMillis(4) + TimeUnit.MINUTES.toMillis(32),
-        pickupCount = 58,
-        totalUsagePerApp = emptyMap()
+private fun UsageDetailContentPreview() {
+    val sampleAppDetails = AppDetails(
+        packageName = "com.example.app",
+        friendlyName = "Sample Application",
+        icon = null,
+        color = "#4CAF50",
+        totalUsageMillis = (3600000L * 2) + (60000L * 33),
+        usagePercentage = 0.35f,
+        sessionCount = 12,
+        averageSessionMillis = 1234567L,
+        peakUsageTimeLabel = "Most used around 8 PM",
+        historicalData = listOf(BarChartEntry(1f, "8a"), BarChartEntry(5f, "12p"), BarChartEntry(10f, "8p"))
     )
-
-    HabitsTheme {
-        UsageStatsContent(
-            uiState = UsageStatsUiState(
-                isLoading = false,
-                isAppUsageTrackingEnabled = true,
-                isAccessibilityServiceEnabled = true,
-                stats = fakeStats,
-                averageSessionMillis = fakeStats.totalScreenOnTime / fakeStats.pickupCount
-            ),
-            onSetTimeRange = {},
-            onRefresh = {},
-            onShowColorPicker = {},
-            onDismissColorPicker = {},
-            onSetAppColor = { _, _ -> },
-            onNavigateToWhitelist = {},
-            onOpenAccessibilitySettings = {}
-        )
+    MaterialTheme {
+        Surface {
+            UsageDetailContent(app = sampleAppDetails, onSetAppColor = { _, _ -> })
+        }
     }
 }

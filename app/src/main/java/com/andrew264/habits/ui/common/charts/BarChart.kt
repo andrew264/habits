@@ -43,11 +43,12 @@ fun BarChart(
     entries: List<BarChartEntry>,
     modifier: Modifier = Modifier,
     barColor: Color = MaterialTheme.colorScheme.primary,
-    gridColor: Color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f)
+    gridColor: Color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f),
+    topValue: Float? = null,
+    yAxisLabelFormatter: (Float) -> String = { it.roundToInt().toString() }
 ) {
     if (entries.isEmpty()) {
         return
-
     }
 
     val textMeasurer = rememberTextMeasurer()
@@ -83,10 +84,11 @@ fun BarChart(
     }
 
     val maxValue = entries.maxOfOrNull { it.value } ?: 0f
-    val yAxisLabelCount = 5
-    val topValue = if (maxValue == 0f) yAxisLabelCount.toFloat() else ceil(maxValue / (yAxisLabelCount - 1)) * (yAxisLabelCount - 1)
+    val yAxisLabelCount = 4 // Keep it even for better intervals
+    val yAxisTopValue = topValue ?: (if (maxValue == 0f) yAxisLabelCount.toFloat() else ceil(maxValue / yAxisLabelCount) * yAxisLabelCount)
+
     val yAxisValues = (0..yAxisLabelCount).map {
-        (topValue / yAxisLabelCount) * it
+        (yAxisTopValue / yAxisLabelCount) * it
     }
 
     Canvas(
@@ -120,11 +122,11 @@ fun BarChart(
         val barWidth = barAreaWidth * 0.6f
         val barSpacing = barAreaWidth * 0.4f
 
-        drawYAxis(textMeasurer, yAxisValues, yAxisWidth, chartAreaHeight, gridColor, size.width, yAxisTextStyle)
+        drawYAxis(textMeasurer, yAxisValues, yAxisWidth, chartAreaHeight, gridColor, size.width, yAxisTextStyle, yAxisLabelFormatter)
         drawXAxis(textMeasurer, entries, yAxisWidth, chartAreaHeight, barAreaWidth, gridColor, xAxisTextStyle)
 
         entries.forEachIndexed { index, entry ->
-            val barHeight = (entry.value / topValue) * chartAreaHeight * animationProgress[index].value
+            val barHeight = if (yAxisTopValue > 0) (entry.value / yAxisTopValue) * chartAreaHeight * animationProgress[index].value else 0f
             val barLeft = yAxisWidth + barSpacing / 2 + index * barAreaWidth
 
             val rect = Rect(
@@ -143,7 +145,7 @@ fun BarChart(
             )
 
             if (selectedIndex == index) {
-                val valueText = entry.value.roundToInt().toString()
+                val valueText = yAxisLabelFormatter(entry.value)
                 val textLayoutResult = textMeasurer.measure(
                     text = AnnotatedString(valueText),
                     style = valueTextStyle
@@ -179,13 +181,15 @@ private fun DrawScope.drawYAxis(
     chartAreaHeight: Float,
     gridColor: Color,
     totalWidth: Float,
-    yAxisTextStyle: TextStyle
+    yAxisTextStyle: TextStyle,
+    yAxisLabelFormatter: (Float) -> String
 ) {
     val pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
     yAxisValues.forEach { value ->
-        val y = chartAreaHeight - (value / yAxisValues.last()) * chartAreaHeight
+        val y = if (yAxisValues.last() > 0) chartAreaHeight - (value / yAxisValues.last()) * chartAreaHeight else chartAreaHeight
+
         val textLayoutResult = textMeasurer.measure(
-            text = AnnotatedString(value.roundToInt().toString()),
+            text = AnnotatedString(yAxisLabelFormatter(value)),
             style = yAxisTextStyle,
             constraints = Constraints(maxWidth = yAxisWidth.toInt() - Dimens.PaddingSmall.toPx().toInt())
         )
