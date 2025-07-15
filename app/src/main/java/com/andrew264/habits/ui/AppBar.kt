@@ -33,7 +33,6 @@ fun MainTopAppBar(
     val title: String = topLevelScreen?.title ?: when (currentRoute) {
         is Whitelist -> "Manage Whitelist"
         is WaterStats -> "Hydration Statistics"
-        is ScheduleEditor -> if (currentRoute.scheduleId == null) "Create New Schedule" else "Update Schedule"
         else -> ""
     }
 

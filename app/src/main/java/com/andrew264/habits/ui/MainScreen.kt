@@ -1,8 +1,6 @@
 package com.andrew264.habits.ui
 
-import android.app.Activity
 import android.view.HapticFeedbackConstants
-import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,9 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuOpen
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
-import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
-import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
@@ -23,6 +19,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.rememberSavedStateNavEntryDecorator
 import androidx.navigation3.ui.rememberSceneSetupNavEntryDecorator
+import androidx.window.core.layout.WindowSizeClass
 import com.andrew264.habits.ui.navigation.AppNavDisplay
 import com.andrew264.habits.ui.navigation.Home
 import com.andrew264.habits.ui.navigation.TopLevelBackStack
@@ -34,8 +31,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(
     ExperimentalMaterial3Api::class,
-    ExperimentalMaterial3ExpressiveApi::class,
-    ExperimentalMaterial3WindowSizeClassApi::class
+    ExperimentalMaterial3ExpressiveApi::class
 )
 @Composable
 fun MainScreen(
@@ -50,8 +46,8 @@ fun MainScreen(
     val uiState by viewModel.uiState.collectAsState()
     val waterHomeViewModel: WaterHomeViewModel = hiltViewModel()
 
-    val isCompact =
-        calculateWindowSizeClass(activity = LocalActivity.current as Activity).widthSizeClass == WindowWidthSizeClass.Compact
+    val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+    val isCompact = windowSizeClass.isHeightAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
 
     // Handle one-time navigation events from the ViewModel
     LaunchedEffect(uiState.destinationRoute) {

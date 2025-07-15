@@ -1,4 +1,4 @@
-package com.andrew264.habits.ui.schedule.create
+package com.andrew264.habits.ui.schedule
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,14 +8,11 @@ import com.andrew264.habits.domain.usecase.SaveScheduleUseCase
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.model.schedule.TimeRange
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedFactory
-import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.UUID
-import com.andrew264.habits.ui.navigation.ScheduleEditor as ScheduleEditorRoute
+import javax.inject.Inject
 
 enum class ScheduleViewMode {
     GROUPED,
@@ -34,21 +31,20 @@ data class ScheduleEditorUiState(
     val isLoading: Boolean = true
 )
 
-@HiltViewModel(assistedFactory = ScheduleViewModel.Factory::class)
-class ScheduleViewModel @AssistedInject constructor(
+@HiltViewModel
+class ScheduleViewModel @Inject constructor(
     private val scheduleRepository: ScheduleRepository,
     private val saveScheduleUseCase: SaveScheduleUseCase,
     private val scheduleEditor: ScheduleEditor,
-    @Assisted private val route: ScheduleEditorRoute
 ) : ViewModel() {
 
-    private val scheduleId: String? = route.scheduleId
-
-    private val _uiState = MutableStateFlow(ScheduleEditorUiState(isNewSchedule = scheduleId == null))
+    private val _uiState = MutableStateFlow(ScheduleEditorUiState())
     val uiState: StateFlow<ScheduleEditorUiState> = _uiState.asStateFlow()
 
     private val _uiEvents = MutableSharedFlow<ScheduleUiEvent>()
     val uiEvents = _uiEvents.asSharedFlow()
+
+    private var currentScheduleId: String? = null
 
     val perDayRepresentation: StateFlow<Map<DayOfWeek, List<TimeRange>>> = uiState
         .map { it.schedule }
@@ -67,11 +63,17 @@ class ScheduleViewModel @AssistedInject constructor(
             initialValue = emptyMap()
         )
 
-    init {
-        loadSchedule()
+    fun initialize(scheduleId: String?) {
+        // Avoid re-initializing if the ID is the same
+        if (scheduleId == currentScheduleId && !_uiState.value.isLoading) return
+        currentScheduleId = scheduleId
+        _uiState.update {
+            ScheduleEditorUiState(isNewSchedule = scheduleId == null) // Reset state
+        }
+        loadSchedule(scheduleId)
     }
 
-    private fun loadSchedule() {
+    private fun loadSchedule(scheduleId: String?) {
         viewModelScope.launch {
             if (scheduleId == null) {
                 _uiState.update {
@@ -83,15 +85,21 @@ class ScheduleViewModel @AssistedInject constructor(
             } else {
                 scheduleRepository.getSchedule(scheduleId).collect { schedule ->
                     _uiState.update {
-                        it.copy(
-                            schedule = it.schedule ?: schedule ?: createNewSchedule(scheduleId),
-                            isLoading = false
-                        )
+                        // Only update if it's the first load for this ID
+                        if (it.schedule == null) {
+                            it.copy(
+                                schedule = schedule ?: createNewSchedule(scheduleId),
+                                isLoading = false
+                            )
+                        } else {
+                            it
+                        }
                     }
                 }
             }
         }
     }
+
 
     private fun createNewSchedule(id: String = UUID.randomUUID().toString()): Schedule {
         return Schedule(id = id, name = "", groups = emptyList())
@@ -203,10 +211,5 @@ class ScheduleViewModel @AssistedInject constructor(
                 viewModelScope.launch { _uiEvents.emit(ScheduleUiEvent.ShowSnackbar(message)) }
             }
         }
-    }
-
-    @AssistedFactory
-    interface Factory {
-        fun create(route: ScheduleEditorRoute): ScheduleViewModel
     }
 }

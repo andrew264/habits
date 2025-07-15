@@ -1,4 +1,4 @@
-package com.andrew264.habits.ui.schedule.list
+package com.andrew264.habits.ui.schedule.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues

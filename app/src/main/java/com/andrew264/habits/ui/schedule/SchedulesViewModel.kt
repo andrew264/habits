@@ -1,4 +1,4 @@
-package com.andrew264.habits.ui.schedule.list
+package com.andrew264.habits.ui.schedule
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

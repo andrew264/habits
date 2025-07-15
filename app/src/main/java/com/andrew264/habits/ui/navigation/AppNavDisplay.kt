@@ -10,15 +10,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.entry
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.andrew264.habits.ui.bedtime.BedtimeScreen
-import com.andrew264.habits.ui.schedule.create.ScheduleEditorScreen
-import com.andrew264.habits.ui.schedule.create.ScheduleViewModel
-import com.andrew264.habits.ui.schedule.list.SchedulesScreen
+import com.andrew264.habits.ui.schedule.SchedulesListDetailScreen
 import com.andrew264.habits.ui.settings.MonitoringSettingsScreen
 import com.andrew264.habits.ui.usage.UsageStatsScreen
 import com.andrew264.habits.ui.usage.whitelist.WhitelistScreen
@@ -63,8 +60,7 @@ fun AppNavDisplay(
                 WaterStatsScreen()
             }
             entry<Schedules> {
-                SchedulesScreen(
-                    onNavigate = onNavigate,
+                SchedulesListDetailScreen(
                     snackbarHostState = snackbarHostState
                 )
             }
@@ -79,18 +75,6 @@ fun AppNavDisplay(
             }
             entry<Bedtime> {
                 BedtimeScreen(onNavigate = onNavigate)
-            }
-            entry<ScheduleEditor> { route ->
-                val viewModel: ScheduleViewModel = hiltViewModel(
-                    creationCallback = { factory: ScheduleViewModel.Factory ->
-                        factory.create(route)
-                    }
-                )
-                ScheduleEditorScreen(
-                    viewModel = viewModel,
-                    snackbarHostState = snackbarHostState,
-                    onNavigateUp = onBack
-                )
             }
             entry<Whitelist> {
                 WhitelistScreen()

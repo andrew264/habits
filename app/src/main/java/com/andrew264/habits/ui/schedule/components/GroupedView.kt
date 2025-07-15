@@ -1,4 +1,4 @@
-package com.andrew264.habits.ui.schedule.create
+package com.andrew264.habits.ui.schedule.components
 
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.layout.*

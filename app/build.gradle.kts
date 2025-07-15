@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("kotlin-parcelize")
 
     alias(libs.plugins.hilt.andriod)
     alias(libs.plugins.google.devtools.ksp)
@@ -63,7 +64,6 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.play.services.location)
-    implementation(libs.androidx.material3.window.size.class1.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -78,6 +78,8 @@ dependencies {
 
     // layout
     implementation(libs.androidx.adaptive)
+    implementation(libs.androidx.adaptive.navigation)
+    implementation(libs.androidx.adaptive.layout)
 
     // datastore
     implementation(libs.androidx.datastore.preferences)
