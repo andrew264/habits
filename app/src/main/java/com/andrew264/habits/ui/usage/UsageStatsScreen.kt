@@ -40,9 +40,7 @@ import com.andrew264.habits.ui.common.color_picker.utils.toColor
 import com.andrew264.habits.ui.common.color_picker.utils.toColorOrNull
 import com.andrew264.habits.ui.common.components.DrawableImage
 import com.andrew264.habits.ui.common.components.FeatureDisabledContent
-import com.andrew264.habits.ui.navigation.AppRoute
-import com.andrew264.habits.ui.navigation.MonitoringSettings
-import com.andrew264.habits.ui.navigation.Whitelist
+import com.andrew264.habits.ui.navigation.*
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.usage.components.AppListItem
 import com.andrew264.habits.ui.usage.components.StatisticsSummaryCard
@@ -91,7 +89,10 @@ fun UsageStatsScreen(
             NavigableListDetailPaneScaffold(
                 navigator = scaffoldNavigator,
                 listPane = {
-                    AnimatedPane {
+                    AnimatedPane(
+                        enterTransition = sharedAxisXEnter(forward = false),
+                        exitTransition = sharedAxisXExit(forward = true)
+                    ) {
                         UsageListContent(
                             uiState = uiState,
                             onSetTimeRange = viewModel::setTimeRange,
@@ -113,7 +114,10 @@ fun UsageStatsScreen(
                     }
                 },
                 detailPane = {
-                    AnimatedPane {
+                    AnimatedPane(
+                        enterTransition = sharedAxisXEnter(forward = true),
+                        exitTransition = sharedAxisXExit(forward = false)
+                    ) {
                         val selection = scaffoldNavigator.currentDestination?.contentKey
                         if (selection?.packageName != null) {
                             val selectedApp = uiState.appDetails.find { it.packageName == selection.packageName }

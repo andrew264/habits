@@ -72,7 +72,7 @@ fun <T> SleepChart(
         typography.bodySmall.copy(color = gridColor)
     }
     val yAxisTextStyle = remember(typography, gridColor) {
-        typography.bodySmall.copy(color = gridColor, textAlign = TextAlign.Start)
+        typography.bodySmall.copy(color = gridColor, textAlign = TextAlign.End)
     }
 
     Canvas(modifier = modifier) {
@@ -102,20 +102,20 @@ fun <T> SleepChart(
         val today = LocalDate.now(ZoneId.systemDefault())
         for (i in 0 until rangeInDays) {
             val date = today.minusDays((rangeInDays - 1) - i.toLong())
-            val columnX = i * dayColumnWidth
+            val columnStartX = yAxisWidth + (i * dayColumnWidth)
 
             // Always draw the grid line for each day
-            drawXAxisGridLine(columnX, chartAreaHeight, gridColor)
+            drawXAxisGridLine(columnStartX, chartAreaHeight, gridColor)
 
             // Conditionally draw the text label to prevent overlap
             if (i % labelInterval == 0) {
-                drawXAxisTextLabel(textMeasurer, date, columnX, dayColumnWidth, chartAreaHeight, gridColor, axisTextStyle)
+                drawXAxisTextLabel(textMeasurer, date, columnStartX, dayColumnWidth, chartAreaHeight, gridColor, axisTextStyle)
             }
 
             groupedSegments[date]?.forEach { segment ->
                 drawSleepBar(
                     segment = segment,
-                    dayColumnX = columnX,
+                    dayColumnX = columnStartX,
                     dayColumnWidth = dayColumnWidth,
                     chartAreaHeight = chartAreaHeight,
                     dayStartMillis = getDisplayDayStartMillis(date),
@@ -221,13 +221,13 @@ private fun DrawScope.drawYAxis(
         )
         drawText(
             textLayoutResult = textLayoutResult,
-            topLeft = Offset(totalWidth - yAxisWidth + Dimens.PaddingSmall.toPx(), y - textLayoutResult.size.height / 2)
+            topLeft = Offset(yAxisWidth - textLayoutResult.size.width - Dimens.PaddingSmall.toPx(), y - textLayoutResult.size.height / 2)
         )
 
         drawLine(
             color = gridColor,
-            start = Offset(0f, y),
-            end = Offset(totalWidth - yAxisWidth, y),
+            start = Offset(yAxisWidth, y),
+            end = Offset(totalWidth, y),
             strokeWidth = 1.dp.toPx(),
             pathEffect = pathEffect
         )
@@ -238,7 +238,7 @@ private fun DrawScope.drawYAxis(
 private fun DrawScope.drawXAxisTextLabel(
     textMeasurer: TextMeasurer,
     date: LocalDate,
-    columnX: Float,
+    columnStartX: Float,
     columnWidth: Float,
     chartHeight: Float,
     gridColor: Color,
@@ -250,7 +250,7 @@ private fun DrawScope.drawXAxisTextLabel(
         style = axisTextStyle
     )
 
-    val textX = columnX + (columnWidth / 2) - (textLayoutResult.size.width / 2)
+    val textX = columnStartX + (columnWidth / 2) - (textLayoutResult.size.width / 2)
     drawText(
         textLayoutResult = textLayoutResult,
         topLeft = Offset(textX, chartHeight + Dimens.PaddingSmall.toPx())
@@ -258,15 +258,15 @@ private fun DrawScope.drawXAxisTextLabel(
 }
 
 private fun DrawScope.drawXAxisGridLine(
-    columnX: Float,
+    columnStartX: Float,
     chartHeight: Float,
     gridColor: Color
 ) {
     // Draw vertical grid line
     drawLine(
         color = gridColor,
-        start = Offset(columnX, 0f),
-        end = Offset(columnX, chartHeight),
+        start = Offset(columnStartX, 0f),
+        end = Offset(columnStartX, chartHeight),
         strokeWidth = 1.dp.toPx(),
         pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
     )

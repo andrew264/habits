@@ -17,6 +17,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.andrew264.habits.ui.navigation.sharedAxisXEnter
+import com.andrew264.habits.ui.navigation.sharedAxisXExit
 import com.andrew264.habits.ui.schedule.components.EmptyState
 import com.andrew264.habits.ui.schedule.components.ScheduleEditorContent
 import com.andrew264.habits.ui.schedule.components.ScheduleList
@@ -60,8 +62,6 @@ fun SchedulesListDetailScreen(
 
     Scaffold(
         floatingActionButton = {
-            // Only show the "New Schedule" FAB if the detail pane is not showing
-            // or is showing the placeholder.
             if (selection == null) {
                 FloatingActionButton(
                     onClick = {
@@ -84,7 +84,10 @@ fun SchedulesListDetailScreen(
             modifier = Modifier.padding(paddingValues),
             navigator = scaffoldNavigator,
             listPane = {
-                AnimatedPane {
+                AnimatedPane(
+                    enterTransition = sharedAxisXEnter(forward = false),
+                    exitTransition = sharedAxisXExit(forward = true)
+                ) {
                     if (uiState.isLoading) {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             CircularProgressIndicator()
@@ -109,7 +112,10 @@ fun SchedulesListDetailScreen(
                 }
             },
             detailPane = {
-                AnimatedPane {
+                AnimatedPane(
+                    enterTransition = sharedAxisXEnter(forward = false),
+                    exitTransition = sharedAxisXExit(forward = true)
+                ) {
                     if (selection != null) {
                         ScheduleEditorContent(
                             scheduleId = selection.scheduleId,
