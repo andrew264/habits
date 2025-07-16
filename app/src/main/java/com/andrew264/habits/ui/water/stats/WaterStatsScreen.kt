@@ -108,10 +108,10 @@ private fun WaterStatsScreenContent(
             ) {
                 CircularProgressIndicator()
             }
-        } else if (uiState.stats == null || uiState.stats?.totalDays == 0) {
+        } else if (uiState.stats == null || uiState.stats.totalDays == 0) {
             EmptyStatsState()
         } else {
-            StatsContent(stats = uiState.stats!!)
+            StatsContent(stats = uiState.stats)
         }
     }
 }

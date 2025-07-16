@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.andrew264.habits.domain.model.PersistentSettings
@@ -87,7 +88,7 @@ fun WaterHomeScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class, ExperimentalTextApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun WaterHomeScreenContent(
     modifier: Modifier = Modifier,
@@ -95,24 +96,130 @@ internal fun WaterHomeScreenContent(
     onLogWater: (Int) -> Unit,
     onEditTarget: () -> Unit
 ) {
-    val sliderState = rememberSliderState(
-        value = 250f,
-        valueRange = 50f..1000f,
-        steps = (1000 / 50) - 2 // 50ml increments
-    )
-    val sliderInteractionSource = remember { MutableInteractionSource() }
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val isLandscape = maxWidth > maxHeight
+
+        if (isLandscape) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(Dimens.PaddingLarge),
+                horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingExtraLarge),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ProgressSection(
+                    uiState = uiState,
+                    onEditTarget = onEditTarget,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                )
+                InputSection(
+                    onLogWater = onLogWater,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        } else { // Portrait
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(Dimens.PaddingLarge),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                ProgressSection(
+                    uiState = uiState,
+                    onEditTarget = onEditTarget,
+                    modifier = Modifier.weight(1f)
+                )
+                InputSection(
+                    onLogWater = onLogWater,
+                    modifier = Modifier.padding(bottom = Dimens.PaddingExtraLarge)
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun ProgressSection(
+    uiState: WaterHomeUiState,
+    onEditTarget: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val animatedProgress by animateFloatAsState(
         targetValue = uiState.progress,
         label = "WaterProgressAnimation",
         animationSpec = WavyProgressIndicatorDefaults.ProgressAnimationSpec
     )
     val view = LocalView.current
-    val textMeasurer = rememberTextMeasurer()
-
     val strokeWidth = 8.dp
     val stroke = with(LocalDensity.current) {
         remember { Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round) }
     }
+
+    BoxWithConstraints(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        val indicatorSize = min(maxWidth, maxHeight)
+
+        CircularWavyProgressIndicator(
+            progress = { animatedProgress },
+            modifier = Modifier.size(indicatorSize),
+            stroke = stroke,
+            trackStroke = stroke,
+            trackColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+        Column(
+            modifier = Modifier
+                .clip(CircleShape)
+                .clickable {
+                    onEditTarget()
+                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                }
+                .padding(Dimens.PaddingLarge),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "${uiState.todaysIntakeMl} ml",
+                style = MaterialTheme.typography.displayLargeEmphasized
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingExtraSmall)
+            ) {
+                Text(
+                    text = "of ${uiState.settings.waterDailyTargetMl} ml",
+                    style = MaterialTheme.typography.titleLargeEmphasized,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Icon(
+                    imageVector = Icons.Outlined.Edit,
+                    contentDescription = null, // Click action is on the parent Column
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalTextApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun InputSection(
+    onLogWater: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val sliderState = rememberSliderState(
+        value = 250f,
+        valueRange = 50f..1000f,
+        steps = (1000 / 50) - 2 // 50ml increments
+    )
+    val sliderInteractionSource = remember { MutableInteractionSource() }
+    val view = LocalView.current
+    val textMeasurer = rememberTextMeasurer()
 
     LaunchedEffect(sliderState) {
         snapshotFlow { sliderState.value }
@@ -125,178 +232,124 @@ internal fun WaterHomeScreenContent(
     }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(Dimens.PaddingLarge),
+        modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Dimens.PaddingExtraLarge)
     ) {
-        // --- Progress Section ---
-        Box(
-            modifier = Modifier.weight(1f),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularWavyProgressIndicator(
-                progress = { animatedProgress },
-                modifier = Modifier.size(384.dp),
-                stroke = stroke,
-                trackStroke = stroke,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant
-            )
-            Column(
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .clickable {
-                        onEditTarget()
-                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                    }
-                    .padding(Dimens.PaddingLarge),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "${uiState.todaysIntakeMl} ml",
-                    style = MaterialTheme.typography.displayLargeEmphasized
+        Slider(
+            state = sliderState,
+            modifier = Modifier.fillMaxWidth(),
+            thumb = {
+                SliderDefaults.Thumb(
+                    interactionSource = sliderInteractionSource,
+                    thumbSize = DpSize(4.dp, 144.dp)
                 )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingExtraSmall)
-                ) {
-                    Text(
-                        text = "of ${uiState.settings.waterDailyTargetMl} ml",
-                        style = MaterialTheme.typography.titleLargeEmphasized,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Icon(
-                        imageVector = Icons.Outlined.Edit,
-                        contentDescription = null, // Click action is on the parent Column
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
+            },
+            track = { currentSliderState ->
+                val activeTrackColor = MaterialTheme.colorScheme.primary
+                val inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                val activeTextColor = MaterialTheme.colorScheme.onPrimary
+                val inactiveTextColor = MaterialTheme.colorScheme.primary
 
-        // --- Input Section ---
-        Column(
-            modifier = Modifier.padding(bottom = Dimens.PaddingExtraLarge),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(Dimens.PaddingExtraLarge)
-        ) {
-            Slider(
-                state = sliderState,
-                modifier = Modifier.fillMaxWidth(),
-                thumb = {
-                    SliderDefaults.Thumb(
-                        interactionSource = sliderInteractionSource,
-                        thumbSize = DpSize(4.dp, 144.dp)
-                    )
-                },
-                track = { currentSliderState ->
-                    val activeTrackColor = MaterialTheme.colorScheme.primary
-                    val inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                    val activeTextColor = MaterialTheme.colorScheme.onPrimary
-                    val inactiveTextColor = MaterialTheme.colorScheme.primary
+                val activeTextStyle = MaterialTheme.typography.displaySmall.copy(
+                    color = activeTextColor,
+                    fontWeight = FontWeight.Bold
+                )
+                val inactiveTextStyle = MaterialTheme.typography.displaySmall.copy(
+                    color = inactiveTextColor,
+                    fontWeight = FontWeight.Bold
+                )
 
-                    val activeTextStyle = MaterialTheme.typography.displaySmall.copy(
-                        color = activeTextColor,
-                        fontWeight = FontWeight.Bold
-                    )
-                    val inactiveTextStyle = MaterialTheme.typography.displaySmall.copy(
-                        color = inactiveTextColor,
-                        fontWeight = FontWeight.Bold
-                    )
+                SliderDefaults.Track(
+                    sliderState = currentSliderState,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(128.dp)
+                        .drawWithContent {
+                            val sliderValue = currentSliderState.value
+                            val valueText = "${sliderValue.roundToInt()} ml"
 
-                    SliderDefaults.Track(
-                        sliderState = currentSliderState,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(128.dp)
-                            .drawWithContent {
-                                val sliderValue = currentSliderState.value
-                                val valueText = "${sliderValue.roundToInt()} ml"
+                            // Draw the track first
+                            drawContent()
 
-                                // Draw the track first
-                                drawContent()
+                            // Calculate track widths
+                            val activeTrackEnd = size.width * currentSliderState.coercedValueAsFraction
+                            val activeTrackWidth = activeTrackEnd
+                            val inactiveTrackWidth = size.width - activeTrackEnd
 
-                                // Calculate track widths
-                                val activeTrackEnd = size.width * currentSliderState.coercedValueAsFraction
-                                val activeTrackWidth = activeTrackEnd
-                                val inactiveTrackWidth = size.width - activeTrackEnd
+                            // Text positioning padding
+                            val textPadding = Dimens.PaddingExtraExtraLarge.toPx()
 
-                                // Text positioning padding
-                                val textPadding = Dimens.PaddingExtraExtraLarge.toPx()
+                            // Try to place text on the inactive side first
+                            val measuredText = textMeasurer.measure(
+                                text = valueText,
+                                style = inactiveTextStyle
+                            )
 
-                                // Try to place text on the inactive side first
-                                val measuredText = textMeasurer.measure(
+                            val thumbWidthPx = 4.dp.toPx()
+                            val halfThumbWidth = thumbWidthPx / 2
+                            val textWidth = measuredText.size.width.toFloat()
+                            val canFitOnInactiveSide = textWidth + textPadding * 2 < inactiveTrackWidth - halfThumbWidth
+
+                            if (canFitOnInactiveSide) {
+                                val y = (size.height - measuredText.size.height) / 2
+                                val x = activeTrackEnd + halfThumbWidth + textPadding
+                                drawText(measuredText, topLeft = Offset(x, y))
+                            } else {
+                                // Otherwise, place it on the active side
+                                val measuredTextOnActive = textMeasurer.measure(
                                     text = valueText,
-                                    style = inactiveTextStyle
+                                    style = activeTextStyle
                                 )
+                                val textWidthOnActive =
+                                    measuredTextOnActive.size.width.toFloat()
+                                val canFitOnActiveSide =
+                                    textWidthOnActive + textPadding * 2 < activeTrackWidth - halfThumbWidth
 
-                                val thumbWidthPx = 4.dp.toPx()
-                                val halfThumbWidth = thumbWidthPx / 2
-                                val textWidth = measuredText.size.width.toFloat()
-                                val canFitOnInactiveSide = textWidth + textPadding * 2 < inactiveTrackWidth - halfThumbWidth
-
-                                if (canFitOnInactiveSide) {
-                                    val y = (size.height - measuredText.size.height) / 2
-                                    val x = activeTrackEnd + halfThumbWidth + textPadding
-                                    drawText(measuredText, topLeft = Offset(x, y))
-                                } else {
-                                    // Otherwise, place it on the active side
-                                    val measuredTextOnActive = textMeasurer.measure(
-                                        text = valueText,
-                                        style = activeTextStyle
-                                    )
-                                    val textWidthOnActive =
-                                        measuredTextOnActive.size.width.toFloat()
-                                    val canFitOnActiveSide =
-                                        textWidthOnActive + textPadding * 2 < activeTrackWidth - halfThumbWidth
-
-                                    if (canFitOnActiveSide) {
-                                        val y =
-                                            (size.height - measuredTextOnActive.size.height) / 2
-                                        val x =
-                                            activeTrackEnd - halfThumbWidth - textWidthOnActive - textPadding
-                                        drawText(measuredTextOnActive, topLeft = Offset(x, y))
-                                    }
+                                if (canFitOnActiveSide) {
+                                    val y =
+                                        (size.height - measuredTextOnActive.size.height) / 2
+                                    val x =
+                                        activeTrackEnd - halfThumbWidth - textWidthOnActive - textPadding
+                                    drawText(measuredTextOnActive, topLeft = Offset(x, y))
                                 }
-                            },
-                        colors = SliderDefaults.colors(
-                            activeTrackColor = activeTrackColor,
-                            inactiveTrackColor = inactiveTrackColor,
-                            activeTickColor = Color.Transparent,
-                            inactiveTickColor = Color.Transparent
-                        ),
-                        trackCornerSize = 16.dp,
-                    )
-                }
-            )
-            Button(
-                onClick = {
-                    onLogWater(sliderState.value.roundToInt())
-                    view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(64.dp),
-                enabled = sliderState.value.roundToInt() > 0,
-                shape = MaterialTheme.shapes.large,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.tertiary,
-                    contentColor = MaterialTheme.colorScheme.onTertiary
+                            }
+                        },
+                    colors = SliderDefaults.colors(
+                        activeTrackColor = activeTrackColor,
+                        inactiveTrackColor = inactiveTrackColor,
+                        activeTickColor = Color.Transparent,
+                        inactiveTickColor = Color.Transparent
+                    ),
+                    trackCornerSize = 16.dp,
                 )
-            ) {
-                Icon(
-                    Icons.Filled.WaterDrop,
-                    contentDescription = "Log Water",
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                Text("Drink", style = MaterialTheme.typography.titleLargeEmphasized)
             }
+        )
+        Button(
+            onClick = {
+                onLogWater(sliderState.value.roundToInt())
+                view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(64.dp),
+            enabled = sliderState.value.roundToInt() > 0,
+            shape = MaterialTheme.shapes.large,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.tertiary,
+                contentColor = MaterialTheme.colorScheme.onTertiary
+            )
+        ) {
+            Icon(
+                Icons.Filled.WaterDrop,
+                contentDescription = "Log Water",
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+            Text("Drink", style = MaterialTheme.typography.titleLargeEmphasized)
         }
     }
 }
-
 
 @Composable
 private fun WaterFeatureDisabledContent(
@@ -379,5 +432,22 @@ private fun WaterHomeScreenContentCompletePreview() {
 private fun WaterFeatureDisabledContentPreview() {
     HabitsTheme {
         WaterFeatureDisabledContent(onEnableClicked = {})
+    }
+}
+
+@Preview(name = "Water Home - Landscape", widthDp = 800, heightDp = 400, showBackground = true)
+@Composable
+private fun WaterHomeScreenContentLandscapePreview() {
+    val settings = PersistentSettings(isWaterTrackingEnabled = true, waterDailyTargetMl = 2500, selectedScheduleId = null, isBedtimeTrackingEnabled = false, isAppUsageTrackingEnabled = false, isWaterReminderEnabled = false, waterReminderIntervalMinutes = 60, waterReminderSnoozeMinutes = 15, waterReminderScheduleId = null)
+    HabitsTheme {
+        WaterHomeScreenContent(
+            uiState = WaterHomeUiState(
+                settings = settings,
+                todaysIntakeMl = 1250,
+                progress = 0.5f
+            ),
+            onLogWater = {},
+            onEditTarget = {}
+        )
     }
 }

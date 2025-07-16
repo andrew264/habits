@@ -350,106 +350,144 @@ private fun UsageDetailContent(
     app: AppDetails,
     onSetAppColor: (packageName: String, colorHex: String) -> Unit
 ) {
-    Column(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(Dimens.PaddingLarge),
-        verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
     ) {
-        // --- Header Card ---
-        Card {
-            Row(
+        val isCompact = maxWidth < 600.dp
+        if (isCompact) {
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxSize()
                     .padding(Dimens.PaddingLarge),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
+                verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
             ) {
-                DrawableImage(drawable = app.icon, contentDescription = null, modifier = Modifier.size(56.dp))
-                Column {
-                    Text(app.friendlyName, style = MaterialTheme.typography.headlineSmall)
-                    Text(
-                        app.packageName,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                HeaderCard(app)
+                KeyMetricsCard(app)
+                if (app.historicalData.isNotEmpty()) {
+                    UsageTrendCard(app)
                 }
+                ColorConfigurationCard(app, onSetAppColor)
             }
-        }
-
-        // --- Key Metrics Card ---
-        Card {
+        } else {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(Dimens.PaddingLarge),
-                horizontalArrangement = Arrangement.SpaceAround
+                horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge),
+                verticalAlignment = Alignment.Top
             ) {
-                StatItem(label = "Total Time", value = formatDuration(app.totalUsageMillis))
-                StatItem(label = "Avg. Session", value = formatDuration(app.averageSessionMillis))
-                StatItem(label = "Sessions", value = app.sessionCount.toString())
-            }
-        }
-
-        // --- Usage Trend Card ---
-        if (app.historicalData.isNotEmpty()) {
-            val maxUsageMillis = app.historicalData.maxOfOrNull { it.value } ?: 0f
-            val maxUsageMinutes = ceil(maxUsageMillis / 60000f).toInt()
-            val topValueMinutes = when {
-                maxUsageMinutes <= 1 -> 1
-                maxUsageMinutes <= 2 -> 2
-                maxUsageMinutes <= 5 -> 5
-                maxUsageMinutes <= 10 -> 10
-                maxUsageMinutes <= 15 -> 15
-                maxUsageMinutes <= 30 -> 30
-                maxUsageMinutes <= 45 -> 45
-                maxUsageMinutes <= 60 -> 60
-                else -> (ceil(maxUsageMinutes / 60f).toInt() * 60)
-            }
-            val topValueMillis = topValueMinutes * 60000f
-
-            val yAxisLabelFormatter: (Float) -> String = { valueInMillis ->
-                val minutes = (valueInMillis / 60000f).roundToInt()
-                "${minutes}m"
-            }
-
-            Card {
                 Column(
-                    modifier = Modifier.padding(Dimens.PaddingLarge),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    modifier = Modifier.weight(0.6f), // Give more space to the graph
+                    verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
                 ) {
-                    Text(
-                        text = "Usage Trend",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Text(
-                        text = app.peakUsageTimeLabel,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = Dimens.PaddingLarge)
-                    )
-                    BarChart(
-                        entries = app.historicalData,
-                        barColor = app.color.toColorOrNull() ?: MaterialTheme.colorScheme.primary,
-                        topValue = topValueMillis,
-                        yAxisLabelFormatter = yAxisLabelFormatter,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
-                    )
+                    HeaderCard(app)
+                    if (app.historicalData.isNotEmpty()) {
+                        UsageTrendCard(app)
+                    }
+                }
+                Column(
+                    modifier = Modifier.weight(0.4f),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
+                ) {
+                    KeyMetricsCard(app)
+                    ColorConfigurationCard(app, onSetAppColor)
                 }
             }
         }
+    }
+}
 
-        // --- Color Configuration Card ---
-        ColorConfigurationCard(
-            app = app,
-            onSetAppColor = onSetAppColor
-        )
+@Composable
+private fun HeaderCard(app: AppDetails) {
+    Card {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Dimens.PaddingLarge),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
+        ) {
+            DrawableImage(drawable = app.icon, contentDescription = null, modifier = Modifier.size(56.dp))
+            Column {
+                Text(app.friendlyName, style = MaterialTheme.typography.headlineSmall)
+                Text(
+                    app.packageName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun KeyMetricsCard(app: AppDetails) {
+    Card {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Dimens.PaddingLarge),
+            horizontalArrangement = Arrangement.SpaceAround
+        ) {
+            StatItem(label = "Total Time", value = formatDuration(app.totalUsageMillis))
+            StatItem(label = "Avg. Session", value = formatDuration(app.averageSessionMillis))
+            StatItem(label = "Sessions", value = app.sessionCount.toString())
+        }
+    }
+}
+
+@Composable
+private fun UsageTrendCard(app: AppDetails) {
+    val maxUsageMillis = app.historicalData.maxOfOrNull { it.value } ?: 0f
+    val maxUsageMinutes = ceil(maxUsageMillis / 60000f).toInt()
+    val topValueMinutes = when {
+        maxUsageMinutes <= 1 -> 1
+        maxUsageMinutes <= 2 -> 2
+        maxUsageMinutes <= 5 -> 5
+        maxUsageMinutes <= 10 -> 10
+        maxUsageMinutes <= 15 -> 15
+        maxUsageMinutes <= 30 -> 30
+        maxUsageMinutes <= 45 -> 45
+        maxUsageMinutes <= 60 -> 60
+        else -> (ceil(maxUsageMinutes / 60f).toInt() * 60)
+    }
+    val topValueMillis = topValueMinutes * 60000f
+
+    val yAxisLabelFormatter: (Float) -> String = { valueInMillis ->
+        val minutes = (valueInMillis / 60000f).roundToInt()
+        "${minutes}m"
+    }
+
+    Card {
+        Column(
+            modifier = Modifier.padding(Dimens.PaddingLarge),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Usage Trend",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Text(
+                text = app.peakUsageTimeLabel,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = Dimens.PaddingLarge)
+            )
+            BarChart(
+                entries = app.historicalData,
+                barColor = app.color.toColorOrNull() ?: MaterialTheme.colorScheme.primary,
+                topValue = topValueMillis,
+                yAxisLabelFormatter = yAxisLabelFormatter,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+            )
+        }
     }
 }
 

@@ -20,8 +20,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.domain.analyzer.ScheduleAnalyzer
+import com.andrew264.habits.model.schedule.DayOfWeek
+import com.andrew264.habits.model.schedule.ScheduleGroup
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.ui.theme.Dimens
 import java.util.Locale
@@ -128,7 +131,9 @@ internal fun ScheduleListItem(
                 shape = MaterialTheme.shapes.medium
             ) {
                 Column(
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = Dimens.PaddingLarge),
+                    modifier = Modifier
+                        .animateContentSize()
+                        .padding(horizontal = 20.dp, vertical = Dimens.PaddingLarge),
                     verticalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
                 ) {
                     Text(
@@ -174,3 +179,30 @@ internal fun ScheduleListItem(
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Preview
+@Composable
+internal fun ScheduleListItemPreview() {
+    val schedule = Schedule(
+        id = "1",
+        name = "Work Schedule",
+        groups = listOf(
+            ScheduleGroup(
+                id = "group1",
+                name = "Weekdays",
+                days = setOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY),
+                timeRanges = listOf(
+                    com.andrew264.habits.model.schedule.TimeRange(fromMinuteOfDay = 9 * 60, toMinuteOfDay = 17 * 60) // 9 AM to 5 PM
+                )
+            )
+        )
+    )
+    ScheduleListItem(
+        schedule = schedule,
+        isPendingDeletion = false,
+        onDelete = { true },
+        onEdit = {}
+    )
+}
+
