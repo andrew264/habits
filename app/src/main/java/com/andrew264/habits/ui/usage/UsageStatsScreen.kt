@@ -20,6 +20,7 @@ import androidx.compose.material3.adaptive.navigation.NavigableListDetailPaneSca
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -496,10 +497,11 @@ private fun ColorConfigurationCard(
     app: AppDetails,
     onSetAppColor: (packageName: String, colorHex: String) -> Unit
 ) {
-    var isExpanded by remember { mutableStateOf(false) }
-    val colorPickerState = remember(app.packageName, app.color) {
+    var isExpanded by rememberSaveable { mutableStateOf(false) }
+    val colorPickerState = rememberSaveable(app.packageName, app.color, saver = ColorPickerState.Saver) {
         ColorPickerState(initialColor = app.color.toColorOrNull() ?: Color.Gray)
     }
+
     val view = LocalView.current
     var hasChanges by remember { mutableStateOf(false) }
 

@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
@@ -39,7 +40,9 @@ fun MainScreen(
     onRequestInitialPermissions: () -> Unit,
     onOpenAppSettings: () -> Unit
 ) {
-    val topLevelBackStack = remember { TopLevelBackStack(Home) }
+    val topLevelBackStack = rememberSaveable(saver = TopLevelBackStack.Saver) {
+        TopLevelBackStack(Home)
+    }
     val wideNavRailState = rememberWideNavigationRailState()
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }

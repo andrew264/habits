@@ -3,6 +3,7 @@ package com.andrew264.habits.ui.common.color_picker
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import com.andrew264.habits.ui.common.color_picker.utils.toColor
@@ -33,5 +34,12 @@ class ColorPickerState(initialColor: Color) {
         hsvColor = newHsv
         hexCode = newHsv.toColor().toHexCode(includeAlpha = true)
         isValidHex = true
+    }
+
+    companion object {
+        val Saver: Saver<ColorPickerState, *> = Saver(
+            save = { it.hsvColor },
+            restore = { hsv -> ColorPickerState(hsv.toColor()) }
+        )
     }
 }

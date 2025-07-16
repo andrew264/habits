@@ -24,8 +24,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.domain.analyzer.ScheduleAnalyzer
 import com.andrew264.habits.model.schedule.DayOfWeek
-import com.andrew264.habits.model.schedule.ScheduleGroup
 import com.andrew264.habits.model.schedule.Schedule
+import com.andrew264.habits.model.schedule.ScheduleGroup
 import com.andrew264.habits.ui.theme.Dimens
 import java.util.Locale
 
