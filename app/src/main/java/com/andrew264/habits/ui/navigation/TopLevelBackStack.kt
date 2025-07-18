@@ -75,6 +75,7 @@ class TopLevelBackStack(startKey: TopLevelRoute) {
                 var index = 2
                 repeat(numStacks) {
                     val routeKey = savedList[index++] as TopLevelRoute
+
                     @Suppress("UNCHECKED_CAST")
                     val routeStack = savedList[index++] as ArrayList<AppRoute>
                     stacks[routeKey] = mutableStateListOf<AppRoute>().apply { addAll(routeStack) }

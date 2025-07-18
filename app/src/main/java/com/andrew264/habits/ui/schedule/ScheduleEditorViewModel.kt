@@ -64,37 +64,36 @@ class ScheduleViewModel @Inject constructor(
         )
 
     fun initialize(scheduleId: String?) {
-        // Avoid re-initializing if the ID is the same
+        // Avoid re-initializing if the ID is the same and we are not in a loading state.
         if (scheduleId == currentScheduleId && !_uiState.value.isLoading) return
         currentScheduleId = scheduleId
-        _uiState.update {
-            ScheduleEditorUiState(isNewSchedule = scheduleId == null) // Reset state
-        }
-        loadSchedule(scheduleId)
-    }
 
-    private fun loadSchedule(scheduleId: String?) {
         viewModelScope.launch {
+            _uiState.value = ScheduleEditorUiState(isLoading = true) // Reset state
             if (scheduleId == null) {
-                _uiState.update {
-                    it.copy(
-                        schedule = createNewSchedule(),
+                // This case is now a fallback, the FAB should always provide an ID.
+                _uiState.value = ScheduleEditorUiState(
+                    schedule = createNewSchedule(),
+                    isNewSchedule = true,
+                    isLoading = false
+                )
+            } else {
+                // Fetch the schedule once to determine if it's new or existing.
+                val existingSchedule = scheduleRepository.getSchedule(scheduleId).first()
+                if (existingSchedule != null) {
+                    // It's an existing schedule, load it for editing.
+                    _uiState.value = ScheduleEditorUiState(
+                        schedule = existingSchedule,
+                        isNewSchedule = false,
                         isLoading = false
                     )
-                }
-            } else {
-                scheduleRepository.getSchedule(scheduleId).collect { schedule ->
-                    _uiState.update {
-                        // Only update if it's the first load for this ID
-                        if (it.schedule == null) {
-                            it.copy(
-                                schedule = schedule ?: createNewSchedule(scheduleId),
-                                isLoading = false
-                            )
-                        } else {
-                            it
-                        }
-                    }
+                } else {
+                    // It's a new schedule, create it with the provided ID.
+                    _uiState.value = ScheduleEditorUiState(
+                        schedule = createNewSchedule(scheduleId),
+                        isNewSchedule = true,
+                        isLoading = false
+                    )
                 }
             }
         }

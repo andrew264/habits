@@ -10,10 +10,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,6 +24,7 @@ import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.model.schedule.ScheduleGroup
 import com.andrew264.habits.ui.theme.Dimens
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -38,6 +36,7 @@ internal fun ScheduleListItem(
     onEdit: () -> Unit
 ) {
     val view = LocalView.current
+    val scope = rememberCoroutineScope()
 
     AnimatedVisibility(
         visible = !isPendingDeletion,
@@ -60,15 +59,20 @@ internal fun ScheduleListItem(
             onDismiss = { direction ->
                 when (direction) {
                     SwipeToDismissBoxValue.StartToEnd -> {
-                        view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-                        onEdit()
+                        scope.launch {
+                            view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                            onEdit()
+                            dismissState.reset()
+                        }
                     }
 
                     SwipeToDismissBoxValue.EndToStart -> {
-                        view.performHapticFeedback(HapticFeedbackConstants.REJECT)
-                        val wasDeleted = onDelete()
-                        if (!wasDeleted) {
-                            dismissState.reset()
+                        scope.launch {
+                            view.performHapticFeedback(HapticFeedbackConstants.REJECT)
+                            val wasDeleted = onDelete()
+                            if (!wasDeleted) {
+                                dismissState.reset()
+                            }
                         }
                     }
 
@@ -205,4 +209,3 @@ internal fun ScheduleListItemPreview() {
         onEdit = {}
     )
 }
-

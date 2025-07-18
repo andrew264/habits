@@ -24,8 +24,10 @@ sealed interface TopLevelRoute : AppRoute {
 data object Home : TopLevelRoute {
     @IgnoredOnParcel
     override val title = "Home"
+
     @IgnoredOnParcel
     override val selectedIcon = Icons.Filled.Home
+
     @IgnoredOnParcel
     override val unselectedIcon = Icons.Outlined.Home
 }
@@ -35,8 +37,10 @@ data object Home : TopLevelRoute {
 data object Water : TopLevelRoute {
     @IgnoredOnParcel
     override val title = "Water"
+
     @IgnoredOnParcel
     override val selectedIcon = Icons.Filled.WaterDrop
+
     @IgnoredOnParcel
     override val unselectedIcon = Icons.Outlined.WaterDrop
 }
@@ -46,8 +50,10 @@ data object Water : TopLevelRoute {
 data object Schedules : TopLevelRoute {
     @IgnoredOnParcel
     override val title = "Schedules"
+
     @IgnoredOnParcel
     override val selectedIcon = Icons.Filled.Schedule
+
     @IgnoredOnParcel
     override val unselectedIcon = Icons.Outlined.Schedule
 }
@@ -57,8 +63,10 @@ data object Schedules : TopLevelRoute {
 data object Usage : TopLevelRoute {
     @IgnoredOnParcel
     override val title = "Usage"
+
     @IgnoredOnParcel
     override val selectedIcon = Icons.Filled.Timeline
+
     @IgnoredOnParcel
     override val unselectedIcon = Icons.Outlined.Timeline
 }
@@ -68,8 +76,10 @@ data object Usage : TopLevelRoute {
 data object MonitoringSettings : TopLevelRoute {
     @IgnoredOnParcel
     override val title = "Monitoring"
+
     @IgnoredOnParcel
     override val selectedIcon = Icons.Filled.Settings
+
     @IgnoredOnParcel
     override val unselectedIcon = Icons.Outlined.Settings
 }
@@ -79,8 +89,10 @@ data object MonitoringSettings : TopLevelRoute {
 data object Bedtime : TopLevelRoute {
     @IgnoredOnParcel
     override val title = "Bedtime"
+
     @IgnoredOnParcel
     override val selectedIcon = Icons.Filled.Alarm
+
     @IgnoredOnParcel
     override val unselectedIcon = Icons.Outlined.Alarm
 }

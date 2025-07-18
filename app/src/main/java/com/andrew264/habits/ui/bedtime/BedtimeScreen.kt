@@ -2,6 +2,7 @@ package com.andrew264.habits.ui.bedtime
 
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -18,11 +19,15 @@ import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
 import androidx.compose.material3.adaptive.layout.SupportingPaneScaffoldRole
 import androidx.compose.material3.adaptive.navigation.NavigableSupportingPaneScaffold
 import androidx.compose.material3.adaptive.navigation.rememberSupportingPaneScaffoldNavigator
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -48,7 +53,7 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun BedtimeScreen(
     modifier: Modifier = Modifier,
@@ -67,7 +72,7 @@ fun BedtimeScreen(
     }
 
     when {
-        uiState.isLoading -> {
+        uiState.isLoading && uiState.timelineSegments.isEmpty() -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
@@ -99,7 +104,8 @@ fun BedtimeScreen(
                                     scaffoldNavigator.navigateTo(SupportingPaneScaffoldRole.Supporting)
                                 }
                             },
-                            isSupportingPaneHidden = { scaffoldNavigator.scaffoldValue[SupportingPaneScaffoldRole.Supporting] == PaneAdaptedValue.Hidden }
+                            isSupportingPaneHidden = { scaffoldNavigator.scaffoldValue[SupportingPaneScaffoldRole.Supporting] == PaneAdaptedValue.Hidden },
+                            onRefresh = viewModel::refresh
                         )
                     }
                 },
@@ -122,151 +128,180 @@ private fun BedtimeMainPane(
     uiState: BedtimeUiState,
     onSetTimelineRange: (BedtimeChartRange) -> Unit,
     onConfigureScheduleClicked: () -> Unit,
-    isSupportingPaneHidden: () -> Boolean
+    isSupportingPaneHidden: () -> Boolean,
+    onRefresh: () -> Unit
 ) {
     val view = LocalView.current
+    val isRefreshing = uiState.isLoading
+    val pullToRefreshState = rememberPullToRefreshState()
+    val scaleFraction = {
+        if (isRefreshing) 1f
+        else LinearOutSlowInEasing.transform(pullToRefreshState.distanceFraction).coerceIn(0f, 1f)
+    }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(Dimens.PaddingLarge),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
-    ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .padding(bottom = Dimens.PaddingLarge),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
+            .pullToRefresh(
+                state = pullToRefreshState,
+                isRefreshing = isRefreshing,
+                onRefresh = onRefresh
             )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(Dimens.PaddingLarge),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
         ) {
-            Column(
+            Card(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(Dimens.PaddingLarge),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    "Sleep History",
-                    style = MaterialTheme.typography.headlineSmall,
-                    textAlign = TextAlign.Center
+                    .fillMaxWidth()
+                    .padding(bottom = Dimens.PaddingLarge),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
                 )
-                Spacer(modifier = Modifier.height(Dimens.PaddingMedium))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(Dimens.PaddingLarge),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    val ranges = BedtimeChartRange.entries
-                    ButtonGroup(
-                        overflowIndicator = { menuState ->
-                            IconButton(onClick = { menuState.show() }) {
-                                Icon(Icons.Default.MoreVert, "More options")
-                            }
-                        },
-                        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+                    Text(
+                        "Sleep History",
+                        style = MaterialTheme.typography.headlineSmall,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(Dimens.PaddingMedium))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        ranges.forEachIndexed { index, range ->
-                            customItem(
-                                buttonGroupContent = {
-                                    ElevatedToggleButton(
-                                        checked = uiState.selectedTimelineRange == range,
-                                        onCheckedChange = {
-                                            onSetTimelineRange(range)
-                                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                                        },
-                                        shapes = when (index) {
-                                            0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                                            ranges.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                                            else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                                        },
-                                    ) {
-                                        Text(range.label)
-                                    }
-                                },
-                                menuContent = { menuState ->
-                                    DropdownMenuItem(
-                                        text = { Text(range.label) },
-                                        onClick = {
-                                            onSetTimelineRange(range)
-                                            menuState.dismiss()
-                                        }
-                                    )
+                        val ranges = BedtimeChartRange.entries
+                        ButtonGroup(
+                            overflowIndicator = { menuState ->
+                                IconButton(onClick = { menuState.show() }) {
+                                    Icon(Icons.Default.MoreVert, "More options")
                                 }
-                            )
+                            },
+                            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+                        ) {
+                            ranges.forEachIndexed { index, range ->
+                                customItem(
+                                    buttonGroupContent = {
+                                        ElevatedToggleButton(
+                                            checked = uiState.selectedTimelineRange == range,
+                                            onCheckedChange = {
+                                                onSetTimelineRange(range)
+                                                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                                            },
+                                            shapes = when (index) {
+                                                0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                                                ranges.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                                else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                                            },
+                                        ) {
+                                            Text(range.label)
+                                        }
+                                    },
+                                    menuContent = { menuState ->
+                                        DropdownMenuItem(
+                                            text = { Text(range.label) },
+                                            onClick = {
+                                                onSetTimelineRange(range)
+                                                menuState.dismiss()
+                                            }
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(Dimens.PaddingLarge))
+                    if (uiState.timelineSegments.isEmpty()) {
+                        Text(
+                            text = "No presence data available for this time range.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    } else {
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .animateContentSize(MaterialTheme.motionScheme.fastSpatialSpec()),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
+                        ) {
+                            if (uiState.selectedTimelineRange.isLinear) {
+                                val timelineLabelStrategy = remember(uiState.selectedTimelineRange) {
+                                    when (uiState.selectedTimelineRange) {
+                                        BedtimeChartRange.TWELVE_HOURS -> TimelineLabelStrategy.TWELVE_HOURS
+                                        else -> TimelineLabelStrategy.DAY
+                                    }
+                                }
+                                TimelineChart(
+                                    segments = uiState.timelineSegments,
+                                    getStartTimeMillis = { it.startTimeMillis },
+                                    getEndTimeMillis = { it.endTimeMillis },
+                                    getColor = { it.state.toColor() },
+                                    viewStartTimeMillis = uiState.viewStartTimeMillis,
+                                    viewEndTimeMillis = uiState.viewEndTimeMillis,
+                                    labelStrategy = timelineLabelStrategy,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(92.dp),
+                                    barHeight = 64.dp
+                                )
+                                PresenceLegend()
+                            } else {
+                                val sleepSegments = remember(uiState.timelineSegments) {
+                                    uiState.timelineSegments.filter { it.state == UserPresenceState.SLEEPING }
+                                }
+                                val rangeInDays = if (uiState.selectedTimelineRange == BedtimeChartRange.WEEK) 7 else 30
+                                SleepChart(
+                                    segments = sleepSegments,
+                                    getStartTimeMillis = { it.startTimeMillis },
+                                    getEndTimeMillis = { it.endTimeMillis },
+                                    getState = { it.state },
+                                    getColorForState = { it.toColor() },
+                                    rangeInDays = rangeInDays,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(300.dp)
+                                )
+                            }
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(Dimens.PaddingLarge))
-                if (uiState.timelineSegments.isEmpty()) {
-                    Text(
-                        text = "No presence data available for this time range.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-                } else {
-                    Column(
-                        modifier = Modifier
-                            .animateContentSize(MaterialTheme.motionScheme.fastSpatialSpec())
-                            .weight(1f),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(Dimens.PaddingMedium)
-                    ) {
-                        if (uiState.selectedTimelineRange.isLinear) {
-                            val timelineLabelStrategy = remember(uiState.selectedTimelineRange) {
-                                when (uiState.selectedTimelineRange) {
-                                    BedtimeChartRange.TWELVE_HOURS -> TimelineLabelStrategy.TWELVE_HOURS
-                                    else -> TimelineLabelStrategy.DAY
-                                }
-                            }
-                            TimelineChart(
-                                segments = uiState.timelineSegments,
-                                getStartTimeMillis = { it.startTimeMillis },
-                                getEndTimeMillis = { it.endTimeMillis },
-                                getColor = { it.state.toColor() },
-                                viewStartTimeMillis = uiState.viewStartTimeMillis,
-                                viewEndTimeMillis = uiState.viewEndTimeMillis,
-                                labelStrategy = timelineLabelStrategy,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(60.dp)
-                            )
-                            PresenceLegend()
-                        } else {
-                            val sleepSegments = remember(uiState.timelineSegments) {
-                                uiState.timelineSegments.filter { it.state == UserPresenceState.SLEEPING }
-                            }
-                            val rangeInDays = if (uiState.selectedTimelineRange == BedtimeChartRange.WEEK) 7 else 30
-                            SleepChart(
-                                segments = sleepSegments,
-                                getStartTimeMillis = { it.startTimeMillis },
-                                getEndTimeMillis = { it.endTimeMillis },
-                                getState = { it.state },
-                                getColorForState = { it.toColor() },
-                                rangeInDays = rangeInDays,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .fillMaxHeight()
-                            )
-                        }
-                    }
+            }
+
+            if (isSupportingPaneHidden()) {
+                FilledTonalButton(
+                    onClick = onConfigureScheduleClicked,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Configure Sleep Schedule")
+                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                    Icon(Icons.Default.ChevronRight, contentDescription = null)
                 }
             }
         }
 
-        if (isSupportingPaneHidden()) {
-            FilledTonalButton(
-                onClick = onConfigureScheduleClicked,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Configure Sleep Schedule")
-                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                Icon(Icons.Default.ChevronRight, contentDescription = null)
-            }
-        }
+        PullToRefreshDefaults.LoadingIndicator(
+            state = pullToRefreshState,
+            isRefreshing = isRefreshing,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .graphicsLayer {
+                    scaleX = scaleFraction()
+                    scaleY = scaleFraction()
+                }
+        )
     }
 }
 
@@ -444,7 +479,8 @@ private fun BedtimeMainPaneCompactPreview() {
             ),
             onSetTimelineRange = {},
             onConfigureScheduleClicked = {},
-            isSupportingPaneHidden = { true }
+            isSupportingPaneHidden = { true },
+            onRefresh = {}
         )
     }
 }

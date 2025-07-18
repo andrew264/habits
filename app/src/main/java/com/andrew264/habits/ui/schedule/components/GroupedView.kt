@@ -3,7 +3,9 @@ package com.andrew264.habits.ui.schedule.components
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -28,6 +30,7 @@ import com.andrew264.habits.ui.theme.HabitsTheme
 fun GroupedView(
     schedule: Schedule,
     modifier: Modifier = Modifier,
+    listState: LazyListState = rememberLazyListState(),
     onUpdateGroupName: (groupId: String, newName: String) -> Unit,
     onDeleteGroup: (groupId: String) -> Unit,
     onToggleDayInGroup: (groupId: String, day: DayOfWeek) -> Unit,
@@ -69,6 +72,7 @@ fun GroupedView(
         }
     } else {
         LazyColumn(
+            state = listState,
             modifier = modifier.padding(bottom = 72.dp),
             contentPadding = PaddingValues(start = Dimens.PaddingLarge, end = Dimens.PaddingLarge, bottom = Dimens.PaddingLarge),
             verticalArrangement = Arrangement.spacedBy(20.dp)

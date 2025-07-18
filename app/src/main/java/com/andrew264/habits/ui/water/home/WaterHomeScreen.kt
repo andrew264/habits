@@ -160,13 +160,15 @@ private fun ProgressSection(
 
     BoxWithConstraints(
         modifier = modifier,
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         val indicatorSize = min(maxWidth, maxHeight)
 
         CircularWavyProgressIndicator(
             progress = { animatedProgress },
-            modifier = Modifier.size(indicatorSize),
+            modifier = Modifier
+                .size(indicatorSize)
+                .padding(Dimens.PaddingLarge),
             stroke = stroke,
             trackStroke = stroke,
             trackColor = MaterialTheme.colorScheme.surfaceVariant

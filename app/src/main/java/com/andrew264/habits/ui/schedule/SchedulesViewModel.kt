@@ -7,6 +7,7 @@ import com.andrew264.habits.domain.usecase.CheckScheduleInUseUseCase
 import com.andrew264.habits.domain.usecase.DeleteScheduleUseCase
 import com.andrew264.habits.model.schedule.Schedule
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -46,24 +47,24 @@ class SchedulesViewModel @Inject constructor(
             initialValue = SchedulesUiState()
         )
 
-    private val _uiEvents = MutableSharedFlow<SchedulesUiEvent>()
-    val uiEvents = _uiEvents.asSharedFlow()
+    private val _uiEvents = Channel<SchedulesUiEvent>(Channel.BUFFERED)
+    val uiEvents = _uiEvents.receiveAsFlow()
 
     suspend fun onDeleteSchedule(schedule: Schedule): Boolean {
         when (val checkResult = checkScheduleInUseUseCase.execute(schedule.id)) {
             is CheckScheduleInUseUseCase.Result.IsDefault -> {
-                _uiEvents.emit(SchedulesUiEvent.ShowSnackbar("The default schedule cannot be deleted."))
+                _uiEvents.send(SchedulesUiEvent.ShowSnackbar("The default schedule cannot be deleted."))
                 return false
             }
 
             is CheckScheduleInUseUseCase.Result.InUse -> {
-                _uiEvents.emit(SchedulesUiEvent.ShowSnackbar(checkResult.usageMessage))
+                _uiEvents.send(SchedulesUiEvent.ShowSnackbar(checkResult.usageMessage))
                 return false
             }
 
             is CheckScheduleInUseUseCase.Result.NotInUse -> {
                 _schedulePendingDeletion.value = schedule
-                _uiEvents.emit(
+                _uiEvents.send(
                     SchedulesUiEvent.ShowSnackbar(
                         message = "'${schedule.name}' deleted",
                         actionLabel = "Undo"

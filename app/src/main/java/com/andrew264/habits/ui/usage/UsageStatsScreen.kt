@@ -4,6 +4,7 @@ import android.content.Intent
 import android.provider.Settings
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,12 +19,15 @@ import androidx.compose.material3.adaptive.layout.AnimatedPane
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.navigation.NavigableListDetailPaneScaffold
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
@@ -50,7 +54,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun UsageStatsScreen(
     viewModel: UsageStatsViewModel = hiltViewModel(),
@@ -73,7 +77,7 @@ fun UsageStatsScreen(
     when {
         uiState.isLoading && uiState.stats == null -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                ContainedLoadingIndicator()
             }
         }
 
@@ -152,7 +156,8 @@ fun UsageStatsScreen(
 
 @OptIn(
     ExperimentalMaterial3Api::class,
-    ExperimentalFoundationApi::class
+    ExperimentalFoundationApi::class,
+    ExperimentalMaterial3ExpressiveApi::class
 )
 @Composable
 private fun UsageListContent(
@@ -163,9 +168,22 @@ private fun UsageListContent(
     onNavigateToWhitelist: () -> Unit,
     onOpenAccessibilitySettings: () -> Unit,
 ) {
-    PullToRefreshBox(
-        isRefreshing = uiState.isLoading && uiState.stats != null,
-        onRefresh = onRefresh
+    val isRefreshing = uiState.isLoading && uiState.stats != null
+    val state = rememberPullToRefreshState()
+
+    val scaleFraction = {
+        if (isRefreshing) 1f
+        else LinearOutSlowInEasing.transform(state.distanceFraction).coerceIn(0f, 1f)
+    }
+
+    Box(
+        Modifier
+            .fillMaxSize()
+            .pullToRefresh(
+                state = state,
+                isRefreshing = isRefreshing,
+                onRefresh = onRefresh,
+            )
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -260,6 +278,17 @@ private fun UsageListContent(
                     modifier = Modifier.clickable { onAppSelected(app) }
                 )
             }
+        }
+
+        Box(
+            Modifier
+                .align(Alignment.TopCenter)
+                .graphicsLayer {
+                    scaleX = scaleFraction()
+                    scaleY = scaleFraction()
+                }
+        ) {
+            PullToRefreshDefaults.LoadingIndicator(state = state, isRefreshing = isRefreshing)
         }
     }
 }

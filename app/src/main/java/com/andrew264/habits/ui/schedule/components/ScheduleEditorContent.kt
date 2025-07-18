@@ -3,15 +3,13 @@ package com.andrew264.habits.ui.schedule.components
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
@@ -35,6 +33,11 @@ fun ScheduleEditorContent(
     val uiState by viewModel.uiState.collectAsState()
     val perDayRepresentation by viewModel.perDayRepresentation.collectAsState()
     val view = LocalView.current
+
+    val listState = rememberLazyListState()
+    val expandedFab by remember {
+        derivedStateOf { listState.firstVisibleItemIndex == 0 }
+    }
 
     LaunchedEffect(scheduleId) {
         viewModel.initialize(scheduleId)
@@ -168,6 +171,7 @@ fun ScheduleEditorContent(
                                 uiState.schedule?.let {
                                     GroupedView(
                                         schedule = it,
+                                        listState = listState,
                                         modifier = Modifier.fillMaxSize(),
                                         onUpdateGroupName = viewModel::updateGroupName,
                                         onDeleteGroup = viewModel::deleteGroup,
@@ -196,11 +200,12 @@ fun ScheduleEditorContent(
 
         // FAB for adding a new group, scoped to this editor content
         if (!uiState.isLoading && uiState.viewMode == ScheduleViewMode.GROUPED) {
-            SmallExtendedFloatingActionButton(
+            ExtendedFloatingActionButton(
                 onClick = {
                     viewModel.addGroup()
                     view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                 },
+                expanded = expandedFab,
                 icon = { Icon(Icons.Default.Add, "Create New Group") },
                 text = { Text("New Group") },
                 modifier = Modifier
