@@ -1,17 +1,12 @@
 package com.andrew264.habits.ui.bedtime
 
-import android.view.HapticFeedbackConstants
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.AnimatedPane
@@ -25,10 +20,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -39,21 +31,24 @@ import com.andrew264.habits.domain.analyzer.ScheduleCoverage
 import com.andrew264.habits.model.UserPresenceState
 import com.andrew264.habits.model.schedule.DefaultSchedules
 import com.andrew264.habits.model.schedule.Schedule
+import com.andrew264.habits.ui.bedtime.components.PresenceLegend
+import com.andrew264.habits.ui.bedtime.components.ScheduleInfoCard
+import com.andrew264.habits.ui.bedtime.components.toColor
 import com.andrew264.habits.ui.common.charts.SleepChart
 import com.andrew264.habits.ui.common.charts.TimelineChart
 import com.andrew264.habits.ui.common.charts.TimelineLabelStrategy
+import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
 import com.andrew264.habits.ui.common.components.FeatureDisabledContent
+import com.andrew264.habits.ui.common.components.FilterButtonGroup
 import com.andrew264.habits.ui.common.components.ScheduleSelector
 import com.andrew264.habits.ui.navigation.AppRoute
 import com.andrew264.habits.ui.navigation.MonitoringSettings
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import kotlinx.coroutines.launch
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 
-@OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun BedtimeScreen(
     modifier: Modifier = Modifier,
@@ -71,11 +66,29 @@ fun BedtimeScreen(
         }
     }
 
+    BedtimeScreen(
+        modifier = modifier,
+        uiState = uiState,
+        onSetTimelineRange = viewModel::setTimelineRange,
+        onSelectSchedule = { viewModel.selectSchedule(it.id) },
+        onRefresh = viewModel::refresh,
+        onNavigate = onNavigate
+    )
+}
+
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@Composable
+private fun BedtimeScreen(
+    modifier: Modifier = Modifier,
+    uiState: BedtimeUiState,
+    onSetTimelineRange: (BedtimeChartRange) -> Unit,
+    onSelectSchedule: (Schedule) -> Unit,
+    onRefresh: () -> Unit,
+    onNavigate: (AppRoute) -> Unit
+) {
     when {
         uiState.isLoading && uiState.timelineSegments.isEmpty() -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
+            ContainedLoadingIndicator()
         }
 
         !uiState.isBedtimeTrackingEnabled -> {
@@ -98,14 +111,14 @@ fun BedtimeScreen(
                     AnimatedPane {
                         BedtimeMainPane(
                             uiState = uiState,
-                            onSetTimelineRange = viewModel::setTimelineRange,
+                            onSetTimelineRange = onSetTimelineRange,
                             onConfigureScheduleClicked = {
                                 scope.launch {
                                     scaffoldNavigator.navigateTo(SupportingPaneScaffoldRole.Supporting)
                                 }
                             },
                             isSupportingPaneHidden = { scaffoldNavigator.scaffoldValue[SupportingPaneScaffoldRole.Supporting] == PaneAdaptedValue.Hidden },
-                            onRefresh = viewModel::refresh
+                            onRefresh = onRefresh
                         )
                     }
                 },
@@ -113,7 +126,7 @@ fun BedtimeScreen(
                     AnimatedPane {
                         BedtimeSupportingPane(
                             uiState = uiState,
-                            onSelectSchedule = { viewModel.selectSchedule(it.id) }
+                            onSelectSchedule = onSelectSchedule
                         )
                     }
                 }
@@ -122,7 +135,7 @@ fun BedtimeScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun BedtimeMainPane(
     uiState: BedtimeUiState,
@@ -131,7 +144,6 @@ private fun BedtimeMainPane(
     isSupportingPaneHidden: () -> Boolean,
     onRefresh: () -> Unit
 ) {
-    val view = LocalView.current
     val isRefreshing = uiState.isLoading
     val pullToRefreshState = rememberPullToRefreshState()
     val scaleFraction = {
@@ -181,45 +193,12 @@ private fun BedtimeMainPane(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        val ranges = BedtimeChartRange.entries
-                        ButtonGroup(
-                            overflowIndicator = { menuState ->
-                                IconButton(onClick = { menuState.show() }) {
-                                    Icon(Icons.Default.MoreVert, "More options")
-                                }
-                            },
-                            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
-                        ) {
-                            ranges.forEachIndexed { index, range ->
-                                customItem(
-                                    buttonGroupContent = {
-                                        ElevatedToggleButton(
-                                            checked = uiState.selectedTimelineRange == range,
-                                            onCheckedChange = {
-                                                onSetTimelineRange(range)
-                                                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                                            },
-                                            shapes = when (index) {
-                                                0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                                                ranges.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                                                else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                                            },
-                                        ) {
-                                            Text(range.label)
-                                        }
-                                    },
-                                    menuContent = { menuState ->
-                                        DropdownMenuItem(
-                                            text = { Text(range.label) },
-                                            onClick = {
-                                                onSetTimelineRange(range)
-                                                menuState.dismiss()
-                                            }
-                                        )
-                                    }
-                                )
-                            }
-                        }
+                        FilterButtonGroup(
+                            options = BedtimeChartRange.entries,
+                            selectedOption = uiState.selectedTimelineRange,
+                            onOptionSelected = onSetTimelineRange,
+                            getLabel = { it.label }
+                        )
                     }
                     Spacer(modifier = Modifier.height(Dimens.PaddingLarge))
                     if (uiState.timelineSegments.isEmpty()) {
@@ -346,105 +325,6 @@ private fun BedtimeSupportingPane(
     }
 }
 
-
-@Composable
-fun ScheduleInfoCard(
-    scheduleInfo: ScheduleInfo,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(Dimens.PaddingLarge)) {
-            Text(
-                text = scheduleInfo.summary,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(Modifier.height(Dimens.PaddingMedium))
-            HorizontalDivider()
-            Spacer(Modifier.height(Dimens.PaddingMedium))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Schedule,
-                    contentDescription = "Total hours",
-                    modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    text = "${String.format(Locale.getDefault(), "%.1f", scheduleInfo.coverage.totalHours)} hours/week (${
-                        String.format(
-                            Locale.getDefault(),
-                            "%.1f",
-                            scheduleInfo.coverage.coveragePercentage
-                        )
-                    }%)",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-
-@Composable
-fun PresenceLegend() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        LegendItem(
-            color = UserPresenceState.AWAKE.toColor(),
-            label = "Awake"
-        )
-        LegendItem(
-            color = UserPresenceState.SLEEPING.toColor(),
-            label = "Sleeping"
-        )
-        LegendItem(
-            color = UserPresenceState.UNKNOWN.toColor(),
-            label = "Unknown"
-        )
-    }
-}
-
-@Composable
-fun LegendItem(
-    color: Color,
-    label: String
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(Dimens.PaddingMedium)
-                .clip(CircleShape)
-                .background(color)
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-fun UserPresenceState.toColor(): Color {
-    return when (this) {
-        UserPresenceState.AWAKE -> Color(0xFF4CAF50) // Green
-        UserPresenceState.SLEEPING -> Color(0xFF3F51B5) // Indigo
-        UserPresenceState.UNKNOWN -> Color(0xFF9E9E9E) // Grey
-    }
-}
-
 @Preview(name = "Bedtime Main Pane (Compact)", showBackground = true)
 @Composable
 private fun BedtimeMainPaneCompactPreview() {
@@ -507,6 +387,12 @@ private fun BedtimeSupportingPanePreview() {
 @Composable
 private fun BedtimeScreenFeatureDisabledPreview() {
     HabitsTheme {
-        BedtimeScreen(onNavigate = {})
+        BedtimeScreen(
+            uiState = BedtimeUiState(isBedtimeTrackingEnabled = false, isLoading = false),
+            onSetTimelineRange = {},
+            onSelectSchedule = {},
+            onRefresh = {},
+            onNavigate = {}
+        )
     }
 }

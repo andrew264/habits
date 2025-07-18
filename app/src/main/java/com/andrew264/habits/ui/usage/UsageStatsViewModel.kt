@@ -2,7 +2,6 @@ package com.andrew264.habits.ui.usage
 
 import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.drawable.Drawable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andrew264.habits.domain.model.UsageStatistics
@@ -11,23 +10,18 @@ import com.andrew264.habits.domain.repository.SettingsRepository
 import com.andrew264.habits.domain.repository.WhitelistRepository
 import com.andrew264.habits.domain.usecase.GetUsageStatisticsUseCase
 import com.andrew264.habits.ui.common.charts.BarChartEntry
+import com.andrew264.habits.ui.common.utils.FormatUtils
 import com.andrew264.habits.util.AccessibilityUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.TextStyle
-import java.util.Locale
 import javax.inject.Inject
 
 data class AppDetails(
     val packageName: String,
     val friendlyName: String,
-    val icon: Drawable?,
     val color: String,
     val totalUsageMillis: Long,
     val usagePercentage: Float,
@@ -58,7 +52,7 @@ class UsageStatsViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val packageManager = context.packageManager
-    private val appDetailsCache = mutableMapOf<String, Pair<String, Drawable?>>()
+    private val appNameCache = mutableMapOf<String, String>()
 
     private val _selectedRange = MutableStateFlow(UsageTimeRange.DAY)
     private val refreshTrigger = MutableStateFlow(0)
@@ -90,7 +84,7 @@ class UsageStatsViewModel @Inject constructor(
 
                 val appDetails = appListSource.map { pkg ->
                     val totalUsage = allAppUsage[pkg] ?: 0L
-                    val details = getAppDetails(pkg)
+                    val friendlyName = getAppName(pkg)
                     val sessionCount = stats.timeBins.count { it.appUsage.containsKey(pkg) }
                     val usagePercentage = if (stats.totalScreenOnTime > 0) totalUsage.toFloat() / stats.totalScreenOnTime.toFloat() else 0f
                     val averageSessionMillis = if (sessionCount > 0) totalUsage / sessionCount else 0L
@@ -105,8 +99,8 @@ class UsageStatsViewModel @Inject constructor(
                         }
                         if (usageInBin > 0) {
                             val label = when (range) {
-                                UsageTimeRange.DAY -> formatHourLabel(bin.startTime)
-                                UsageTimeRange.WEEK -> formatDayLabel(bin.startTime)
+                                UsageTimeRange.DAY -> FormatUtils.formatChartHourLabel(bin.startTime)
+                                UsageTimeRange.WEEK -> FormatUtils.formatChartDayLabel(bin.startTime)
                             }
                             BarChartEntry(value = usageInBin.toFloat(), label = label)
                         } else {
@@ -116,15 +110,14 @@ class UsageStatsViewModel @Inject constructor(
 
                     val peakUsageTimeLabel = peakBin?.let {
                         when (range) {
-                            UsageTimeRange.DAY -> "Most used around ${formatHour(it.startTime)}"
-                            UsageTimeRange.WEEK -> "Most used on ${formatDay(it.startTime)}"
+                            UsageTimeRange.DAY -> "Most used around ${FormatUtils.formatTimestamp(it.startTime, "ha")}"
+                            UsageTimeRange.WEEK -> "Most used on ${FormatUtils.formatDayFullName(it.startTime)}"
                         }
                     } ?: "Not used in this period"
 
                     AppDetails(
                         packageName = pkg,
-                        friendlyName = details.first,
-                        icon = details.second,
+                        friendlyName = friendlyName,
                         color = whitelistedApps[pkg] ?: "#808080",
                         totalUsageMillis = totalUsage,
                         usagePercentage = usagePercentage,
@@ -184,46 +177,18 @@ class UsageStatsViewModel @Inject constructor(
         }
     }
 
-    private fun getAppDetails(packageName: String): Pair<String, Drawable?> {
-        return appDetailsCache.getOrPut(packageName) {
+    private fun getAppName(packageName: String): String {
+        return appNameCache.getOrPut(packageName) {
             try {
                 val appInfo = packageManager.getApplicationInfo(packageName, 0)
-                val friendlyName = packageManager.getApplicationLabel(appInfo).toString()
-                val icon = packageManager.getApplicationIcon(packageName)
-                Pair(friendlyName, icon)
+                packageManager.getApplicationLabel(appInfo).toString()
             } catch (_: PackageManager.NameNotFoundException) {
-                Pair(packageName, null)
+                packageName
             }
         }
     }
 
     private fun updateAccessibilityStatus() {
         _isAccessibilityEnabled.value = AccessibilityUtils.isAccessibilityServiceEnabled(context)
-    }
-
-    private fun formatHour(millis: Long): String {
-        val dateTime = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
-        return dateTime.format(DateTimeFormatter.ofPattern("ha", Locale.getDefault()).withLocale(Locale.US))
-    }
-
-    private fun formatHourLabel(millis: Long): String {
-        val dateTime = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
-        val hour = dateTime.hour
-        return when {
-            hour == 0 -> "12a"
-            hour == 12 -> "12p"
-            hour < 12 -> "${hour}a"
-            else -> "${hour - 12}p"
-        }
-    }
-
-    private fun formatDay(millis: Long): String {
-        val dateTime = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
-        return dateTime.format(DateTimeFormatter.ofPattern("EEEE", Locale.getDefault()))
-    }
-
-    private fun formatDayLabel(millis: Long): String {
-        val dateTime = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
-        return dateTime.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
     }
 }

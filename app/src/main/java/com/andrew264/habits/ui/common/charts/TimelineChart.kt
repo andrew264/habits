@@ -21,15 +21,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.model.UserPresenceState
-import com.andrew264.habits.ui.bedtime.toColor
+import com.andrew264.habits.ui.bedtime.components.toColor
+import com.andrew264.habits.ui.common.utils.FormatUtils
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
-import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.util.Date
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
@@ -71,10 +69,6 @@ fun <T> TimelineChart(
     val barOutlineColor = MaterialTheme.colorScheme.outline
     val barBackgroundColor = MaterialTheme.colorScheme.surfaceContainer
     val cornerRadius = CornerRadius(barHeight.value / 3)
-
-    val timeFormatter = remember(labelStrategy.formatterPattern) {
-        SimpleDateFormat(labelStrategy.formatterPattern, Locale.getDefault())
-    }
 
     // Since getColor is now a composable, we need to resolve colors before drawing
     val resolvedColors = segments.map { getColor(it) }
@@ -140,7 +134,7 @@ fun <T> TimelineChart(
 
         while (labelTimeMillis <= viewEndTimeMillis) {
             if (labelTimeMillis >= viewStartTimeMillis) {
-                val labelText = timeFormatter.format(Date(labelTimeMillis)).lowercase()
+                val labelText = FormatUtils.formatTimestamp(labelTimeMillis, labelStrategy.formatterPattern)
                 val textLayoutResult = textMeasurer.measure(text = labelText, style = labelTextStyle)
 
                 val labelX = (labelTimeMillis - viewStartTimeMillis).toFloat() / totalDurationMillis * canvasWidth

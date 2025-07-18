@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import com.andrew264.habits.ui.common.charts.BarChartEntry
 import com.andrew264.habits.ui.common.components.DrawableImage
+import com.andrew264.habits.ui.common.utils.FormatUtils
+import com.andrew264.habits.ui.common.utils.rememberAppIcon
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.ui.usage.AppDetails
@@ -33,8 +35,9 @@ fun AppListItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
     ) {
+        val icon = rememberAppIcon(packageName = appDetails.packageName)
         DrawableImage(
-            drawable = appDetails.icon,
+            drawable = icon,
             contentDescription = "${appDetails.friendlyName} icon",
             modifier = Modifier.size(40.dp)
         )
@@ -61,7 +64,7 @@ fun AppListItem(
             )
         }
         Text(
-            text = formatDuration(appDetails.totalUsageMillis),
+            text = FormatUtils.formatDuration(appDetails.totalUsageMillis),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -74,23 +77,12 @@ fun AppListItem(
     }
 }
 
-private fun formatDuration(millis: Long): String {
-    if (millis <= 0) return "0m"
-    val totalMinutes = millis / 1000 / 60
-    if (totalMinutes < 1) return "<1m"
-    if (totalMinutes < 60) return "${totalMinutes}m"
-    val hours = totalMinutes / 60
-    val minutes = totalMinutes % 60
-    return if (minutes == 0L) "${hours}h" else "${hours}h ${minutes}m"
-}
-
 @Preview(showBackground = true)
 @Composable
 private fun AppListItemPreview() {
     val sampleAppDetails = AppDetails(
         packageName = "com.example.app",
         friendlyName = "Sample Application",
-        icon = null,
         color = "#4CAF50",
         totalUsageMillis = (3600000L * 2) + (60000L * 33),
         usagePercentage = 0.35f,

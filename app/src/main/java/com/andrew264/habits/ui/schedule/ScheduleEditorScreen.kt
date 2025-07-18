@@ -1,4 +1,4 @@
-package com.andrew264.habits.ui.schedule.components
+package com.andrew264.habits.ui.schedule
 
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.Crossfade
@@ -16,15 +16,16 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.andrew264.habits.ui.schedule.ScheduleUiEvent
-import com.andrew264.habits.ui.schedule.ScheduleViewMode
-import com.andrew264.habits.ui.schedule.ScheduleViewModel
+import com.andrew264.habits.model.schedule.DayOfWeek
+import com.andrew264.habits.model.schedule.TimeRange
+import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
+import com.andrew264.habits.ui.schedule.components.GroupedView
+import com.andrew264.habits.ui.schedule.components.PerDayView
 import com.andrew264.habits.ui.theme.Dimens
 import kotlinx.coroutines.flow.collectLatest
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun ScheduleEditorContent(
+fun ScheduleEditorScreen(
     scheduleId: String?,
     snackbarHostState: SnackbarHostState,
     onNavigateUp: () -> Unit,
@@ -32,12 +33,6 @@ fun ScheduleEditorContent(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val perDayRepresentation by viewModel.perDayRepresentation.collectAsState()
-    val view = LocalView.current
-
-    val listState = rememberLazyListState()
-    val expandedFab by remember {
-        derivedStateOf { listState.firstVisibleItemIndex == 0 }
-    }
 
     LaunchedEffect(scheduleId) {
         viewModel.initialize(scheduleId)
@@ -47,10 +42,7 @@ fun ScheduleEditorContent(
         viewModel.uiEvents.collectLatest { event ->
             when (event) {
                 is ScheduleUiEvent.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(
-                        message = event.message,
-                        duration = SnackbarDuration.Short
-                    )
+                    snackbarHostState.showSnackbar(message = event.message, duration = SnackbarDuration.Short)
                 }
 
                 is ScheduleUiEvent.NavigateUp -> {
@@ -60,9 +52,55 @@ fun ScheduleEditorContent(
         }
     }
 
+    ScheduleEditorScreen(
+        uiState = uiState,
+        perDayRepresentation = perDayRepresentation,
+        onSaveSchedule = viewModel::saveSchedule,
+        onSetViewMode = viewModel::setViewMode,
+        onUpdateScheduleName = viewModel::updateScheduleName,
+        onAddGroup = viewModel::addGroup,
+        onUpdateGroupName = viewModel::updateGroupName,
+        onDeleteGroup = viewModel::deleteGroup,
+        onToggleDayInGroup = viewModel::toggleDayInGroup,
+        onAddTimeRangeToGroup = viewModel::addTimeRangeToGroup,
+        onUpdateTimeRangeInGroup = viewModel::updateTimeRangeInGroup,
+        onDeleteTimeRangeFromGroup = viewModel::deleteTimeRangeFromGroup,
+        onAddTimeRangeToDay = viewModel::addTimeRangeToDay,
+        onUpdateTimeRangeInDay = viewModel::updateTimeRangeInDay,
+        onDeleteTimeRangeFromDay = viewModel::deleteTimeRangeFromDay,
+    )
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun ScheduleEditorScreen(
+    uiState: ScheduleEditorUiState,
+    perDayRepresentation: Map<DayOfWeek, List<TimeRange>>,
+    onSaveSchedule: () -> Unit,
+    onSetViewMode: (ScheduleViewMode) -> Unit,
+    onUpdateScheduleName: (String) -> Unit,
+    onAddGroup: () -> Unit,
+    onUpdateGroupName: (groupId: String, newName: String) -> Unit,
+    onDeleteGroup: (groupId: String) -> Unit,
+    onToggleDayInGroup: (groupId: String, day: DayOfWeek) -> Unit,
+    onAddTimeRangeToGroup: (groupId: String, timeRange: TimeRange) -> Unit,
+    onUpdateTimeRangeInGroup: (groupId: String, updatedTimeRange: TimeRange) -> Unit,
+    onDeleteTimeRangeFromGroup: (groupId: String, timeRange: TimeRange) -> Unit,
+    onAddTimeRangeToDay: (day: DayOfWeek, timeRange: TimeRange) -> Unit,
+    onUpdateTimeRangeInDay: (day: DayOfWeek, updatedTimeRange: TimeRange) -> Unit,
+    onDeleteTimeRangeFromDay: (day: DayOfWeek, timeRange: TimeRange) -> Unit,
+) {
+    val view = LocalView.current
+
+    val listState = rememberLazyListState()
+    val expandedFab by remember {
+        derivedStateOf { listState.firstVisibleItemIndex == 0 }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         if (uiState.isLoading) {
-            LoadingState()
+            ContainedLoadingIndicator()
         } else {
             Column(
                 modifier = Modifier
@@ -82,14 +120,14 @@ fun ScheduleEditorContent(
                         // Schedule Name Editor
                         OutlinedTextField(
                             value = uiState.schedule?.name.orEmpty(),
-                            onValueChange = viewModel::updateScheduleName,
+                            onValueChange = onUpdateScheduleName,
                             label = { Text("Schedule Name") },
                             placeholder = { Text("Enter schedule name") },
                             modifier = Modifier.weight(1f),
                             singleLine = true
                         )
                         FilledTonalButton(
-                            onClick = { viewModel.saveSchedule() },
+                            onClick = { onSaveSchedule() },
                             shapes = ButtonDefaults.shapes()
                         ) {
                             Icon(
@@ -119,7 +157,7 @@ fun ScheduleEditorContent(
                                     ToggleButton(
                                         checked = uiState.viewMode == mode,
                                         onCheckedChange = {
-                                            viewModel.setViewMode(mode)
+                                            onSetViewMode(mode)
                                             view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                                         },
                                         shapes = when (index) {
@@ -148,7 +186,7 @@ fun ScheduleEditorContent(
                                             )
                                         },
                                         onClick = {
-                                            viewModel.setViewMode(mode)
+                                            onSetViewMode(mode)
                                             menuState.dismiss()
                                         }
                                     )
@@ -173,12 +211,12 @@ fun ScheduleEditorContent(
                                         schedule = it,
                                         listState = listState,
                                         modifier = Modifier.fillMaxSize(),
-                                        onUpdateGroupName = viewModel::updateGroupName,
-                                        onDeleteGroup = viewModel::deleteGroup,
-                                        onToggleDayInGroup = viewModel::toggleDayInGroup,
-                                        onAddTimeRangeToGroup = viewModel::addTimeRangeToGroup,
-                                        onUpdateTimeRangeInGroup = viewModel::updateTimeRangeInGroup,
-                                        onDeleteTimeRangeFromGroup = viewModel::deleteTimeRangeFromGroup
+                                        onUpdateGroupName = onUpdateGroupName,
+                                        onDeleteGroup = onDeleteGroup,
+                                        onToggleDayInGroup = onToggleDayInGroup,
+                                        onAddTimeRangeToGroup = onAddTimeRangeToGroup,
+                                        onUpdateTimeRangeInGroup = onUpdateTimeRangeInGroup,
+                                        onDeleteTimeRangeFromGroup = onDeleteTimeRangeFromGroup
                                     )
                                 }
                             }
@@ -187,9 +225,9 @@ fun ScheduleEditorContent(
                                 PerDayView(
                                     perDayRepresentation = perDayRepresentation,
                                     modifier = Modifier.fillMaxSize(),
-                                    onAddTimeRangeToDay = viewModel::addTimeRangeToDay,
-                                    onUpdateTimeRangeInDay = viewModel::updateTimeRangeInDay,
-                                    onDeleteTimeRangeFromDay = viewModel::deleteTimeRangeFromDay
+                                    onAddTimeRangeToDay = onAddTimeRangeToDay,
+                                    onUpdateTimeRangeInDay = onUpdateTimeRangeInDay,
+                                    onDeleteTimeRangeFromDay = onDeleteTimeRangeFromDay
                                 )
                             }
                         }
@@ -202,7 +240,7 @@ fun ScheduleEditorContent(
         if (!uiState.isLoading && uiState.viewMode == ScheduleViewMode.GROUPED) {
             ExtendedFloatingActionButton(
                 onClick = {
-                    viewModel.addGroup()
+                    onAddGroup()
                     view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                 },
                 expanded = expandedFab,
@@ -213,15 +251,5 @@ fun ScheduleEditorContent(
                     .padding(Dimens.PaddingLarge)
             )
         }
-    }
-}
-
-@Composable
-private fun LoadingState() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator()
     }
 }

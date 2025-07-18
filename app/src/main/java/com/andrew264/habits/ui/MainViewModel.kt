@@ -1,5 +1,6 @@
 package com.andrew264.habits.ui
 
+import android.Manifest
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -21,7 +22,7 @@ data class MainUiState(
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val handlePermissionResultUseCase: HandlePermissionResultUseCase,
-    settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MainUiState())
@@ -51,14 +52,16 @@ class MainViewModel @Inject constructor(
         _uiState.update { it.copy(destinationRoute = null) }
     }
 
-    fun handlePermissionResults(
-        activityRecognitionGranted: Boolean,
-        notificationsGranted: Boolean
-    ) {
+    fun handlePermissionResults(permissions: Map<String, Boolean>) {
         viewModelScope.launch {
-            // This use case now only cares about the notification permission result,
-            // as activity recognition is handled contextually in the settings screen.
+            val notificationsGranted = permissions[Manifest.permission.POST_NOTIFICATIONS] ?: false
+            val activityRecognitionGranted = permissions[Manifest.permission.ACTIVITY_RECOGNITION] ?: false
+
             handlePermissionResultUseCase.execute(notificationsGranted)
+
+            if (activityRecognitionGranted) {
+                settingsRepository.updateBedtimeTrackingEnabled(true)
+            }
         }
         initialPermissionCheckDone = true
     }

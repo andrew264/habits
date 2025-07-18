@@ -1,29 +1,34 @@
 package com.andrew264.habits.ui.common.charts
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.text.*
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.model.UserPresenceState
-import com.andrew264.habits.ui.bedtime.toColor
+import com.andrew264.habits.ui.bedtime.components.toColor
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.time.*
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
@@ -46,7 +51,7 @@ private const val DAY_START_HOUR = 18 // 6 PM
  * @param rangeInDays The number of days to display on the X-axis.
  * @param modifier The modifier to be applied to the chart.
  */
-@OptIn(ExperimentalTextApi::class)
+@OptIn(ExperimentalTextApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun <T> SleepChart(
     segments: List<T>,
@@ -67,6 +72,27 @@ fun <T> SleepChart(
         processAndGroupSegments(segments, getStartTimeMillis, getEndTimeMillis, getState)
     }
 
+    val flatSegmentsToAnimate = remember(groupedSegments) {
+        groupedSegments.values.flatten()
+    }
+
+    val animationProgress = remember(flatSegmentsToAnimate) {
+        flatSegmentsToAnimate.map { Animatable(0f) }
+    }
+
+    val animationSpec: AnimationSpec<Float> = MaterialTheme.motionScheme.defaultSpatialSpec()
+
+    LaunchedEffect(flatSegmentsToAnimate) {
+        animationProgress.forEach { it.snapTo(0f) }
+        animationProgress.forEachIndexed { index, animatable ->
+            launch {
+                delay(index * 15L)
+                animatable.animateTo(1f, animationSpec)
+            }
+        }
+    }
+
+
     val typography = MaterialTheme.typography
     val axisTextStyle = remember(typography, gridColor) {
         typography.bodySmall.copy(color = gridColor)
@@ -74,6 +100,28 @@ fun <T> SleepChart(
     val yAxisTextStyle = remember(typography, gridColor) {
         typography.bodySmall.copy(color = gridColor, textAlign = TextAlign.End)
     }
+
+    val yAxisLabelInfo = remember(timeFormatter) {
+        val yAxisHours = listOf(18, 22, 2, 6, 10, 14, 18) // 6PM, 10PM, 2AM ... 6PM
+        yAxisHours.mapIndexed { index, hour ->
+            val time = LocalTime.of(hour, 0)
+            YAxisLabelInfo(
+                label = time.format(timeFormatter).lowercase(),
+                positionFraction = index.toFloat() / (yAxisHours.size - 1)
+            )
+        }
+    }
+
+    val dates = remember(rangeInDays) {
+        val today = LocalDate.now(ZoneId.systemDefault())
+        (0 until rangeInDays).map { i ->
+            today.minusDays((rangeInDays - 1) - i.toLong())
+        }
+    }
+    val xAxisLabels = remember(dates) {
+        dates.map { it.dayOfMonth.toString() }
+    }
+
 
     Canvas(modifier = modifier) {
         val yAxisWidth = 50.dp.toPx()
@@ -97,29 +145,23 @@ fun <T> SleepChart(
             1
         }
 
-        drawYAxis(textMeasurer, chartAreaHeight, size.width, yAxisWidth, gridColor, timeFormatter, yAxisTextStyle)
+        drawYAxis(yAxisLabelInfo, yAxisWidth, chartAreaHeight, textMeasurer, yAxisTextStyle, gridColor)
+        drawXAxisWithVerticalGridLines(xAxisLabels, yAxisWidth, chartAreaHeight, dayColumnWidth, textMeasurer, axisTextStyle, gridColor, labelInterval)
 
-        val today = LocalDate.now(ZoneId.systemDefault())
-        for (i in 0 until rangeInDays) {
-            val date = today.minusDays((rangeInDays - 1) - i.toLong())
+        dates.forEachIndexed { i, date ->
             val columnStartX = yAxisWidth + (i * dayColumnWidth)
-
-            // Always draw the grid line for each day
-            drawXAxisGridLine(columnStartX, chartAreaHeight, gridColor)
-
-            // Conditionally draw the text label to prevent overlap
-            if (i % labelInterval == 0) {
-                drawXAxisTextLabel(textMeasurer, date, columnStartX, dayColumnWidth, chartAreaHeight, gridColor, axisTextStyle)
-            }
-
             groupedSegments[date]?.forEach { segment ->
+                val animationIndex = flatSegmentsToAnimate.indexOf(segment)
+                val progress = if (animationIndex != -1) animationProgress[animationIndex].value else 1f
+
                 drawSleepBar(
                     segment = segment,
                     dayColumnX = columnStartX,
                     dayColumnWidth = dayColumnWidth,
                     chartAreaHeight = chartAreaHeight,
                     dayStartMillis = getDisplayDayStartMillis(date),
-                    color = getColorForState(segment.state)
+                    color = getColorForState(segment.state),
+                    animationProgress = progress
                 )
             }
         }
@@ -196,89 +238,14 @@ private fun getDisplayDayStartMillis(date: LocalDate): Long {
     return ldt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 }
 
-@OptIn(ExperimentalTextApi::class)
-private fun DrawScope.drawYAxis(
-    textMeasurer: TextMeasurer,
-    chartHeight: Float,
-    totalWidth: Float,
-    yAxisWidth: Float,
-    gridColor: Color,
-    timeFormatter: DateTimeFormatter,
-    yAxisTextStyle: TextStyle
-) {
-    val pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
-    val yAxisHours = listOf(18, 22, 2, 6, 10, 14, 18) // 6PM, 10PM, 2AM ... 6PM
-
-    yAxisHours.forEachIndexed { index, hour ->
-        val y = (index.toFloat() / (yAxisHours.size - 1)) * chartHeight
-        val time = LocalTime.of(hour, 0)
-        val label = time.format(timeFormatter).lowercase()
-
-        val textLayoutResult = textMeasurer.measure(
-            text = label,
-            style = yAxisTextStyle,
-            constraints = Constraints(maxWidth = yAxisWidth.toInt() - Dimens.PaddingSmall.toPx().toInt())
-        )
-        drawText(
-            textLayoutResult = textLayoutResult,
-            topLeft = Offset(yAxisWidth - textLayoutResult.size.width - Dimens.PaddingSmall.toPx(), y - textLayoutResult.size.height / 2)
-        )
-
-        drawLine(
-            color = gridColor,
-            start = Offset(yAxisWidth, y),
-            end = Offset(totalWidth, y),
-            strokeWidth = 1.dp.toPx(),
-            pathEffect = pathEffect
-        )
-    }
-}
-
-@OptIn(ExperimentalTextApi::class)
-private fun DrawScope.drawXAxisTextLabel(
-    textMeasurer: TextMeasurer,
-    date: LocalDate,
-    columnStartX: Float,
-    columnWidth: Float,
-    chartHeight: Float,
-    gridColor: Color,
-    axisTextStyle: TextStyle
-) {
-    val label = date.dayOfMonth.toString()
-    val textLayoutResult = textMeasurer.measure(
-        text = label,
-        style = axisTextStyle
-    )
-
-    val textX = columnStartX + (columnWidth / 2) - (textLayoutResult.size.width / 2)
-    drawText(
-        textLayoutResult = textLayoutResult,
-        topLeft = Offset(textX, chartHeight + Dimens.PaddingSmall.toPx())
-    )
-}
-
-private fun DrawScope.drawXAxisGridLine(
-    columnStartX: Float,
-    chartHeight: Float,
-    gridColor: Color
-) {
-    // Draw vertical grid line
-    drawLine(
-        color = gridColor,
-        start = Offset(columnStartX, 0f),
-        end = Offset(columnStartX, chartHeight),
-        strokeWidth = 1.dp.toPx(),
-        pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
-    )
-}
-
 private fun DrawScope.drawSleepBar(
     segment: ProcessedSegment,
     dayColumnX: Float,
     dayColumnWidth: Float,
     chartAreaHeight: Float,
     dayStartMillis: Long,
-    color: Color
+    color: Color,
+    animationProgress: Float
 ) {
     val fullDayMillis = TimeUnit.HOURS.toMillis(24)
     val barWidth = dayColumnWidth * 0.6f
@@ -288,7 +255,7 @@ private fun DrawScope.drawSleepBar(
     val endOffsetMillis = segment.endTimeMillis - dayStartMillis
 
     val y = (startOffsetMillis.toFloat() / fullDayMillis) * chartAreaHeight
-    val height = ((endOffsetMillis - startOffsetMillis).toFloat() / fullDayMillis) * chartAreaHeight
+    val height = ((endOffsetMillis - startOffsetMillis).toFloat() / fullDayMillis) * chartAreaHeight * animationProgress
 
     if (height > 0) {
         drawRoundRect(

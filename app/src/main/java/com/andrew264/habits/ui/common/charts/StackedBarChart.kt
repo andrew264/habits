@@ -1,37 +1,40 @@
 package com.andrew264.habits.ui.common.charts
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipPath
-import androidx.compose.ui.text.*
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import com.andrew264.habits.domain.model.UsageTimeBin
-import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.ui.usage.UsageTimeRange
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import kotlin.math.min
 
-@OptIn(ExperimentalTextApi::class)
+@OptIn(ExperimentalTextApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun StackedBarChart(
     bins: List<UsageTimeBin>,
@@ -52,13 +55,64 @@ fun StackedBarChart(
         typography.labelSmall.copy(color = gridColor)
     }
 
+    val animationProgress = remember(bins) {
+        bins.map { Animatable(0f) }
+    }
+    val animationSpec: AnimationSpec<Float> = MaterialTheme.motionScheme.defaultSpatialSpec()
+
+    LaunchedEffect(bins) {
+        animationProgress.forEachIndexed { index, animatable ->
+            launch {
+                delay(index * 20L)
+                animatable.animateTo(
+                    targetValue = 1f,
+                    animationSpec = animationSpec
+                )
+            }
+        }
+    }
+
     val topValue = when (range) {
         UsageTimeRange.DAY -> TimeUnit.HOURS.toMillis(1)
         UsageTimeRange.WEEK -> TimeUnit.HOURS.toMillis(24)
     }
 
     val yAxisLabelCount = 4
-    val yAxisValues = (0..yAxisLabelCount).map { i -> (topValue / yAxisLabelCount) * i }
+    val yAxisLabelInfo = remember(topValue, range) {
+        (0..yAxisLabelCount).map { i ->
+            val value = (topValue / yAxisLabelCount) * i
+            val positionFraction = 1f - (i.toFloat() / yAxisLabelCount)
+            val label = when (range) {
+                UsageTimeRange.DAY -> {
+                    val minutes = value / 60_000
+                    if (minutes > 0) "${minutes}m" else "0"
+                }
+
+                UsageTimeRange.WEEK -> {
+                    val hours = value / 3600_000
+                    if (hours > 0) "${hours}h" else "0"
+                }
+            }
+            YAxisLabelInfo(label, positionFraction)
+        }
+    }
+
+    val xAxisLabels = remember(bins, range) {
+        val formatter = when (range) {
+            UsageTimeRange.DAY -> DateTimeFormatter.ofPattern("ha")
+            UsageTimeRange.WEEK -> DateTimeFormatter.ofPattern("E")
+        }
+        bins.map { bin ->
+            val dateTime = Instant.ofEpochMilli(bin.startTime).atZone(ZoneId.systemDefault())
+            formatter.format(dateTime).let {
+                if (range == UsageTimeRange.DAY) it.lowercase().removeSuffix("m") else it
+            }
+        }
+    }
+    val xAxisLabelInterval = when (range) {
+        UsageTimeRange.DAY -> 6
+        UsageTimeRange.WEEK -> 1
+    }
 
     Canvas(modifier = modifier) {
         val yAxisWidth = 50.dp.toPx()
@@ -72,13 +126,14 @@ fun StackedBarChart(
         val barWidth = barAreaWidth * 0.75f
         val barSpacing = barAreaWidth * 0.25f
 
-        drawYAxis(textMeasurer, yAxisValues, range, yAxisWidth, chartAreaHeight, size.width, gridColor, yAxisTextStyle)
-        drawXAxis(textMeasurer, bins, range, yAxisWidth, barAreaWidth, chartAreaHeight, xAxisTextStyle)
+        drawYAxis(yAxisLabelInfo, yAxisWidth, chartAreaHeight, textMeasurer, yAxisTextStyle, gridColor)
+        drawXAxis(xAxisLabels, yAxisWidth, chartAreaHeight, barAreaWidth, textMeasurer, xAxisTextStyle, gridColor, labelInterval = xAxisLabelInterval, drawAxisLine = false)
+
 
         bins.forEachIndexed { index, bin ->
             if (bin.totalScreenOnTime <= 0) return@forEachIndexed
 
-            val totalBarHeightCapped = (min(bin.totalScreenOnTime, topValue).toFloat() / topValue) * chartAreaHeight
+            val totalBarHeightCapped = (min(bin.totalScreenOnTime, topValue).toFloat() / topValue) * chartAreaHeight * animationProgress[index].value
             if (totalBarHeightCapped <= 0) return@forEachIndexed
 
             val barLeft = yAxisWidth + barSpacing / 2 + index * barAreaWidth
@@ -127,93 +182,6 @@ fun StackedBarChart(
                     )
                 }
             }
-        }
-    }
-}
-
-@OptIn(ExperimentalTextApi::class)
-private fun DrawScope.drawYAxis(
-    textMeasurer: TextMeasurer,
-    yAxisValues: List<Long>,
-    range: UsageTimeRange,
-    yAxisWidth: Float,
-    chartAreaHeight: Float,
-    totalWidth: Float,
-    gridColor: Color,
-    textStyle: TextStyle
-) {
-    val pathEffect = PathEffect.dashPathEffect(floatArrayOf(5f, 5f), 0f)
-    yAxisValues.forEach { value ->
-        val y = chartAreaHeight - (value.toFloat() / yAxisValues.last()) * chartAreaHeight
-
-        val label = when (range) {
-            UsageTimeRange.DAY -> {
-                val minutes = value / 60_000
-                if (minutes > 0) "${minutes}m" else "0"
-            }
-
-            UsageTimeRange.WEEK -> {
-                val hours = value / 3600_000
-                if (hours > 0) "${hours}h" else "0"
-            }
-        }
-
-        val textLayoutResult = textMeasurer.measure(
-            text = label,
-            style = textStyle,
-            constraints = Constraints(maxWidth = yAxisWidth.toInt() - Dimens.PaddingSmall.toPx().toInt())
-        )
-
-        drawText(
-            textLayoutResult = textLayoutResult,
-            topLeft = Offset(yAxisWidth - textLayoutResult.size.width - Dimens.PaddingSmall.toPx(), y - textLayoutResult.size.height / 2)
-        )
-
-        if (value > 0) {
-            drawLine(
-                color = gridColor,
-                start = Offset(yAxisWidth, y),
-                end = Offset(totalWidth, y),
-                strokeWidth = 1.dp.toPx(),
-                pathEffect = pathEffect
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalTextApi::class)
-private fun DrawScope.drawXAxis(
-    textMeasurer: TextMeasurer,
-    bins: List<UsageTimeBin>,
-    range: UsageTimeRange,
-    yAxisWidth: Float,
-    barAreaWidth: Float,
-    chartAreaHeight: Float,
-    textStyle: TextStyle
-) {
-    val formatter = when (range) {
-        UsageTimeRange.DAY -> DateTimeFormatter.ofPattern("ha")
-        UsageTimeRange.WEEK -> DateTimeFormatter.ofPattern("E")
-    }
-
-    val labelInterval = when (range) {
-        UsageTimeRange.DAY -> 6
-        UsageTimeRange.WEEK -> 1
-    }
-
-    bins.forEachIndexed { index, bin ->
-        if (index % labelInterval == 0) {
-            val dateTime = Instant.ofEpochMilli(bin.startTime).atZone(ZoneId.systemDefault())
-            val label = formatter.format(dateTime).let {
-                if (range == UsageTimeRange.DAY) it.lowercase().removeSuffix("m") else it
-            }
-
-            val textLayoutResult = textMeasurer.measure(text = label, style = textStyle)
-            val x = yAxisWidth + index * barAreaWidth + (barAreaWidth / 2) - (textLayoutResult.size.width / 2)
-            drawText(
-                textLayoutResult = textLayoutResult,
-                topLeft = Offset(x, chartAreaHeight + Dimens.PaddingSmall.toPx())
-            )
         }
     }
 }

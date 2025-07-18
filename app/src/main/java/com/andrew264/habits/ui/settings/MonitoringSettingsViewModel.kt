@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class MonitoringSettingsUiState(
-    val settings: PersistentSettings = PersistentSettings(null, false, false, false, 2500, false, 60, 15, null),
+    val settings: PersistentSettings = PersistentSettings(selectedScheduleId = null, isBedtimeTrackingEnabled = false, isAppUsageTrackingEnabled = false, isWaterTrackingEnabled = false, waterDailyTargetMl = 2500, isWaterReminderEnabled = false, waterReminderIntervalMinutes = 60, waterReminderSnoozeMinutes = 15, waterReminderScheduleId = null),
     val isAccessibilityServiceEnabled: Boolean = false
 )
 
@@ -28,8 +28,8 @@ sealed interface MonitoringSettingsEvent {
 class MonitoringSettingsViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val settingsRepository: SettingsRepository,
-    private val startPresenceMonitoringUseCase: StartPresenceMonitoringUseCase,
-    private val stopPresenceMonitoringUseCase: StopPresenceMonitoringUseCase
+    startPresenceMonitoringUseCase: StartPresenceMonitoringUseCase,
+    stopPresenceMonitoringUseCase: StopPresenceMonitoringUseCase
 ) : ViewModel() {
 
     private val _isAccessibilityEnabled = MutableStateFlow(false)
@@ -52,28 +52,32 @@ class MonitoringSettingsViewModel @Inject constructor(
 
     init {
         updateAccessibilityStatus()
+        // Centralize the service start/stop logic here.
+        // This collector reacts to the source of truth (the settings repository).
+        viewModelScope.launch {
+            settingsRepository.settingsFlow
+                .map { it.isBedtimeTrackingEnabled }
+                .distinctUntilChanged()
+                .collect { isEnabled ->
+                    if (isEnabled) {
+                        startPresenceMonitoringUseCase.execute()
+                    } else {
+                        stopPresenceMonitoringUseCase.execute()
+                    }
+                }
+        }
     }
 
     fun onBedtimeTrackingToggled(enable: Boolean) {
         viewModelScope.launch {
             if (enable) {
+                // We don't have the permission yet. Signal the UI to request it.
+                // The actual setting will be updated in MainViewModel after the user responds.
                 _events.emit(MonitoringSettingsEvent.RequestActivityPermission)
             } else {
-                // If turning off, just do it.
-                stopPresenceMonitoringUseCase.execute()
+                // Turning it off requires no permission. Just update the setting.
+                // The collector in init() will handle stopping the service.
                 settingsRepository.updateBedtimeTrackingEnabled(false)
-            }
-        }
-    }
-
-    fun onActivityPermissionResult(granted: Boolean) {
-        viewModelScope.launch {
-            if (granted) {
-                settingsRepository.updateBedtimeTrackingEnabled(true)
-                startPresenceMonitoringUseCase.execute()
-            } else {
-                // The toggle will remain off as the setting was never updated.
-                // Optionally show a snackbar here if desired.
             }
         }
     }

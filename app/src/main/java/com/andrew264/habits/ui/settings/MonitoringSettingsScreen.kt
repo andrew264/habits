@@ -1,11 +1,7 @@
 package com.andrew264.habits.ui.settings
 
-import android.Manifest
 import android.content.Intent
 import android.provider.Settings
-import android.view.HapticFeedbackConstants
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -17,7 +13,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -25,6 +20,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.andrew264.habits.domain.model.PersistentSettings
+import com.andrew264.habits.ui.common.components.SettingsRow
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import kotlinx.coroutines.flow.collectLatest
@@ -33,18 +29,11 @@ import kotlinx.coroutines.flow.collectLatest
 fun MonitoringSettingsScreen(
     modifier: Modifier = Modifier,
     viewModel: MonitoringSettingsViewModel = hiltViewModel(),
-    onRequestPermissions: () -> Unit,
-    onOpenAppSettings: () -> Unit
+    onRequestActivityPermission: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var showAccessibilityDialog by remember { mutableStateOf(false) }
-
-    val activityPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        viewModel.onActivityPermissionResult(isGranted)
-    }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.updateAccessibilityStatus()
@@ -54,7 +43,7 @@ fun MonitoringSettingsScreen(
         viewModel.events.collectLatest { event ->
             when (event) {
                 MonitoringSettingsEvent.RequestActivityPermission -> {
-                    activityPermissionLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)
+                    onRequestActivityPermission()
                 }
 
                 MonitoringSettingsEvent.ShowAccessibilityDialog -> {
@@ -75,7 +64,7 @@ fun MonitoringSettingsScreen(
         )
     }
 
-    MonitoringSettingsScreenContent(
+    MonitoringSettingsScreen(
         modifier = modifier,
         uiState = uiState,
         onBedtimeToggled = viewModel::onBedtimeTrackingToggled,
@@ -91,7 +80,7 @@ fun MonitoringSettingsScreen(
 }
 
 @Composable
-private fun MonitoringSettingsScreenContent(
+private fun MonitoringSettingsScreen(
     modifier: Modifier = Modifier,
     uiState: MonitoringSettingsUiState,
     onBedtimeToggled: (Boolean) -> Unit,
@@ -192,41 +181,6 @@ private fun MonitoringSettingsScreenContent(
     }
 }
 
-@Composable
-private fun SettingsRow(
-    text: String,
-    description: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    enabled: Boolean = true
-) {
-    val view = LocalView.current
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text, style = MaterialTheme.typography.titleMedium)
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Spacer(Modifier.width(Dimens.PaddingLarge))
-        Switch(
-            checked = checked,
-            onCheckedChange = {
-                onCheckedChange(it)
-                val feedback = if (it) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
-                view.performHapticFeedback(feedback)
-            },
-            enabled = enabled
-        )
-    }
-}
-
 @Preview(name = "Settings - All Enabled", showBackground = true)
 @Composable
 private fun MonitoringSettingsScreenAllEnabledPreview() {
@@ -242,7 +196,7 @@ private fun MonitoringSettingsScreenAllEnabledPreview() {
         waterReminderScheduleId = null
     )
     HabitsTheme {
-        MonitoringSettingsScreenContent(
+        MonitoringSettingsScreen(
             uiState = MonitoringSettingsUiState(
                 settings = settings,
                 isAccessibilityServiceEnabled = true
@@ -270,7 +224,7 @@ private fun MonitoringSettingsScreenWarningPreview() {
         waterReminderScheduleId = null
     )
     HabitsTheme {
-        MonitoringSettingsScreenContent(
+        MonitoringSettingsScreen(
             uiState = MonitoringSettingsUiState(
                 settings = settings,
                 isAccessibilityServiceEnabled = false // This triggers the warning

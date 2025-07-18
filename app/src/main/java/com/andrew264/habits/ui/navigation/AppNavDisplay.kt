@@ -32,9 +32,8 @@ fun AppNavDisplay(
     entryDecorators: List<NavEntryDecorator<*>>,
     snackbarHostState: SnackbarHostState,
     onNavigate: (AppRoute) -> Unit,
-    onRequestPermissions: () -> Unit,
-    onOpenAppSettings: () -> Unit,
-    waterHomeViewModel: WaterHomeViewModel
+    waterHomeViewModel: WaterHomeViewModel,
+    onRequestActivityPermission: () -> Unit
 ) {
     NavDisplay(
         backStack = backStack,
@@ -52,23 +51,16 @@ fun AppNavDisplay(
                 }
             }
             entry<Water> {
-                WaterHomeScreen(
-                    viewModel = waterHomeViewModel
-                )
+                WaterHomeScreen(viewModel = waterHomeViewModel)  // TODO: ugh, viewModel here, its disgusting; it is need so the MainScreen can take us here when we interact with water remainder notification
             }
             entry<WaterStats> {
                 WaterStatsScreen()
             }
             entry<Schedules> {
-                SchedulesListDetailScreen(
-                    snackbarHostState = snackbarHostState
-                )
+                SchedulesListDetailScreen(snackbarHostState = snackbarHostState)
             }
             entry<MonitoringSettings> {
-                MonitoringSettingsScreen(
-                    onRequestPermissions = onRequestPermissions,
-                    onOpenAppSettings = onOpenAppSettings
-                )
+                MonitoringSettingsScreen(onRequestActivityPermission = onRequestActivityPermission)
             }
             entry<Usage> {
                 UsageStatsScreen(onNavigate = onNavigate)

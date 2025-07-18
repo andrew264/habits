@@ -15,13 +15,13 @@ import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.model.schedule.ScheduleGroup
 import com.andrew264.habits.model.schedule.TimeRange
+import com.andrew264.habits.ui.common.components.EmptyState
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 
@@ -41,35 +41,12 @@ fun GroupedView(
     val view = LocalView.current
 
     if (schedule.groups.isEmpty()) {
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(Dimens.PaddingLarge),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "No Groups Yet",
-                    style = MaterialTheme.typography.headlineSmall,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = "Tap the 'New Group' button below to add one.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+        EmptyState(
+            modifier = modifier,
+            icon = Icons.Default.Add,
+            title = "No Groups Yet",
+            description = "Groups allow you to apply the same time ranges to multiple days. Tap 'New Group' in the editor to add one."
+        )
     } else {
         LazyColumn(
             state = listState,

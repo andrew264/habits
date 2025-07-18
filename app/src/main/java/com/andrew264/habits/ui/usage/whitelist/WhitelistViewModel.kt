@@ -78,7 +78,7 @@ class WhitelistViewModel @Inject constructor(
             val pm = context.packageManager
             val allApps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
             val appInfos = allApps.mapNotNull { appInfo ->
-                // Ignore our own app and common system packages
+                // Ignore our own app
                 if (appInfo.packageName == context.packageName) {
                     return@mapNotNull null
                 }
@@ -86,11 +86,6 @@ class WhitelistViewModel @Inject constructor(
                 InstalledAppInfo(
                     packageName = appInfo.packageName,
                     friendlyName = appInfo.loadLabel(pm).toString(),
-                    icon = try {
-                        appInfo.loadIcon(pm)
-                    } catch (_: Exception) {
-                        null
-                    },
                     isSystemApp = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
                 )
             }

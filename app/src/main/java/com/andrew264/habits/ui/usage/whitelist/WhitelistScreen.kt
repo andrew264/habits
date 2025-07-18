@@ -13,16 +13,34 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
 import com.andrew264.habits.ui.common.components.DrawableImage
+import com.andrew264.habits.ui.common.utils.rememberAppIcon
 import com.andrew264.habits.ui.theme.Dimens
+import com.andrew264.habits.ui.theme.HabitsTheme
 
 @Composable
-fun WhitelistScreen(
-    viewModel: WhitelistViewModel = hiltViewModel(),
-) {
+fun WhitelistScreen(viewModel: WhitelistViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsState()
+
+    WhitelistScreen(
+        uiState = uiState,
+        onSearchTextChanged = viewModel::onSearchTextChanged,
+        onToggleShowSystemApps = viewModel::onToggleShowSystemApps,
+        onToggleWhitelist = viewModel::onToggleWhitelist
+    )
+}
+
+@Composable
+private fun WhitelistScreen(
+    uiState: WhitelistUiState,
+    onSearchTextChanged: (String) -> Unit,
+    onToggleShowSystemApps: (Boolean) -> Unit,
+    onToggleWhitelist: (app: InstalledAppInfo, isWhitelisted: Boolean) -> Unit
+) {
     val view = LocalView.current
 
     Column(
@@ -33,7 +51,7 @@ fun WhitelistScreen(
         // Search and Filter controls
         OutlinedTextField(
             value = uiState.searchText,
-            onValueChange = viewModel::onSearchTextChanged,
+            onValueChange = onSearchTextChanged,
             label = { Text("Search apps") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             modifier = Modifier
@@ -53,7 +71,7 @@ fun WhitelistScreen(
             Switch(
                 checked = uiState.showSystemApps,
                 onCheckedChange = {
-                    viewModel.onToggleShowSystemApps(it)
+                    onToggleShowSystemApps(it)
                     view.performHapticFeedback(if (it) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF)
                 }
             )
@@ -61,9 +79,7 @@ fun WhitelistScreen(
 
         // App List
         if (uiState.isLoading) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
+            ContainedLoadingIndicator()
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -76,8 +92,9 @@ fun WhitelistScreen(
                         headlineContent = { Text(app.friendlyName) },
                         supportingContent = { Text(app.packageName, style = MaterialTheme.typography.bodySmall) },
                         leadingContent = {
+                            val icon = rememberAppIcon(packageName = app.packageName)
                             DrawableImage(
-                                drawable = app.icon,
+                                drawable = icon,
                                 contentDescription = "${app.friendlyName} icon",
                                 modifier = Modifier.size(40.dp)
                             )
@@ -86,7 +103,7 @@ fun WhitelistScreen(
                             Switch(
                                 checked = isWhitelisted,
                                 onCheckedChange = { _ ->
-                                    viewModel.onToggleWhitelist(app, isWhitelisted)
+                                    onToggleWhitelist(app, isWhitelisted)
                                     view.performHapticFeedback(if (!isWhitelisted) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF)
                                 }
                             )
@@ -95,5 +112,57 @@ fun WhitelistScreen(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun WhitelistScreenPreview() {
+    val sampleApps = listOf(
+        InstalledAppInfo("com.google.android.youtube", "YouTube", false),
+        InstalledAppInfo("com.google.android.gm", "Gmail", false),
+        InstalledAppInfo("com.android.settings", "Settings", true)
+    )
+    val whitelisted = setOf("com.google.android.youtube")
+
+    HabitsTheme {
+        WhitelistScreen(
+            uiState = WhitelistUiState(
+                isLoading = false,
+                searchText = "",
+                showSystemApps = false,
+                apps = sampleApps.filter { !it.isSystemApp },
+                whitelistedPackageNames = whitelisted
+            ),
+            onSearchTextChanged = {},
+            onToggleShowSystemApps = {},
+            onToggleWhitelist = { _, _ -> }
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun WhitelistScreenSystemAppsPreview() {
+    val sampleApps = listOf(
+        InstalledAppInfo("com.google.android.youtube", "YouTube", false),
+        InstalledAppInfo("com.google.android.gm", "Gmail", false),
+        InstalledAppInfo("com.android.settings", "Settings", true)
+    )
+    val whitelisted = setOf("com.google.android.youtube")
+
+    HabitsTheme {
+        WhitelistScreen(
+            uiState = WhitelistUiState(
+                isLoading = false,
+                searchText = "",
+                showSystemApps = true,
+                apps = sampleApps,
+                whitelistedPackageNames = whitelisted
+            ),
+            onSearchTextChanged = {},
+            onToggleShowSystemApps = {},
+            onToggleWhitelist = { _, _ -> }
+        )
     }
 }

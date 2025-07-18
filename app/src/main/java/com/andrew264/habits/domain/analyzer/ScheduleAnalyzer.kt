@@ -3,10 +3,8 @@ package com.andrew264.habits.domain.analyzer
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.ScheduleGroup
 import com.andrew264.habits.model.schedule.TimeRange
+import com.andrew264.habits.ui.common.utils.FormatUtils
 import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 /**
  * A data class to hold the results of the schedule coverage calculation for a full week.
@@ -207,7 +205,7 @@ class ScheduleAnalyzer(groups: List<ScheduleGroup>) {
                 val daysSummary = formatDayGroup(days)
                 val timeSummary = ranges.joinToString(", ") { range ->
                     val overnightIndicator = if (range.toMinuteOfDay < range.fromMinuteOfDay) " (+1d)" else ""
-                    "${formatTime(range.fromMinuteOfDay)} - ${formatTime(range.toMinuteOfDay)}$overnightIndicator"
+                    "${FormatUtils.formatTimeFromMinute(range.fromMinuteOfDay)} - ${FormatUtils.formatTimeFromMinute(range.toMinuteOfDay)}$overnightIndicator"
                 }
                 "$daysSummary: $timeSummary"
             }
@@ -236,41 +234,22 @@ class ScheduleAnalyzer(groups: List<ScheduleGroup>) {
             when {
                 streakStart == streakEnd -> {
                     // Single day
-                    dayStrings.add(streakStart.toShortName())
+                    dayStrings.add(FormatUtils.formatDayOfWeekShort(streakStart))
                 }
 
                 streakEnd.ordinal == streakStart.ordinal + 1 -> {
                     // Streak of 2, e.g., "Mon, Tue"
-                    dayStrings.add(streakStart.toShortName())
-                    dayStrings.add(streakEnd.toShortName())
+                    dayStrings.add(FormatUtils.formatDayOfWeekShort(streakStart))
+                    dayStrings.add(FormatUtils.formatDayOfWeekShort(streakEnd))
                 }
 
                 else -> {
                     // Streak of 3+, e.g., "Mon-Fri"
-                    dayStrings.add("${streakStart.toShortName()}-${streakEnd.toShortName()}")
+                    dayStrings.add("${FormatUtils.formatDayOfWeekShort(streakStart)}-${FormatUtils.formatDayOfWeekShort(streakEnd)}")
                 }
             }
             i = j + 1
         }
         return dayStrings.joinToString(", ")
-    }
-
-    /**
-     * Formats a minute-of-day integer into a 12-hour time string like "9:30 AM" or "8 PM".
-     */
-    private fun formatTime(minuteOfDay: Int): String {
-        if (minuteOfDay < 0 || minuteOfDay >= 24 * 60) return "Invalid Time"
-        val time = LocalTime.ofSecondOfDay(minuteOfDay * 60L)
-        val pattern = if (time.minute == 0) "h a" else "h:mm a"
-        return time.format(DateTimeFormatter.ofPattern(pattern, Locale.getDefault()))
-    }
-
-    /**
-     * Gets a 3-letter, title-cased name for a DayOfWeek, e.g., "Sun".
-     */
-    private fun DayOfWeek.toShortName(): String {
-        return this.name.substring(0, 3).replaceFirstChar {
-            if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-        }
     }
 }

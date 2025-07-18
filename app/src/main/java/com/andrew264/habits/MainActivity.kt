@@ -3,9 +3,7 @@ package com.andrew264.habits
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
-import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -31,10 +29,7 @@ class MainActivity : ComponentActivity() {
 
         permissionHandler =
             PermissionHandler(this) { permissions ->
-                viewModel.handlePermissionResults(
-                    activityRecognitionGranted = permissions[Manifest.permission.ACTIVITY_RECOGNITION] ?: false,
-                    notificationsGranted = permissions[Manifest.permission.POST_NOTIFICATIONS] ?: false
-                )
+                viewModel.handlePermissionResults(permissions)
             }
 
         setContent {
@@ -47,7 +42,9 @@ class MainActivity : ComponentActivity() {
                             permissionHandler.requestPermissions(listOf(pnPermission))
                         }
                     },
-                    onOpenAppSettings = { openAppSettings() }
+                    onRequestActivityPermission = {
+                        permissionHandler.requestPermissions(listOf(Manifest.permission.ACTIVITY_RECOGNITION))
+                    }
                 )
             }
         }
@@ -57,12 +54,5 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         viewModel.handleIntent(intent)
-    }
-
-    private fun openAppSettings() {
-        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-        val uri = Uri.fromParts("package", packageName, null)
-        intent.data = uri
-        startActivity(intent)
     }
 }

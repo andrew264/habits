@@ -21,37 +21,25 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.ui.navigation.sharedAxisXEnter
 import com.andrew264.habits.ui.navigation.sharedAxisXExit
-import com.andrew264.habits.ui.schedule.components.EmptyState
-import com.andrew264.habits.ui.schedule.components.ScheduleEditorContent
-import com.andrew264.habits.ui.schedule.components.ScheduleList
+import com.andrew264.habits.ui.schedule.components.SchedulesListPane
 import com.andrew264.habits.ui.theme.Dimens
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun SchedulesListDetailScreen(
     snackbarHostState: SnackbarHostState,
     viewModel: SchedulesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val scaffoldNavigator = rememberListDetailPaneScaffoldNavigator<ScheduleSelection>()
     val scope = rememberCoroutineScope()
     val view = LocalView.current
 
-    val listState = rememberLazyListState()
-    val expandedFab by remember {
-        derivedStateOf { listState.firstVisibleItemIndex == 0 }
-    }
-
-    val selection = scaffoldNavigator.currentDestination?.contentKey
-
     LaunchedEffect(key1 = true) {
         viewModel.uiEvents.collect { event ->
-            // TODO: snackbar shows up twice (sometimes ?), what is up with another showSnackbar in ScheduleEditorContent ??
             when (event) {
                 is SchedulesUiEvent.ShowSnackbar -> {
                     scope.launch {
@@ -71,6 +59,29 @@ fun SchedulesListDetailScreen(
             }
         }
     }
+
+    SchedulesListDetailScreenContent(
+        uiState = uiState,
+        onDeleteSchedule = viewModel::onDeleteSchedule,
+        snackbarHostState = snackbarHostState
+    )
+}
+
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@Composable
+private fun SchedulesListDetailScreenContent(
+    uiState: SchedulesUiState,
+    onDeleteSchedule: suspend (Schedule) -> Boolean,
+    snackbarHostState: SnackbarHostState
+) {
+    val scaffoldNavigator = rememberListDetailPaneScaffoldNavigator<ScheduleSelection>()
+    val scope = rememberCoroutineScope()
+    val view = LocalView.current
+    val listState = rememberLazyListState()
+    val expandedFab by remember {
+        derivedStateOf { listState.firstVisibleItemIndex == 0 }
+    }
+    val selection = scaffoldNavigator.currentDestination?.contentKey
 
     Scaffold(
         floatingActionButton = {
@@ -102,38 +113,28 @@ fun SchedulesListDetailScreen(
                     enterTransition = sharedAxisXEnter(forward = false),
                     exitTransition = sharedAxisXExit(forward = true)
                 ) {
-                    if (uiState.isLoading) {
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator()
-                        }
-                    } else if (uiState.schedules.isEmpty() && uiState.schedulePendingDeletion == null) {
-                        EmptyState()
-                    } else {
-                        ScheduleList(
-                            schedules = uiState.schedules,
-                            listState = listState,
-                            pendingDeletionId = uiState.schedulePendingDeletion?.id,
-                            onDelete = viewModel::onDeleteSchedule,
-                            onEdit = { scheduleId ->
-                                scope.launch {
-                                    scaffoldNavigator.navigateTo(
-                                        pane = ListDetailPaneScaffoldRole.Detail,
-                                        contentKey = ScheduleSelection(scheduleId)
-                                    )
-                                }
+                    SchedulesListPane(
+                        uiState = uiState,
+                        listState = listState,
+                        onDelete = onDeleteSchedule,
+                        onEdit = { scheduleId ->
+                            scope.launch {
+                                scaffoldNavigator.navigateTo(
+                                    pane = ListDetailPaneScaffoldRole.Detail,
+                                    contentKey = ScheduleSelection(scheduleId)
+                                )
                             }
-                        )
-                    }
+                        }
+                    )
                 }
             },
             detailPane = {
-                // TODO: in here when in a foldable, when the selection is not null and back button/gesture is done, make the selection null first?
                 AnimatedPane(
                     enterTransition = sharedAxisXEnter(forward = true),
                     exitTransition = sharedAxisXExit(forward = false)
                 ) {
                     if (selection != null) {
-                        ScheduleEditorContent(
+                        ScheduleEditorScreen(
                             scheduleId = selection.scheduleId,
                             snackbarHostState = snackbarHostState,
                             onNavigateUp = { scope.launch { scaffoldNavigator.navigateBack() } }
