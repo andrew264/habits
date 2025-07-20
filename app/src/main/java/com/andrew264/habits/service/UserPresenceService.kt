@@ -22,6 +22,7 @@ import com.andrew264.habits.domain.usecase.EvaluateUserPresenceUseCase
 import com.andrew264.habits.domain.usecase.PresenceEvaluationInput
 import com.andrew264.habits.model.UserPresenceState
 import com.andrew264.habits.receiver.SleepReceiver
+import com.andrew264.habits.ui.navigation.Bedtime
 import com.google.android.gms.location.ActivityRecognition
 import com.google.android.gms.location.SleepClassifyEvent
 import com.google.android.gms.location.SleepSegmentEvent
@@ -72,10 +73,7 @@ class UserPresenceService : Service() {
     private var sleepApiPendingIntent: PendingIntent? = null
 
     private val screenStateReceiver = object : BroadcastReceiver() {
-        override fun onReceive(
-            context: Context?,
-            intent: Intent?
-        ) {
+        override fun onReceive(context: Context?, intent: Intent?) {
             val timestamp = System.currentTimeMillis()
             serviceScope.launch {
                 when (intent?.action) {
@@ -116,11 +114,7 @@ class UserPresenceService : Service() {
         }
     }
 
-    override fun onStartCommand(
-        intent: Intent?,
-        flags: Int,
-        startId: Int
-    ): Int {
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(TAG, "onStartCommand with action: ${intent?.action}")
 
         when (intent?.action) {
@@ -195,10 +189,7 @@ class UserPresenceService : Service() {
         stopSelf()
     }
 
-    private fun updateUserPresenceStateInternal(
-        newState: UserPresenceState,
-        reason: String
-    ) {
+    private fun updateUserPresenceStateInternal(newState: UserPresenceState, reason: String) {
         val oldState = currentPresenceState
         if (oldState != newState) {
             userPresenceHistoryRepository.updateUserPresenceState(newState)
@@ -215,14 +206,19 @@ class UserPresenceService : Service() {
 
 
     private fun createNotification(): Notification {
-        val notificationIntent = Intent(this, MainActivity::class.java)
+        val notificationIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("destination_route", Bedtime::class.java.simpleName)
+        }
         val pendingIntentFlags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        val pendingIntent =
-            PendingIntent.getActivity(this, 0, notificationIntent, pendingIntentFlags)
+        // Use a unique request code to prevent collisions with other notifications
+        val pendingIntent = PendingIntent.getActivity(this, Bedtime::class.java.simpleName.hashCode(), notificationIntent, pendingIntentFlags)
 
-        val currentPresenceText = currentPresenceState.name.replace('_', ' ')
-        val baseText = if (isSleepApiAvailable) "Sleep API & Schedule" else "Schedule Only"
-        val contentText = "$baseText Active. State: $currentPresenceText"
+        val contentText = when (currentPresenceState) {
+            UserPresenceState.AWAKE -> "Bedtime tracking active. Current status: Awake."
+            UserPresenceState.SLEEPING -> "Bedtime tracking active. Current status: Sleeping."
+            UserPresenceState.UNKNOWN -> "Bedtime tracking is starting..."
+        }
 
         return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setContentTitle("Habit Tracker")
@@ -261,11 +257,7 @@ class UserPresenceService : Service() {
 
 
     private fun subscribeToSleepUpdates() {
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACTIVITY_RECOGNITION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED) {
             Log.d(TAG, "Subscribing to Sleep API updates.")
             sleepApiPendingIntent = getSleepPendingIntent()
             activityRecognitionClient.requestSleepSegmentUpdates(
