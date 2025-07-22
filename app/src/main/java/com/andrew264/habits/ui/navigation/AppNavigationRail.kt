@@ -104,7 +104,9 @@ private fun AppNavigationRailContent(
                 selected = selected,
                 onClick = {
                     view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                    topLevelBackStack.switchTopLevel(screen)
+                    if (topLevelBackStack.currentTopLevelRoute != screen) {
+                        topLevelBackStack.switchTopLevel(screen)
+                    }
                     if (isCompact) {
                         scope.launch { railState.collapse() }
                     }
