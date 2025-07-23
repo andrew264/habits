@@ -8,7 +8,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,7 +33,9 @@ fun ColorPickerDialog(
 ) {
     val view = LocalView.current
     val focusManager = LocalFocusManager.current
-    val state = remember { ColorPickerState(initialColor) }
+    val state = rememberSaveable(initialColor, saver = ColorPickerState.Saver) {
+        ColorPickerState(initialColor)
+    }
 
     Dialog(onDismissRequest = onDismissRequest) {
         Surface(

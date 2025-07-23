@@ -80,7 +80,7 @@ fun <T> SleepChart(
         flatSegmentsToAnimate.map { Animatable(0f) }
     }
 
-    val animationSpec: AnimationSpec<Float> = MaterialTheme.motionScheme.defaultSpatialSpec()
+    val animationSpec: AnimationSpec<Float> = MaterialTheme.motionScheme.slowSpatialSpec()
 
     LaunchedEffect(flatSegmentsToAnimate) {
         animationProgress.forEach { it.snapTo(0f) }

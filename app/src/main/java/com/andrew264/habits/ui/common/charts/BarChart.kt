@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -52,7 +53,7 @@ fun BarChart(
     }
 
     val textMeasurer = rememberTextMeasurer()
-    var selectedIndex by remember { mutableStateOf<Int?>(null) }
+    var selectedIndex by rememberSaveable { mutableStateOf<Int?>(null) }
 
     val animationProgress = remember(entries) {
         entries.map { Animatable(0f) }
@@ -69,7 +70,7 @@ fun BarChart(
     val xAxisTextStyle = remember(typography, gridColor) {
         typography.bodySmall.copy(color = gridColor)
     }
-    val animationSpec: AnimationSpec<Float> = MaterialTheme.motionScheme.defaultSpatialSpec()
+    val animationSpec: AnimationSpec<Float> = MaterialTheme.motionScheme.slowSpatialSpec()
 
     LaunchedEffect(entries) {
         animationProgress.forEachIndexed { index, animatable ->

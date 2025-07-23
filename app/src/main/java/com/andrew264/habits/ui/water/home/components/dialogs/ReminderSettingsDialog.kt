@@ -6,7 +6,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
@@ -26,10 +30,10 @@ fun ReminderSettingsDialog(
     onDismiss: () -> Unit,
     onSave: (isEnabled: Boolean, interval: String, snooze: String, schedule: Schedule?) -> Unit
 ) {
-    var isEnabled by remember { mutableStateOf(settings.isWaterReminderEnabled) }
-    var interval by remember { mutableStateOf(settings.waterReminderIntervalMinutes.toString()) }
-    var snooze by remember { mutableStateOf(settings.waterReminderSnoozeMinutes.toString()) }
-    var selectedSchedule by remember(settings.waterReminderScheduleId, allSchedules) {
+    var isEnabled by rememberSaveable { mutableStateOf(settings.isWaterReminderEnabled) }
+    var interval by rememberSaveable { mutableStateOf(settings.waterReminderIntervalMinutes.toString()) }
+    var snooze by rememberSaveable { mutableStateOf(settings.waterReminderSnoozeMinutes.toString()) }
+    var selectedSchedule by rememberSaveable(settings.waterReminderScheduleId, allSchedules) {
         mutableStateOf(allSchedules.find { it.id == settings.waterReminderScheduleId })
     }
     val view = LocalView.current

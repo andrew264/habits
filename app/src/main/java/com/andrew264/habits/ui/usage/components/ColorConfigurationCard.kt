@@ -30,7 +30,7 @@ internal fun ColorConfigurationCard(
     }
 
     val view = LocalView.current
-    var hasChanges by remember { mutableStateOf(false) }
+    var hasChanges by rememberSaveable { mutableStateOf(false) }
 
     // Track if color has changed from initial
     LaunchedEffect(colorPickerState.hsvColor) {

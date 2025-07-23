@@ -4,7 +4,11 @@ import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
@@ -21,8 +25,8 @@ fun TargetSettingsDialog(
     onDismiss: () -> Unit,
     onSave: (isEnabled: Boolean, targetMl: String) -> Unit
 ) {
-    var isEnabled by remember { mutableStateOf(settings.isWaterTrackingEnabled) }
-    var targetMl by remember { mutableStateOf(settings.waterDailyTargetMl.toString()) }
+    var isEnabled by rememberSaveable { mutableStateOf(settings.isWaterTrackingEnabled) }
+    var targetMl by rememberSaveable { mutableStateOf(settings.waterDailyTargetMl.toString()) }
     val view = LocalView.current
 
     Dialog(onDismissRequest = onDismiss) {

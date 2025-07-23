@@ -58,7 +58,7 @@ fun StackedBarChart(
     val animationProgress = remember(bins) {
         bins.map { Animatable(0f) }
     }
-    val animationSpec: AnimationSpec<Float> = MaterialTheme.motionScheme.defaultSpatialSpec()
+    val animationSpec: AnimationSpec<Float> = MaterialTheme.motionScheme.slowSpatialSpec()
 
     LaunchedEffect(bins) {
         animationProgress.forEachIndexed { index, animatable ->

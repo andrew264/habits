@@ -1,12 +1,16 @@
 package com.andrew264.habits.ui.common.charts
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.*
@@ -14,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -31,22 +36,8 @@ import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
-/**
- * A generic composable to display a horizontal timeline with colored segments.
- *
- * @param T The type of data for each segment.
- * @param segments The list of data items to render as segments.
- * @param getStartTimeMillis A lambda to extract the start timestamp from a segment item.
- * @param getEndTimeMillis A lambda to extract the end timestamp from a segment item.
- * @param getColor A lambda to determine the color for a segment item.
- * @param viewStartTimeMillis The timestamp for the start of the visible timeline window.
- * @param viewEndTimeMillis The timestamp for the end of the visible timeline window.
- * @param modifier The modifier to be applied to the chart.
- * @param labelStrategy The strategy to use for drawing time labels below the chart.
- * @param barHeight The height of the main timeline bar.
- * @param labelSpacing The vertical space between the timeline bar and the labels.
- * @param tickHeight The height of the small tick marks above the labels.
- */
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun <T> TimelineChart(
     segments: List<T>,
@@ -70,7 +61,19 @@ fun <T> TimelineChart(
     val barBackgroundColor = MaterialTheme.colorScheme.surfaceContainer
     val cornerRadius = CornerRadius(barHeight.value / 3)
 
-    // Since getColor is now a composable, we need to resolve colors before drawing
+    // Animation state
+    val animationProgress = remember { Animatable(0f) }
+    val animationSpec: AnimationSpec<Float> = MaterialTheme.motionScheme.slowSpatialSpec()
+
+    LaunchedEffect(segments) {
+        animationProgress.snapTo(0f)
+        animationProgress.animateTo(
+            targetValue = 1f,
+            animationSpec = animationSpec
+        )
+    }
+
+    // Resolve colors once
     val resolvedColors = segments.map { getColor(it) }
 
     Canvas(modifier = modifier) {
@@ -87,36 +90,39 @@ fun <T> TimelineChart(
             addRoundRect(RoundRect(mainBarRect, cornerRadius))
         }
 
-        // Draw the segments clipped to the rounded shape
+        // Clip the entire drawing area to the rounded rectangle shape
         clipPath(path = roundedRectPath) {
-            // Draw a base background color first. This will be visible for any gaps.
+            // Draw the background track for the timeline
             drawRect(
                 color = barBackgroundColor,
                 topLeft = mainBarRect.topLeft,
                 size = mainBarRect.size
             )
 
-            // Draw the actual segments
-            segments.forEachIndexed { index, segment ->
-                val segmentStartTime = getStartTimeMillis(segment)
-                val segmentEndTime = getEndTimeMillis(segment)
+            // Clip the colored segments to create the wipe animation
+            clipRect(right = size.width * animationProgress.value) {
+                // Draw the colored segments
+                segments.forEachIndexed { index, segment ->
+                    val segmentStartTime = getStartTimeMillis(segment)
+                    val segmentEndTime = getEndTimeMillis(segment)
 
-                val startOffset = max(0L, segmentStartTime - viewStartTimeMillis)
-                val endOffset = segmentEndTime - viewStartTimeMillis
-                val segmentWidth = ((endOffset - startOffset).toFloat() / totalDurationMillis.toFloat()) * canvasWidth
-                val currentX = (startOffset.toFloat() / totalDurationMillis.toFloat()) * canvasWidth
+                    val startOffset = max(0L, segmentStartTime - viewStartTimeMillis)
+                    val endOffset = segmentEndTime - viewStartTimeMillis
+                    val segmentWidth = ((endOffset - startOffset).toFloat() / totalDurationMillis.toFloat()) * canvasWidth
+                    val currentX = (startOffset.toFloat() / totalDurationMillis.toFloat()) * canvasWidth
 
-                if (segmentWidth > 0f) {
-                    drawRect(
-                        color = resolvedColors[index],
-                        topLeft = Offset(currentX, barTopY),
-                        size = Size(segmentWidth, mainBarHeightPx)
-                    )
+                    if (segmentWidth > 0f) {
+                        drawRect(
+                            color = resolvedColors[index],
+                            topLeft = Offset(currentX, barTopY),
+                            size = Size(segmentWidth, mainBarHeightPx)
+                        )
+                    }
                 }
             }
         }
 
-        // Draw the outline over the clipped content
+        // Draw the outline for the timeline bar over everything else
         drawRoundRect(
             color = barOutlineColor,
             topLeft = mainBarRect.topLeft,
@@ -147,7 +153,7 @@ fun <T> TimelineChart(
                 if (canDraw) {
                     drawnLabels.add(textLayoutResult to textX)
 
-                    // Draw tick mark
+                    // Draw tick mark below the bar
                     drawLine(
                         color = tickColor,
                         start = Offset(labelX, barTopY + mainBarHeightPx),
@@ -155,7 +161,7 @@ fun <T> TimelineChart(
                         strokeWidth = 1.dp.toPx()
                     )
 
-                    // Draw text
+                    // Draw the label text
                     drawText(
                         textLayoutResult = textLayoutResult,
                         topLeft = Offset(textX, barTopY + mainBarHeightPx + labelSpacing.toPx() + tickHeight.toPx())
