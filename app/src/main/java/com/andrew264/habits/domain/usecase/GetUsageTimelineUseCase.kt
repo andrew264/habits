@@ -22,10 +22,10 @@ class GetUsageTimelineUseCase @Inject constructor(
         return combine(
             screenHistoryRepository.getScreenEventsInRange(startTime, endTime),
             appUsageRepository.getUsageEventsInRange(startTime, endTime),
-            whitelistRepository.getWhitelistedAppsMap()
+            whitelistRepository.getWhitelistedApps()
         ) { screenEvents, appUsageEvents, whitelistedApps ->
+            val whitelistedAppsMap = whitelistedApps.associate { it.packageName to it.colorHex }
 
-            // 1. Process screen events to find "ON" periods
             val screenOnPeriods = mutableListOf<Pair<Long, Long>>()
             var lastScreenOnTime: Long? = null
             val pickupCount = screenEvents.count { it.eventType == "SCREEN_ON" }
@@ -42,12 +42,12 @@ class GetUsageTimelineUseCase @Inject constructor(
                     }
                 }
             }
-            // If the screen is still on at the end of the range, cap the period
+
             lastScreenOnTime?.let { screenOnPeriods.add(Pair(it, endTime)) }
 
             val totalScreenOnTime = screenOnPeriods.sumOf { it.second - it.first }
 
-            // 2. For each "ON" period, find the app segments within it
+
             val finalPeriods = screenOnPeriods.map { (periodStart, periodEnd) ->
                 val segments = appUsageEvents
                     .filter { it.startTimestamp < periodEnd && (it.endTimestamp ?: Long.MAX_VALUE) > periodStart }
@@ -56,7 +56,7 @@ class GetUsageTimelineUseCase @Inject constructor(
                             packageName = usageEvent.packageName,
                             startTimestamp = maxOf(usageEvent.startTimestamp, periodStart),
                             endTimestamp = minOf(usageEvent.endTimestamp ?: periodEnd, periodEnd),
-                            color = whitelistedApps[usageEvent.packageName]
+                            color = whitelistedAppsMap[usageEvent.packageName]
                         )
                     }
                 ScreenOnPeriod(periodStart, periodEnd, segments)

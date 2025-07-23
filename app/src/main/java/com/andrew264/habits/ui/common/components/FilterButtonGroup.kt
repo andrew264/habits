@@ -56,6 +56,7 @@ fun <T> FilterButtonGroup(
                         onClick = {
                             onOptionSelected(option)
                             menuState.dismiss()
+                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                         }
                     )
                 }

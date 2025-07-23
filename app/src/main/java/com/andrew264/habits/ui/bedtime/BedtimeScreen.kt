@@ -1,5 +1,6 @@
 package com.andrew264.habits.ui.bedtime
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.foundation.layout.*
@@ -21,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -146,6 +148,7 @@ private fun BedtimeMainPane(
 ) {
     val isRefreshing = uiState.isLoading
     val pullToRefreshState = rememberPullToRefreshState()
+    val view = LocalView.current
     val scaleFraction = {
         if (isRefreshing) 1f
         else LinearOutSlowInEasing.transform(pullToRefreshState.distanceFraction).coerceIn(0f, 1f)
@@ -261,7 +264,10 @@ private fun BedtimeMainPane(
 
             if (isSupportingPaneHidden()) {
                 FilledTonalButton(
-                    onClick = onConfigureScheduleClicked,
+                    onClick = {
+                        onConfigureScheduleClicked()
+                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                    },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Configure Sleep Schedule")

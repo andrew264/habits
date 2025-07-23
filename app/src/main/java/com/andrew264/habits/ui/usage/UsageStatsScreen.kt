@@ -2,6 +2,7 @@ package com.andrew264.habits.ui.usage
 
 import android.content.Intent
 import android.provider.Settings
+import android.view.HapticFeedbackConstants
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -26,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -33,10 +35,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.andrew264.habits.ui.common.charts.StackedBarChart
-import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
-import com.andrew264.habits.ui.common.components.EmptyState
-import com.andrew264.habits.ui.common.components.FeatureDisabledContent
-import com.andrew264.habits.ui.common.components.FilterButtonGroup
+import com.andrew264.habits.ui.common.components.*
 import com.andrew264.habits.ui.navigation.*
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.usage.components.AccessibilityWarningCard
@@ -65,7 +64,9 @@ fun UsageStatsScreen(
         onSetTimeRange = viewModel::setTimeRange,
         onRefresh = viewModel::refresh,
         onNavigate = onNavigate,
-        onSetAppColor = viewModel::setAppColor
+        onSetAppColor = viewModel::setAppColor,
+        onSetUsageLimitNotificationsEnabled = viewModel::setUsageLimitNotificationsEnabled,
+        onSaveLimits = { pkg, daily, session -> viewModel.saveAppLimits(pkg, daily, session) }
     )
 }
 
@@ -77,6 +78,8 @@ private fun UsageStatsScreen(
     onRefresh: () -> Unit,
     onNavigate: (AppRoute) -> Unit,
     onSetAppColor: (packageName: String, colorHex: String) -> Unit,
+    onSetUsageLimitNotificationsEnabled: (Boolean) -> Unit,
+    onSaveLimits: (packageName: String, dailyMinutes: Int?, sessionMinutes: Int?) -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -117,6 +120,7 @@ private fun UsageStatsScreen(
                                 }
                             },
                             onNavigateToWhitelist = { onNavigate(Whitelist) },
+                            onSetUsageLimitNotificationsEnabled = onSetUsageLimitNotificationsEnabled,
                             onOpenAccessibilitySettings = {
                                 val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
                                 context.startActivity(intent)
@@ -135,7 +139,8 @@ private fun UsageStatsScreen(
                             if (selectedApp != null) {
                                 UsageDetailScreen(
                                     app = selectedApp,
-                                    onSetAppColor = onSetAppColor
+                                    onSetAppColor = onSetAppColor,
+                                    onSaveLimits = { daily, session -> onSaveLimits(selectedApp.packageName, daily, session) }
                                 )
                             }
                         } else {
@@ -160,10 +165,12 @@ private fun UsageListContent(
     onRefresh: () -> Unit,
     onAppSelected: (AppDetails) -> Unit,
     onNavigateToWhitelist: () -> Unit,
+    onSetUsageLimitNotificationsEnabled: (Boolean) -> Unit,
     onOpenAccessibilitySettings: () -> Unit,
 ) {
     val isRefreshing = uiState.isLoading && uiState.stats != null
     val state = rememberPullToRefreshState()
+    val view = LocalView.current
 
     val scaleFraction = {
         if (isRefreshing) 1f
@@ -181,7 +188,7 @@ private fun UsageListContent(
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(all = Dimens.PaddingLarge),
+            contentPadding = PaddingValues(all = Dimens.PaddingMedium),
             verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
         ) {
             item {
@@ -208,9 +215,23 @@ private fun UsageListContent(
                 }
             }
 
+            if (!uiState.isAccessibilityServiceEnabled) {
+                item {
+                    AnimatedVisibility(visible = uiState.isAppUsageTrackingEnabled && !uiState.isAccessibilityServiceEnabled) {
+                        AccessibilityWarningCard(onOpenAccessibilitySettings)
+                    }
+                }
+            }
+
             item {
-                AnimatedVisibility(visible = uiState.isAppUsageTrackingEnabled && !uiState.isAccessibilityServiceEnabled) {
-                    AccessibilityWarningCard(onOpenAccessibilitySettings)
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    SettingsRow(
+                        modifier = Modifier.padding(Dimens.PaddingLarge),
+                        text = "Enable Limit Notifications",
+                        description = "Get notified when you exceed a daily or session limit for an app.",
+                        checked = uiState.usageLimitNotificationsEnabled,
+                        onCheckedChange = onSetUsageLimitNotificationsEnabled
+                    )
                 }
             }
 
@@ -219,7 +240,7 @@ private fun UsageListContent(
                     StackedBarChart(
                         bins = uiState.stats.timeBins,
                         range = uiState.selectedRange,
-                        whitelistedAppColors = uiState.whitelistedAppColors,
+                        whitelistedAppColors = uiState.whitelistedApps.associate { it.packageName to it.colorHex },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(200.dp)
@@ -229,7 +250,10 @@ private fun UsageListContent(
 
             item {
                 FilledTonalButton(
-                    onClick = onNavigateToWhitelist,
+                    onClick = {
+                        onNavigateToWhitelist()
+                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                    },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(
@@ -256,7 +280,10 @@ private fun UsageListContent(
 
             if (uiState.appDetails.isEmpty() && uiState.stats?.totalUsagePerApp?.isNotEmpty() == true) {
                 item {
-                    Card(modifier = Modifier.fillMaxWidth(), onClick = onNavigateToWhitelist) {
+                    Card(modifier = Modifier.fillMaxWidth(), onClick = {
+                        onNavigateToWhitelist()
+                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                    }) {
                         Text(
                             "No whitelisted apps with usage in this period. Tap 'Manage Whitelisted Apps' to add some.",
                             modifier = Modifier.padding(Dimens.PaddingLarge),
@@ -271,7 +298,10 @@ private fun UsageListContent(
             items(uiState.appDetails, key = { it.packageName }) { app ->
                 AppListItem(
                     appDetails = app,
-                    modifier = Modifier.clickable { onAppSelected(app) }
+                    modifier = Modifier.clickable {
+                        onAppSelected(app)
+                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                    }
                 )
             }
         }

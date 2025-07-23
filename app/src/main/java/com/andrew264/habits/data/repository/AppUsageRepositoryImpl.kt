@@ -6,6 +6,7 @@ import com.andrew264.habits.data.dao.AppUsageEventDao
 import com.andrew264.habits.data.entity.AppUsageEventEntity
 import com.andrew264.habits.domain.model.AppUsageEvent
 import com.andrew264.habits.domain.repository.AppUsageRepository
+import com.andrew264.habits.domain.usecase.CheckUsageLimitsUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -13,12 +14,13 @@ import javax.inject.Singleton
 
 @Singleton
 class AppUsageRepositoryImpl @Inject constructor(
-    private val appUsageEventDao: AppUsageEventDao
+    private val appUsageEventDao: AppUsageEventDao,
+    private val checkUsageLimitsUseCase: CheckUsageLimitsUseCase
 ) : AppUsageRepository {
 
     companion object {
         private const val TAG = "AppUsageRepository"
-        private const val FLICKER_THRESHOLD_MS = 60_000 // 60 seconds
+        private const val FLICKER_THRESHOLD_MS = 60_000
     }
 
     @Transaction
@@ -33,6 +35,12 @@ class AppUsageRepositoryImpl @Inject constructor(
             Log.d(TAG, "No ongoing session. Starting a new one for $packageName.")
             val newEvent = AppUsageEventEntity(packageName = packageName, startTimestamp = timestamp)
             appUsageEventDao.insert(newEvent)
+            checkUsageLimitsUseCase.checkDailyLimit(packageName)
+            return
+        }
+
+        if (lastSession.packageName == packageName) {
+            Log.d(TAG, "New package is same as last. No changes needed.")
             return
         }
 
@@ -40,6 +48,8 @@ class AppUsageRepositoryImpl @Inject constructor(
         appUsageEventDao.update(endedLastSession)
         val lastSessionDuration = endedLastSession.endTimestamp!! - endedLastSession.startTimestamp
         Log.d(TAG, "Ended last session for ${lastSession.packageName}. Duration: ${lastSessionDuration}ms")
+
+        checkUsageLimitsUseCase.checkSessionLimit(lastSession.packageName, lastSessionDuration)
 
         if (lastSessionDuration < FLICKER_THRESHOLD_MS) {
             Log.d(TAG, "Last session was a short flicker. Checking for merge possibility.")
@@ -53,12 +63,16 @@ class AppUsageRepositoryImpl @Inject constructor(
                 return
             } else {
                 Log.d(TAG, "Flicker detected, but not a return to previous app. Proceeding normally.")
+                checkUsageLimitsUseCase.clearSessionNotified(lastSession.packageName)
             }
+        } else {
+            checkUsageLimitsUseCase.clearSessionNotified(lastSession.packageName)
         }
 
         Log.d(TAG, "Inserting new session for $packageName.")
         val newEvent = AppUsageEventEntity(packageName = packageName, startTimestamp = timestamp)
         appUsageEventDao.insert(newEvent)
+        checkUsageLimitsUseCase.checkDailyLimit(packageName)
     }
 
     override suspend fun endCurrentUsageSession(timestamp: Long) {
@@ -67,6 +81,8 @@ class AppUsageRepositoryImpl @Inject constructor(
             if (timestamp > ongoingEvent.startTimestamp) {
                 appUsageEventDao.update(ongoingEvent.copy(endTimestamp = timestamp))
                 Log.d(TAG, "Ended ongoing session for ${ongoingEvent.packageName} at $timestamp")
+                val duration = timestamp - ongoingEvent.startTimestamp
+                checkUsageLimitsUseCase.checkSessionLimit(ongoingEvent.packageName, duration)
             } else {
                 appUsageEventDao.update(ongoingEvent.copy(endTimestamp = ongoingEvent.startTimestamp))
                 Log.w(TAG, "Ended ongoing session with end time before start time. Invalidating session for ${ongoingEvent.packageName}.")

@@ -113,6 +113,7 @@ internal fun ReminderSettingsDialogPreview() {
         selectedScheduleId = null,
         isBedtimeTrackingEnabled = false,
         isAppUsageTrackingEnabled = false,
+        usageLimitNotificationsEnabled = false,
         isWaterTrackingEnabled = true,
         waterDailyTargetMl = 0,
         isWaterReminderEnabled = true,

@@ -3,7 +3,10 @@ package com.andrew264.habits.domain.model
 data class PersistentSettings(
     val selectedScheduleId: String?,
     val isBedtimeTrackingEnabled: Boolean,
+
+    // App Usage Tracking Settings
     val isAppUsageTrackingEnabled: Boolean,
+    val usageLimitNotificationsEnabled: Boolean,
 
     // Water Tracking Settings
     val isWaterTrackingEnabled: Boolean,

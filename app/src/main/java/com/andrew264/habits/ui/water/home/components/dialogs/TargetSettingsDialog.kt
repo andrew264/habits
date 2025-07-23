@@ -85,6 +85,7 @@ internal fun TargetSettingsDialogPreview() {
         selectedScheduleId = null,
         isBedtimeTrackingEnabled = false,
         isAppUsageTrackingEnabled = false,
+        usageLimitNotificationsEnabled = false,
         isWaterTrackingEnabled = true,
         waterDailyTargetMl = 2000,
         isWaterReminderEnabled = false,

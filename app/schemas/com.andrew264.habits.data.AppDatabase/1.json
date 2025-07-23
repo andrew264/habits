@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "976fea4235163550047c5f2effc0944c",
+    "identityHash": "44e9f18e3befb006a3315901be783207",
     "entities": [
       {
         "tableName": "user_presence_history",
@@ -334,7 +334,7 @@
       },
       {
         "tableName": "whitelisted_apps",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`package_name` TEXT NOT NULL, `color_hex` TEXT NOT NULL, PRIMARY KEY(`package_name`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`package_name` TEXT NOT NULL, `color_hex` TEXT NOT NULL, `daily_limit_minutes` INTEGER DEFAULT NULL, `session_limit_minutes` INTEGER DEFAULT NULL, PRIMARY KEY(`package_name`))",
         "fields": [
           {
             "fieldPath": "packageName",
@@ -347,6 +347,18 @@
             "columnName": "color_hex",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "dailyLimitMinutes",
+            "columnName": "daily_limit_minutes",
+            "affinity": "INTEGER",
+            "defaultValue": "NULL"
+          },
+          {
+            "fieldPath": "sessionLimitMinutes",
+            "columnName": "session_limit_minutes",
+            "affinity": "INTEGER",
+            "defaultValue": "NULL"
           }
         ],
         "primaryKey": {
@@ -359,7 +371,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '976fea4235163550047c5f2effc0944c')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '44e9f18e3befb006a3315901be783207')"
     ]
   }
 }

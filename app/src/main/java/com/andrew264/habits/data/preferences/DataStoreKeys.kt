@@ -3,11 +3,19 @@ package com.andrew264.habits.data.preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 
 object DataStoreKeys {
     val SELECTED_SCHEDULE_ID = stringPreferencesKey("selected_schedule_id")
     val BEDTIME_TRACKING_ENABLED = booleanPreferencesKey("bedtime_tracking_enabled")
+
+    // App Usage Tracking Feature
     val APP_USAGE_TRACKING_ENABLED = booleanPreferencesKey("app_usage_tracking_enabled")
+    val USAGE_LIMIT_NOTIFICATIONS_ENABLED = booleanPreferencesKey("usage_limit_notifications_enabled")
+
+    // For tracking daily limit notifications
+    val NOTIFIED_PACKAGES_DATE = stringPreferencesKey("notified_packages_date")
+    val NOTIFIED_PACKAGES_LIST = stringSetPreferencesKey("notified_packages_list")
 
     // Water Tracking Feature
     val WATER_TRACKING_ENABLED = booleanPreferencesKey("water_tracking_enabled")

@@ -2,6 +2,7 @@ package com.andrew264.habits.ui.settings
 
 import android.content.Intent
 import android.provider.Settings
+import android.view.HapticFeedbackConstants
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,6 +15,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -89,6 +91,7 @@ private fun MonitoringSettingsScreen(
     onWaterToggled: (Boolean) -> Unit,
     onOpenAppSettings: () -> Unit,
 ) {
+    val view = LocalView.current
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -97,7 +100,7 @@ private fun MonitoringSettingsScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
     ) {
-        // Feature Toggles Card
+
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(Dimens.PaddingLarge),
@@ -128,7 +131,7 @@ private fun MonitoringSettingsScreen(
                     onCheckedChange = onUsageToggled
                 )
 
-                // Warning message for accessibility service status
+
                 AnimatedVisibility(visible = uiState.settings.isAppUsageTrackingEnabled && !uiState.isAccessibilityServiceEnabled) {
                     Row(
                         modifier = Modifier
@@ -160,7 +163,7 @@ private fun MonitoringSettingsScreen(
             }
         }
 
-        // Permissions Card
+
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(Dimens.PaddingLarge),
@@ -172,7 +175,10 @@ private fun MonitoringSettingsScreen(
                     style = MaterialTheme.typography.titleLarge
                 )
                 Button(
-                    onClick = onOpenAppSettings,
+                    onClick = {
+                        onOpenAppSettings()
+                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                    },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Open App Info")
@@ -189,6 +195,7 @@ private fun MonitoringSettingsScreenAllEnabledPreview() {
         selectedScheduleId = null,
         isBedtimeTrackingEnabled = true,
         isAppUsageTrackingEnabled = true,
+        usageLimitNotificationsEnabled = true,
         isWaterTrackingEnabled = true,
         waterDailyTargetMl = 2500,
         isWaterReminderEnabled = true,
@@ -217,6 +224,7 @@ private fun MonitoringSettingsScreenWarningPreview() {
         selectedScheduleId = null,
         isBedtimeTrackingEnabled = true,
         isAppUsageTrackingEnabled = true,
+        usageLimitNotificationsEnabled = true,
         isWaterTrackingEnabled = true,
         waterDailyTargetMl = 2500,
         isWaterReminderEnabled = true,
@@ -228,7 +236,7 @@ private fun MonitoringSettingsScreenWarningPreview() {
         MonitoringSettingsScreen(
             uiState = MonitoringSettingsUiState(
                 settings = settings,
-                isAccessibilityServiceEnabled = false // This triggers the warning
+                isAccessibilityServiceEnabled = false
             ),
             onBedtimeToggled = {},
             onUsageToggled = {},

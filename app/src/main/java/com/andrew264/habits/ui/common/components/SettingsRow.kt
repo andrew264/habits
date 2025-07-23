@@ -14,6 +14,7 @@ import com.andrew264.habits.ui.theme.Dimens
 
 @Composable
 fun SettingsRow(
+    modifier: Modifier = Modifier,
     text: String,
     description: String,
     checked: Boolean,
@@ -22,9 +23,9 @@ fun SettingsRow(
 ) {
     val view = LocalView.current
     Row(
+        modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(text, style = MaterialTheme.typography.titleMedium)

@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andrew264.habits.domain.model.UsageStatistics
 import com.andrew264.habits.domain.model.UsageTimeBin
+import com.andrew264.habits.domain.model.WhitelistedApp
 import com.andrew264.habits.domain.repository.SettingsRepository
 import com.andrew264.habits.domain.repository.WhitelistRepository
 import com.andrew264.habits.domain.usecase.GetUsageStatisticsUseCase
@@ -23,6 +24,8 @@ data class AppDetails(
     val packageName: String,
     val friendlyName: String,
     val color: String,
+    val dailyLimitMinutes: Int?,
+    val sessionLimitMinutes: Int?,
     val totalUsageMillis: Long,
     val usagePercentage: Float,
     val sessionCount: Int,
@@ -34,10 +37,11 @@ data class AppDetails(
 data class UsageStatsUiState(
     val isLoading: Boolean = true,
     val isAppUsageTrackingEnabled: Boolean = true,
+    val usageLimitNotificationsEnabled: Boolean = false,
     val isAccessibilityServiceEnabled: Boolean = false,
     val selectedRange: UsageTimeRange = UsageTimeRange.DAY,
     val stats: UsageStatistics? = null,
-    val whitelistedAppColors: Map<String, String> = emptyMap(),
+    val whitelistedApps: List<WhitelistedApp> = emptyList(),
     val appDetails: List<AppDetails> = emptyList(),
     val averageSessionMillis: Long = 0
 )
@@ -48,7 +52,7 @@ class UsageStatsViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val getUsageStatisticsUseCase: GetUsageStatisticsUseCase,
     private val whitelistRepository: WhitelistRepository,
-    settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val packageManager = context.packageManager
@@ -64,26 +68,40 @@ class UsageStatsViewModel @Inject constructor(
         refreshTrigger,
         _isAccessibilityEnabled
     ) { settings, range, _, isAccessibilityEnabled ->
-        Triple(settings, range, isAccessibilityEnabled)
-    }.flatMapLatest { (settings, range, isAccessibilityEnabled) ->
+        object {
+            val settings = settings
+            val range = range
+            val isAccessibilityEnabled = isAccessibilityEnabled
+        }
+    }.flatMapLatest { flowParams ->
+        val settings = flowParams.settings
+        val range = flowParams.range
+        val isAccessibilityEnabled = flowParams.isAccessibilityEnabled
+
         if (!settings.isAppUsageTrackingEnabled) {
             flowOf(
                 UsageStatsUiState(
                     isLoading = false,
                     isAppUsageTrackingEnabled = false,
-                    isAccessibilityServiceEnabled = isAccessibilityEnabled
+                    isAccessibilityServiceEnabled = isAccessibilityEnabled,
+                    usageLimitNotificationsEnabled = settings.usageLimitNotificationsEnabled
                 )
             )
         } else {
             combine(
                 getUsageStatisticsUseCase.execute(range),
-                whitelistRepository.getWhitelistedAppsMap(),
+                whitelistRepository.getWhitelistedApps(),
             ) { stats, whitelistedApps ->
                 val allAppUsage = stats.totalUsagePerApp
-                val appListSource = if (whitelistedApps.isEmpty()) allAppUsage.keys else whitelistedApps.keys
+                val appListSource = if (whitelistedApps.isEmpty()) allAppUsage.keys else whitelistedApps.map { it.packageName }
 
-                val appDetails = appListSource.map { pkg ->
+                val appDetails = appListSource.mapNotNull { pkg ->
+                    val whitelistedApp = whitelistedApps.find { it.packageName == pkg }
                     val totalUsage = allAppUsage[pkg] ?: 0L
+
+                    // If no whitelist, show all apps. If whitelist, only show apps on it.
+                    if (whitelistedApps.isNotEmpty() && whitelistedApp == null) return@mapNotNull null
+
                     val friendlyName = getAppName(pkg)
                     val sessionCount = stats.timeBins.count { it.appUsage.containsKey(pkg) }
                     val usagePercentage = if (stats.totalScreenOnTime > 0) totalUsage.toFloat() / stats.totalScreenOnTime.toFloat() else 0f
@@ -118,7 +136,9 @@ class UsageStatsViewModel @Inject constructor(
                     AppDetails(
                         packageName = pkg,
                         friendlyName = friendlyName,
-                        color = whitelistedApps[pkg] ?: "#808080",
+                        color = whitelistedApp?.colorHex ?: "#808080",
+                        dailyLimitMinutes = whitelistedApp?.dailyLimitMinutes,
+                        sessionLimitMinutes = whitelistedApp?.sessionLimitMinutes,
                         totalUsageMillis = totalUsage,
                         usagePercentage = usagePercentage,
                         sessionCount = sessionCount,
@@ -139,9 +159,10 @@ class UsageStatsViewModel @Inject constructor(
                     isLoading = false,
                     isAppUsageTrackingEnabled = true,
                     isAccessibilityServiceEnabled = isAccessibilityEnabled,
+                    usageLimitNotificationsEnabled = settings.usageLimitNotificationsEnabled,
                     selectedRange = range,
                     stats = stats,
-                    whitelistedAppColors = whitelistedApps,
+                    whitelistedApps = whitelistedApps,
                     appDetails = appDetails,
                     averageSessionMillis = averageSessionMillis
                 )
@@ -168,12 +189,30 @@ class UsageStatsViewModel @Inject constructor(
         refreshTrigger.value++
     }
 
+    fun setUsageLimitNotificationsEnabled(isEnabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updateUsageLimitNotificationsEnabled(isEnabled)
+        }
+    }
+
+    fun saveAppLimits(packageName: String, dailyLimit: Int?, sessionLimit: Int?) {
+        viewModelScope.launch {
+            val app = uiState.value.whitelistedApps.find { it.packageName == packageName } ?: return@launch
+            val updatedApp = app.copy(
+                dailyLimitMinutes = dailyLimit,
+                sessionLimitMinutes = sessionLimit
+            )
+            whitelistRepository.updateWhitelistedApp(updatedApp)
+        }
+    }
+
     fun setAppColor(
         packageName: String,
         colorHex: String
     ) {
         viewModelScope.launch {
-            whitelistRepository.whitelistApp(packageName, colorHex)
+            val app = uiState.value.whitelistedApps.find { it.packageName == packageName } ?: return@launch
+            whitelistRepository.updateWhitelistedApp(app.copy(colorHex = colorHex))
         }
     }
 

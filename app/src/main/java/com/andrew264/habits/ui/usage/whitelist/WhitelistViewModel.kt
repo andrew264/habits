@@ -5,6 +5,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.andrew264.habits.domain.model.WhitelistedApp
 import com.andrew264.habits.domain.repository.WhitelistRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -45,12 +46,14 @@ class WhitelistViewModel @Inject constructor(
             val allApps = allApps
             val isLoading = isLoading
         }
-    }.combine(whitelistRepository.getWhitelistedAppsMap()) { fourFlowsResult, whitelistedMap ->
+    }.combine(whitelistRepository.getWhitelistedApps()) { fourFlowsResult, whitelistedApps ->
+        val whitelistedPackageNames = whitelistedApps.map { it.packageName }.toSet()
+
         val filteredApps = fourFlowsResult.allApps.filter { appInfo ->
             (fourFlowsResult.showSystemApps || !appInfo.isSystemApp) &&
                     (fourFlowsResult.searchText.isBlank() || appInfo.friendlyName.contains(fourFlowsResult.searchText, ignoreCase = true))
         }.sortedWith(
-            compareBy<InstalledAppInfo> { !whitelistedMap.containsKey(it.packageName) }
+            compareBy<InstalledAppInfo> { !whitelistedPackageNames.contains(it.packageName) }
                 .thenBy { it.friendlyName.lowercase() }
         )
 
@@ -59,7 +62,7 @@ class WhitelistViewModel @Inject constructor(
             searchText = fourFlowsResult.searchText,
             showSystemApps = fourFlowsResult.showSystemApps,
             apps = filteredApps,
-            whitelistedPackageNames = whitelistedMap.keys
+            whitelistedPackageNames = whitelistedPackageNames
         )
     }.stateIn(
         scope = viewModelScope,
@@ -78,7 +81,6 @@ class WhitelistViewModel @Inject constructor(
             val pm = context.packageManager
             val allApps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
             val appInfos = allApps.mapNotNull { appInfo ->
-                // Ignore our own app
                 if (appInfo.packageName == context.packageName) {
                     return@mapNotNull null
                 }
@@ -110,8 +112,13 @@ class WhitelistViewModel @Inject constructor(
             if (isCurrentlyWhitelisted) {
                 whitelistRepository.unWhitelistApp(app.packageName)
             } else {
-                val assignedColor = assignColorForPackage(app.packageName)
-                whitelistRepository.whitelistApp(app.packageName, assignedColor)
+                val newWhitelistedApp = WhitelistedApp(
+                    packageName = app.packageName,
+                    colorHex = assignColorForPackage(app.packageName),
+                    dailyLimitMinutes = null,
+                    sessionLimitMinutes = null
+                )
+                whitelistRepository.updateWhitelistedApp(newWhitelistedApp)
             }
         }
     }

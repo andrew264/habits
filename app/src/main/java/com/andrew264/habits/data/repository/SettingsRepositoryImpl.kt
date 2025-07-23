@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -33,10 +34,12 @@ class SettingsRepositoryImpl @Inject constructor(@param:ApplicationContext priva
         .map { preferences ->
             val selectedScheduleId = preferences[DataStoreKeys.SELECTED_SCHEDULE_ID]
             val isBedtimeTrackingEnabled = preferences[DataStoreKeys.BEDTIME_TRACKING_ENABLED] ?: false
+
+            // Usage
             val isAppUsageTrackingEnabled = preferences[DataStoreKeys.APP_USAGE_TRACKING_ENABLED] ?: false
+            val usageLimitNotificationsEnabled = preferences[DataStoreKeys.USAGE_LIMIT_NOTIFICATIONS_ENABLED] ?: false
 
-
-            // Water Tracking Settings
+            // Water
             val isWaterTrackingEnabled = preferences[DataStoreKeys.WATER_TRACKING_ENABLED] ?: false
             val waterDailyTargetMl = preferences[DataStoreKeys.WATER_DAILY_TARGET_ML] ?: 2500
             val isWaterReminderEnabled = preferences[DataStoreKeys.WATER_REMINDER_ENABLED] ?: false
@@ -49,6 +52,7 @@ class SettingsRepositoryImpl @Inject constructor(@param:ApplicationContext priva
                 selectedScheduleId = selectedScheduleId,
                 isBedtimeTrackingEnabled = isBedtimeTrackingEnabled,
                 isAppUsageTrackingEnabled = isAppUsageTrackingEnabled,
+                usageLimitNotificationsEnabled = usageLimitNotificationsEnabled,
                 isWaterTrackingEnabled = isWaterTrackingEnabled,
                 waterDailyTargetMl = waterDailyTargetMl,
                 isWaterReminderEnabled = isWaterReminderEnabled,
@@ -80,7 +84,12 @@ class SettingsRepositoryImpl @Inject constructor(@param:ApplicationContext priva
         }
     }
 
-    // --- Water Tracking Settings Updaters ---
+    override suspend fun updateUsageLimitNotificationsEnabled(isEnabled: Boolean) {
+        context.dataStore.edit { settings ->
+            settings[DataStoreKeys.USAGE_LIMIT_NOTIFICATIONS_ENABLED] = isEnabled
+        }
+    }
+
 
     override suspend fun updateWaterTrackingEnabled(isEnabled: Boolean) {
         context.dataStore.edit { settings ->
@@ -115,6 +124,32 @@ class SettingsRepositoryImpl @Inject constructor(@param:ApplicationContext priva
     override suspend fun updateWaterReminderSchedule(scheduleId: String) {
         context.dataStore.edit { settings ->
             settings[DataStoreKeys.WATER_REMINDER_SCHEDULE_ID] = scheduleId
+        }
+    }
+
+    override fun getNotifiedDailyPackages(): Flow<Set<String>> {
+        return context.dataStore.data.map { preferences ->
+            val today = LocalDate.now().toString()
+            val storedDate = preferences[DataStoreKeys.NOTIFIED_PACKAGES_DATE]
+            if (today == storedDate) {
+                preferences[DataStoreKeys.NOTIFIED_PACKAGES_LIST] ?: emptySet()
+            } else {
+                emptySet()
+            }
+        }
+    }
+
+    override suspend fun addNotifiedDailyPackage(packageName: String) {
+        context.dataStore.edit { settings ->
+            val today = LocalDate.now().toString()
+            val storedDate = settings[DataStoreKeys.NOTIFIED_PACKAGES_DATE]
+            val currentSet = if (today == storedDate) {
+                settings[DataStoreKeys.NOTIFIED_PACKAGES_LIST] ?: emptySet()
+            } else {
+                emptySet()
+            }
+            settings[DataStoreKeys.NOTIFIED_PACKAGES_DATE] = today
+            settings[DataStoreKeys.NOTIFIED_PACKAGES_LIST] = currentSet + packageName
         }
     }
 }

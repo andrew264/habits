@@ -127,7 +127,10 @@ private fun ScheduleEditorScreen(
                             singleLine = true
                         )
                         FilledTonalButton(
-                            onClick = { onSaveSchedule() },
+                            onClick = {
+                                onSaveSchedule()
+                                view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                            },
                             shapes = ButtonDefaults.shapes()
                         ) {
                             Icon(
@@ -188,6 +191,7 @@ private fun ScheduleEditorScreen(
                                         onClick = {
                                             onSetViewMode(mode)
                                             menuState.dismiss()
+                                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                                         }
                                     )
                                 }
@@ -196,7 +200,7 @@ private fun ScheduleEditorScreen(
                     }
                 }
 
-                // Content with smooth transitions
+
                 Box(
                     modifier = Modifier.weight(1f)
                 ) {
@@ -236,7 +240,7 @@ private fun ScheduleEditorScreen(
             }
         }
 
-        // FAB for adding a new group, scoped to this editor content
+
         if (!uiState.isLoading && uiState.viewMode == ScheduleViewMode.GROUPED) {
             ExtendedFloatingActionButton(
                 onClick = {

@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class MonitoringSettingsUiState(
-    val settings: PersistentSettings = PersistentSettings(selectedScheduleId = null, isBedtimeTrackingEnabled = false, isAppUsageTrackingEnabled = false, isWaterTrackingEnabled = false, waterDailyTargetMl = 2500, isWaterReminderEnabled = false, waterReminderIntervalMinutes = 60, waterReminderSnoozeMinutes = 15, waterReminderScheduleId = null),
+    val settings: PersistentSettings = PersistentSettings(selectedScheduleId = null, isBedtimeTrackingEnabled = false, isAppUsageTrackingEnabled = false, isWaterTrackingEnabled = false, usageLimitNotificationsEnabled = false, waterDailyTargetMl = 2500, isWaterReminderEnabled = false, waterReminderIntervalMinutes = 60, waterReminderSnoozeMinutes = 15, waterReminderScheduleId = null),
     val isAccessibilityServiceEnabled: Boolean = false
 )
 
