@@ -4,6 +4,7 @@ import android.view.HapticFeedbackConstants
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -24,7 +25,10 @@ import com.andrew264.habits.domain.analyzer.ScheduleAnalyzer
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.model.schedule.ScheduleGroup
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.theme.Dimens
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -36,7 +40,6 @@ internal fun ScheduleListItem(
     onDelete: suspend () -> Boolean,
     onEdit: () -> Unit
 ) {
-    val view = LocalView.current
     val scope = rememberCoroutineScope()
     val animationSpec = MaterialTheme.motionScheme.fastSpatialSpec<IntSize>()
 
@@ -48,11 +51,24 @@ internal fun ScheduleListItem(
         )
     ) {
         val dismissState = rememberSwipeToDismissBoxState()
+        val view = LocalView.current
 
-        LaunchedEffect(dismissState.targetValue) {
-            if (dismissState.targetValue != SwipeToDismissBoxValue.Settled) {
-                view.performHapticFeedback(HapticFeedbackConstants.GESTURE_THRESHOLD_ACTIVATE)
-            }
+        LaunchedEffect(dismissState) {
+            var wasBeyondThreshold = dismissState.targetValue != SwipeToDismissBoxValue.Settled
+            snapshotFlow { dismissState.targetValue }
+                .map { it != SwipeToDismissBoxValue.Settled }
+                .distinctUntilChanged()
+                .collect { isBeyondThreshold ->
+                    if (isBeyondThreshold) {
+                        view.performHapticFeedback(HapticFeedbackConstants.GESTURE_THRESHOLD_ACTIVATE)
+                    } else {
+                        // Only trigger deactivate if we were previously beyond the threshold
+                        if (wasBeyondThreshold) {
+                            view.performHapticFeedback(HapticFeedbackConstants.GESTURE_THRESHOLD_DEACTIVATE)
+                        }
+                    }
+                    wasBeyondThreshold = isBeyondThreshold
+                }
         }
 
         SwipeToDismissBox(
@@ -78,7 +94,7 @@ internal fun ScheduleListItem(
                         }
                     }
 
-                    SwipeToDismissBoxValue.Settled -> { /* Do nothing */
+                    SwipeToDismissBoxValue.Settled -> {
                     }
                 }
             },
@@ -127,12 +143,12 @@ internal fun ScheduleListItem(
             val analyzer = remember(schedule.groups) { ScheduleAnalyzer(schedule.groups) }
             val summary = remember(analyzer) { analyzer.createSummary() }
             val coverage = remember(analyzer) { analyzer.calculateCoverage() }
+            val interactionSource = remember { MutableInteractionSource() }
+            HapticInteractionEffect(interactionSource)
 
             Card(
-                onClick = {
-                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                    onEdit()
-                },
+                onClick = onEdit,
+                interactionSource = interactionSource,
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium
             ) {
@@ -199,7 +215,7 @@ internal fun ScheduleListItemPreview() {
                 name = "Weekdays",
                 days = setOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY),
                 timeRanges = listOf(
-                    com.andrew264.habits.model.schedule.TimeRange(fromMinuteOfDay = 9 * 60, toMinuteOfDay = 17 * 60) // 9 AM to 5 PM
+                    com.andrew264.habits.model.schedule.TimeRange(fromMinuteOfDay = 9 * 60, toMinuteOfDay = 17 * 60)
                 )
             )
         )

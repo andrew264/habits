@@ -1,6 +1,7 @@
 package com.andrew264.habits.ui.schedule.components
 
 import android.view.HapticFeedbackConstants
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -12,6 +13,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
@@ -22,6 +24,7 @@ import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.model.schedule.ScheduleGroup
 import com.andrew264.habits.model.schedule.TimeRange
 import com.andrew264.habits.ui.common.components.EmptyState
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 
@@ -64,7 +67,7 @@ fun GroupedView(
                         modifier = Modifier.padding(20.dp),
                         verticalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
                     ) {
-                        // Header Section
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
@@ -77,12 +80,14 @@ fun GroupedView(
                                 modifier = Modifier.weight(1f),
                                 singleLine = true
                             )
-
+                            val deleteInteractionSource = remember { MutableInteractionSource() }
+                            HapticInteractionEffect(deleteInteractionSource)
                             IconButton(
                                 onClick = {
                                     onDeleteGroup(group.id)
                                     view.performHapticFeedback(HapticFeedbackConstants.REJECT)
                                 },
+                                interactionSource = deleteInteractionSource,
                                 shapes = IconButtonDefaults.shapes()
                             ) {
                                 Icon(
@@ -93,13 +98,13 @@ fun GroupedView(
                             }
                         }
 
-                        // Day Selector
+
                         DaySelector(
                             selectedDays = group.days,
                             onDayClick = { day -> onToggleDayInGroup(group.id, day) }
                         )
 
-                        // Time Ranges Section
+
                         if (group.timeRanges.isNotEmpty()) {
                             Column(
                                 modifier = Modifier.padding(Dimens.PaddingSmall),
@@ -125,12 +130,13 @@ fun GroupedView(
                             }
                         }
 
-                        // Add Time Button
+                        val addTimeRangeInteractionSource = remember { MutableInteractionSource() }
+                        HapticInteractionEffect(addTimeRangeInteractionSource)
                         FilledTonalButton(
                             onClick = {
                                 onAddTimeRangeToGroup(group.id, TimeRange(fromMinuteOfDay = 540, toMinuteOfDay = 600))
-                                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                             },
+                            interactionSource = addTimeRangeInteractionSource,
                             modifier = Modifier.align(Alignment.End),
                             shapes = ButtonDefaults.shapes()
                         ) {
@@ -164,8 +170,8 @@ fun GroupedViewPreview() {
                         name = "Weekdays",
                         days = setOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY),
                         timeRanges = listOf(
-                            TimeRange(fromMinuteOfDay = 480, toMinuteOfDay = 540), // 8:00 - 9:00
-                            TimeRange(fromMinuteOfDay = 600, toMinuteOfDay = 660)  // 10:00 - 11:00
+                            TimeRange(fromMinuteOfDay = 480, toMinuteOfDay = 540),
+                            TimeRange(fromMinuteOfDay = 600, toMinuteOfDay = 660)
                         )
                     ),
                     ScheduleGroup(
@@ -173,7 +179,7 @@ fun GroupedViewPreview() {
                         name = "Weekends",
                         days = setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY),
                         timeRanges = listOf(
-                            TimeRange(fromMinuteOfDay = 720, toMinuteOfDay = 780) // 12:00 - 13:00
+                            TimeRange(fromMinuteOfDay = 720, toMinuteOfDay = 780)
                         )
                     )
                 )

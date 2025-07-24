@@ -1,27 +1,25 @@
 package com.andrew264.habits.ui.usage.components
 
-import android.view.HapticFeedbackConstants
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.ui.common.color_picker.ColorPickerDialog
 import com.andrew264.habits.ui.common.color_picker.utils.toColorOrNull
 import com.andrew264.habits.ui.common.color_picker.utils.toHexCode
 import com.andrew264.habits.ui.common.dialogs.DurationPickerDialog
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.common.utils.FormatUtils
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.usage.AppDetails
@@ -73,7 +71,6 @@ private fun LimitSettingsRow(
     onSaveLimit: (Int?) -> Unit
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
-    val view = LocalView.current
 
     if (showDialog) {
         DurationPickerDialog(
@@ -88,12 +85,17 @@ private fun LimitSettingsRow(
         )
     }
 
+    val interactionSource = remember { MutableInteractionSource() }
+    HapticInteractionEffect(interactionSource)
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
+            .clickable(
+                interactionSource = interactionSource,
+                indication = LocalIndication.current
+            ) {
                 showDialog = true
-                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
             }
             .padding(vertical = Dimens.PaddingMedium)
     ) {
@@ -114,7 +116,6 @@ private fun ColorSettingsRow(
     onSetAppColor: (packageName: String, colorHex: String) -> Unit
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
-    val view = LocalView.current
 
     if (showDialog) {
         ColorPickerDialog(
@@ -129,12 +130,17 @@ private fun ColorSettingsRow(
         )
     }
 
+    val interactionSource = remember { MutableInteractionSource() }
+    HapticInteractionEffect(interactionSource)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
+            .clickable(
+                interactionSource = interactionSource,
+                indication = LocalIndication.current
+            ) {
                 showDialog = true
-                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
             }
             .padding(vertical = Dimens.PaddingMedium),
         verticalAlignment = Alignment.CenterVertically,

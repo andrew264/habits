@@ -2,6 +2,7 @@ package com.andrew264.habits.ui.schedule
 
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -19,6 +20,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.TimeRange
 import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.schedule.components.GroupedView
 import com.andrew264.habits.ui.schedule.components.PerDayView
 import com.andrew264.habits.ui.theme.Dimens
@@ -106,7 +108,7 @@ private fun ScheduleEditorScreen(
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-                // Main content area
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -117,7 +119,7 @@ private fun ScheduleEditorScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
                     ) {
-                        // Schedule Name Editor
+
                         OutlinedTextField(
                             value = uiState.schedule?.name.orEmpty(),
                             onValueChange = onUpdateScheduleName,
@@ -143,7 +145,7 @@ private fun ScheduleEditorScreen(
                         }
                     }
 
-                    // View Mode Toggles
+
                     val options = ScheduleViewMode.entries
                     ButtonGroup(
                         overflowIndicator = { menuState ->
@@ -160,8 +162,10 @@ private fun ScheduleEditorScreen(
                                     ToggleButton(
                                         checked = uiState.viewMode == mode,
                                         onCheckedChange = {
-                                            onSetViewMode(mode)
-                                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                                            if (uiState.viewMode != mode) {
+                                                onSetViewMode(mode)
+                                                view.performHapticFeedback(HapticFeedbackConstants.TOGGLE_ON)
+                                            }
                                         },
                                         shapes = when (index) {
                                             0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
@@ -191,7 +195,6 @@ private fun ScheduleEditorScreen(
                                         onClick = {
                                             onSetViewMode(mode)
                                             menuState.dismiss()
-                                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                                         }
                                     )
                                 }
@@ -242,11 +245,13 @@ private fun ScheduleEditorScreen(
 
 
         if (!uiState.isLoading && uiState.viewMode == ScheduleViewMode.GROUPED) {
+            val fabInteractionSource = remember { MutableInteractionSource() }
+            HapticInteractionEffect(fabInteractionSource)
             ExtendedFloatingActionButton(
                 onClick = {
                     onAddGroup()
-                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                 },
+                interactionSource = fabInteractionSource,
                 expanded = expandedFab,
                 icon = { Icon(Icons.Default.Add, "Create New Group") },
                 text = { Text("New Group") },

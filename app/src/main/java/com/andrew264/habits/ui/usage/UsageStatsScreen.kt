@@ -6,8 +6,10 @@ import android.view.HapticFeedbackConstants
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -36,11 +38,13 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.andrew264.habits.ui.common.charts.StackedBarChart
 import com.andrew264.habits.ui.common.components.*
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.navigation.*
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.usage.components.AccessibilityWarningCard
 import com.andrew264.habits.ui.usage.components.AppListItem
 import com.andrew264.habits.ui.usage.components.StatisticsSummaryCard
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 @Composable
@@ -170,11 +174,27 @@ private fun UsageListContent(
 ) {
     val isRefreshing = uiState.isLoading && uiState.stats != null
     val state = rememberPullToRefreshState()
-    val view = LocalView.current
 
     val scaleFraction = {
         if (isRefreshing) 1f
         else LinearOutSlowInEasing.transform(state.distanceFraction).coerceIn(0f, 1f)
+    }
+
+    val view = LocalView.current
+    LaunchedEffect(state) {
+        var wasBeyondThreshold = state.distanceFraction >= 1.0f
+        snapshotFlow { state.distanceFraction >= 1.0f }
+            .distinctUntilChanged()
+            .collect { isBeyondThreshold ->
+                if (isBeyondThreshold) {
+                    view.performHapticFeedback(HapticFeedbackConstants.GESTURE_THRESHOLD_ACTIVATE)
+                } else {
+                    if (wasBeyondThreshold) {
+                        view.performHapticFeedback(HapticFeedbackConstants.GESTURE_THRESHOLD_DEACTIVATE)
+                    }
+                }
+                wasBeyondThreshold = isBeyondThreshold
+            }
     }
 
     Box(
@@ -249,11 +269,11 @@ private fun UsageListContent(
             }
 
             item {
+                val interactionSource = remember { MutableInteractionSource() }
+                HapticInteractionEffect(interactionSource)
                 FilledTonalButton(
-                    onClick = {
-                        onNavigateToWhitelist()
-                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                    },
+                    onClick = onNavigateToWhitelist,
+                    interactionSource = interactionSource,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(
@@ -280,10 +300,9 @@ private fun UsageListContent(
 
             if (uiState.appDetails.isEmpty() && uiState.stats?.totalUsagePerApp?.isNotEmpty() == true) {
                 item {
-                    Card(modifier = Modifier.fillMaxWidth(), onClick = {
-                        onNavigateToWhitelist()
-                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                    }) {
+                    val interactionSource = remember { MutableInteractionSource() }
+                    HapticInteractionEffect(interactionSource)
+                    Card(modifier = Modifier.fillMaxWidth(), onClick = onNavigateToWhitelist) {
                         Text(
                             "No whitelisted apps with usage in this period. Tap 'Manage Whitelisted Apps' to add some.",
                             modifier = Modifier.padding(Dimens.PaddingLarge),
@@ -296,12 +315,15 @@ private fun UsageListContent(
             }
 
             items(uiState.appDetails, key = { it.packageName }) { app ->
+                val interactionSource = remember { MutableInteractionSource() }
+                HapticInteractionEffect(interactionSource)
                 AppListItem(
                     appDetails = app,
-                    modifier = Modifier.clickable {
-                        onAppSelected(app)
-                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                    }
+                    modifier = Modifier.clickable(
+                        interactionSource = interactionSource,
+                        indication = LocalIndication.current,
+                        onClick = { onAppSelected(app) }
+                    )
                 )
             }
         }

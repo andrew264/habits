@@ -68,7 +68,7 @@ fun NumberPicker(
             .collect { index ->
                 val finalIndex = if (loop) index % items.size else index.coerceIn(items.indices)
                 onValueChange(items[finalIndex])
-                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY_RELEASE)
+                view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_TICK)
             }
     }
 

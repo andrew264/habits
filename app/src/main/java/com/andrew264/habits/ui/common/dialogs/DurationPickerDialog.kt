@@ -38,11 +38,10 @@ fun DurationPickerDialog(
 
     var selectedHour by rememberSaveable { mutableIntStateOf(initialHours) }
     var selectedMinute by rememberSaveable { mutableIntStateOf(roundedInitialMinutes) }
+    val view = LocalView.current
 
 
     var isInitialized by remember { mutableStateOf(false) }
-
-    val view = LocalView.current
 
     val hoursItems = remember { (0..23).map { it.toString() } }
     val minutesItems = remember { (0..55 step 5).map { String.format(Locale.getDefault(), "%02d", it) } }
@@ -73,7 +72,6 @@ fun DurationPickerDialog(
         val middleIndex = (Int.MAX_VALUE / 2) - ((Int.MAX_VALUE / 2) % minutesItems.size) + initialMinuteIndex
         minutesState.scrollToItem(middleIndex)
 
-        // Delay to allow scroll to finish before enabling value changes
         kotlinx.coroutines.delay(100)
         isInitialized = true
     }
@@ -158,18 +156,23 @@ fun DurationPickerDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = {
-                        onDismissRequest()
-                        view.performHapticFeedback(HapticFeedbackConstants.REJECT)
-                    }) {
+                    TextButton(
+                        onClick = {
+                            view.performHapticFeedback(HapticFeedbackConstants.REJECT)
+                            onDismissRequest()
+                        }
+                    ) {
                         Text("Cancel")
                     }
                     Spacer(Modifier.width(Dimens.PaddingSmall))
-                    TextButton(onClick = {
-                        val totalMinutes = selectedHour * 60 + selectedMinute
-                        onConfirm(totalMinutes)
-                        view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-                    }) {
+
+                    TextButton(
+                        onClick = {
+                            view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                            val totalMinutes = selectedHour * 60 + selectedMinute
+                            onConfirm(totalMinutes)
+                        }
+                    ) {
                         Text("OK")
                     }
                 }

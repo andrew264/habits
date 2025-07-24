@@ -48,7 +48,7 @@ private fun WhitelistScreen(
             .fillMaxSize()
             .padding(horizontal = Dimens.PaddingLarge)
     ) {
-        // Search and Filter controls
+
         OutlinedTextField(
             value = uiState.searchText,
             onValueChange = onSearchTextChanged,
@@ -72,12 +72,13 @@ private fun WhitelistScreen(
                 checked = uiState.showSystemApps,
                 onCheckedChange = {
                     onToggleShowSystemApps(it)
-                    view.performHapticFeedback(if (it) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF)
+                    val feedback = if (it) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
+                    view.performHapticFeedback(feedback)
                 }
             )
         }
 
-        // App List
+
         if (uiState.isLoading) {
             ContainedLoadingIndicator()
         } else {
@@ -104,7 +105,8 @@ private fun WhitelistScreen(
                                 checked = isWhitelisted,
                                 onCheckedChange = { _ ->
                                     onToggleWhitelist(app, isWhitelisted)
-                                    view.performHapticFeedback(if (!isWhitelisted) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF)
+                                    val feedback = if (!isWhitelisted) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
+                                    view.performHapticFeedback(feedback)
                                 }
                             )
                         }

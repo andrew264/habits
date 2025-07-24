@@ -1,9 +1,10 @@
 package com.andrew264.habits.ui.schedule.components
 
-import android.view.HapticFeedbackConstants
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -17,12 +18,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.TimeRange
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.theme.Dimens
 import java.util.Locale
 
@@ -36,7 +37,6 @@ fun PerDayView(
     onDeleteTimeRangeFromDay: (day: DayOfWeek, timeRange: TimeRange) -> Unit,
 ) {
     var expandedDays by rememberSaveable { mutableStateOf(emptySet<DayOfWeek>()) }
-    val view = LocalView.current
 
     LazyColumn(
         modifier = modifier,
@@ -46,24 +46,29 @@ fun PerDayView(
         items(DayOfWeek.entries.toList(), key = { it.name }) { day ->
             val timeRanges = perDayRepresentation[day] ?: emptyList()
             val isExpanded = day in expandedDays
+            val expandInteractionSource = remember { MutableInteractionSource() }
+            HapticInteractionEffect(expandInteractionSource)
 
             Card(
                 modifier = Modifier
                     .fillMaxWidth(),
             ) {
                 Column {
-                    // Day Header
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable {
-                                expandedDays = if (isExpanded) {
-                                    expandedDays - day
-                                } else {
-                                    expandedDays + day
+                            .clickable(
+                                interactionSource = expandInteractionSource,
+                                indication = LocalIndication.current,
+                                onClick = {
+                                    expandedDays = if (isExpanded) {
+                                        expandedDays - day
+                                    } else {
+                                        expandedDays + day
+                                    }
                                 }
-                                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                            }
+                            )
                             .padding(horizontal = 20.dp, vertical = Dimens.PaddingMedium),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
@@ -118,14 +123,14 @@ fun PerDayView(
                         )
                     }
 
-                    // Collapsible content
+
                     AnimatedVisibility(visible = isExpanded) {
                         Column(
                             modifier = Modifier
                                 .padding(horizontal = 20.dp)
                                 .padding(bottom = 20.dp),
                         ) {
-                            // Time Ranges
+
                             if (timeRanges.isNotEmpty()) {
                                 Column {
                                     timeRanges.forEach { timeRange ->
@@ -149,7 +154,7 @@ fun PerDayView(
                                     }
                                 }
                             } else {
-                                // Empty State
+
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),
                                 ) {
@@ -173,12 +178,13 @@ fun PerDayView(
                                 }
                             }
 
-                            // Add Time Button
+                            val addInteractionSource = remember { MutableInteractionSource() }
+                            HapticInteractionEffect(addInteractionSource)
                             FilledTonalButton(
                                 onClick = {
                                     onAddTimeRangeToDay(day, TimeRange(fromMinuteOfDay = 540, toMinuteOfDay = 600))
-                                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                                 },
+                                interactionSource = addInteractionSource,
                                 modifier = Modifier.align(Alignment.End),
                                 shapes = ButtonDefaults.shapes()
                             ) {

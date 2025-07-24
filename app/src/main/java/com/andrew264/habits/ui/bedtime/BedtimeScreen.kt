@@ -3,6 +3,7 @@ package com.andrew264.habits.ui.bedtime
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -43,10 +44,12 @@ import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
 import com.andrew264.habits.ui.common.components.FeatureDisabledContent
 import com.andrew264.habits.ui.common.components.FilterButtonGroup
 import com.andrew264.habits.ui.common.components.ScheduleSelector
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.navigation.AppRoute
 import com.andrew264.habits.ui.navigation.MonitoringSettings
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
@@ -148,10 +151,26 @@ private fun BedtimeMainPane(
 ) {
     val isRefreshing = uiState.isLoading
     val pullToRefreshState = rememberPullToRefreshState()
-    val view = LocalView.current
     val scaleFraction = {
         if (isRefreshing) 1f
         else LinearOutSlowInEasing.transform(pullToRefreshState.distanceFraction).coerceIn(0f, 1f)
+    }
+
+    val view = LocalView.current
+    LaunchedEffect(pullToRefreshState) {
+        var wasBeyondThreshold = pullToRefreshState.distanceFraction >= 1.0f
+        snapshotFlow { pullToRefreshState.distanceFraction >= 1.0f }
+            .distinctUntilChanged()
+            .collect { isBeyondThreshold ->
+                if (isBeyondThreshold) {
+                    view.performHapticFeedback(HapticFeedbackConstants.GESTURE_THRESHOLD_ACTIVATE)
+                } else {
+                    if (wasBeyondThreshold) {
+                        view.performHapticFeedback(HapticFeedbackConstants.GESTURE_THRESHOLD_DEACTIVATE)
+                    }
+                }
+                wasBeyondThreshold = isBeyondThreshold
+            }
     }
 
     Box(
@@ -263,11 +282,11 @@ private fun BedtimeMainPane(
             }
 
             if (isSupportingPaneHidden()) {
+                val interactionSource = remember { MutableInteractionSource() }
+                HapticInteractionEffect(interactionSource)
                 FilledTonalButton(
-                    onClick = {
-                        onConfigureScheduleClicked()
-                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                    },
+                    onClick = onConfigureScheduleClicked,
+                    interactionSource = interactionSource,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Configure Sleep Schedule")

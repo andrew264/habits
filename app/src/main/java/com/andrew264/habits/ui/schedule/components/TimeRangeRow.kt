@@ -1,16 +1,14 @@
 package com.andrew264.habits.ui.schedule.components
 
 import android.view.HapticFeedbackConstants
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
@@ -18,6 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.model.schedule.TimeRange
 import com.andrew264.habits.ui.common.dialogs.HabitsTimePickerDialog
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.common.utils.FormatUtils
 import com.andrew264.habits.ui.theme.Dimens
 
@@ -63,11 +62,11 @@ fun TimeRangeRow(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
                 ) {
+                    val fromInteractionSource = remember { MutableInteractionSource() }
+                    HapticInteractionEffect(fromInteractionSource)
                     FilledTonalButton(
-                        onClick = {
-                            showFromPicker = true
-                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                        },
+                        onClick = { showFromPicker = true },
+                        interactionSource = fromInteractionSource,
                         shapes = ButtonDefaults.shapes()
                     ) {
                         Text(
@@ -79,11 +78,11 @@ fun TimeRangeRow(
                         text = "→",
                     )
 
+                    val toInteractionSource = remember { MutableInteractionSource() }
+                    HapticInteractionEffect(toInteractionSource)
                     FilledTonalButton(
-                        onClick = {
-                            showToPicker = true
-                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                        },
+                        onClick = { showToPicker = true },
+                        interactionSource = toInteractionSource,
                         shapes = ButtonDefaults.shapes()
                     ) {
                         Text(
@@ -101,12 +100,14 @@ fun TimeRangeRow(
                     }
                 }
             }
-
+            val deleteInteractionSource = remember { MutableInteractionSource() }
+            HapticInteractionEffect(deleteInteractionSource)
             IconButton(
                 onClick = {
                     onDelete()
                     view.performHapticFeedback(HapticFeedbackConstants.REJECT)
                 },
+                interactionSource = deleteInteractionSource,
                 shapes = IconButtonDefaults.shapes()
             ) {
                 Icon(

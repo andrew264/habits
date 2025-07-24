@@ -60,7 +60,7 @@ fun ReminderSettingsDialog(
                             val feedback = if (it) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
                             view.performHapticFeedback(feedback)
                         },
-                        // You can only enable reminders if the whole water feature is enabled
+
                         enabled = settings.isWaterTrackingEnabled
                     )
                 }

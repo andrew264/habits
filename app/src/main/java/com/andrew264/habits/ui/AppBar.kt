@@ -1,6 +1,6 @@
 package com.andrew264.habits.ui
 
-import android.view.HapticFeedbackConstants
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Alarm
@@ -8,9 +8,10 @@ import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.navigation.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -25,7 +26,6 @@ fun MainTopAppBar(
     onWaterReminderClick: () -> Unit
 ) {
     val currentRoute = topLevelBackStack.backStack.lastOrNull() ?: return
-    val view = LocalView.current
 
     val topLevelScreen = railItems.find { it == currentRoute }
     val isTopLevelScreen = topLevelScreen != null
@@ -38,20 +38,22 @@ fun MainTopAppBar(
 
     val navigationIcon: @Composable () -> Unit = if (!isTopLevelScreen) {
         {
-            IconButton(onClick = {
-                topLevelBackStack.removeLast()
-                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-            }) {
+            val interactionSource = remember { MutableInteractionSource() }
+            HapticInteractionEffect(interactionSource)
+            IconButton(
+                onClick = { topLevelBackStack.removeLast() },
+                interactionSource = interactionSource
+            ) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
             }
         }
     } else if (isCompact) {
         {
+            val interactionSource = remember { MutableInteractionSource() }
+            HapticInteractionEffect(interactionSource)
             IconButton(
-                onClick = {
-                    scope.launch { railState.expand() }
-                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                },
+                onClick = { scope.launch { railState.expand() } },
+                interactionSource = interactionSource,
                 shapes = IconButtonDefaults.shapes()
             ) {
                 Icon(Icons.Default.Menu, contentDescription = "Open Navigation")
@@ -66,16 +68,21 @@ fun MainTopAppBar(
         navigationIcon = navigationIcon,
         actions = {
             if (currentRoute is Water) {
-                IconButton(onClick = {
-                    topLevelBackStack.add(WaterStats)
-                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                }) {
+                val statsInteractionSource = remember { MutableInteractionSource() }
+                HapticInteractionEffect(statsInteractionSource)
+                IconButton(
+                    onClick = { topLevelBackStack.add(WaterStats) },
+                    interactionSource = statsInteractionSource
+                ) {
                     Icon(Icons.Default.BarChart, contentDescription = "Hydration Statistics")
                 }
-                IconButton(onClick = {
-                    onWaterReminderClick()
-                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                }) {
+
+                val reminderInteractionSource = remember { MutableInteractionSource() }
+                HapticInteractionEffect(reminderInteractionSource)
+                IconButton(
+                    onClick = onWaterReminderClick,
+                    interactionSource = reminderInteractionSource
+                ) {
                     Icon(Icons.Default.Alarm, contentDescription = "Reminder Settings")
                 }
             }

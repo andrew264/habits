@@ -49,7 +49,7 @@ data class BedtimeUiState(
 class BedtimeViewModel @Inject constructor(
     private val getBedtimeScreenDataUseCase: GetBedtimeScreenDataUseCase,
     private val setSleepScheduleUseCase: SetSleepScheduleUseCase,
-    private val settingsRepository: SettingsRepository
+    settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val _selectedTimelineRange = MutableStateFlow(BedtimeChartRange.DAY)

@@ -2,8 +2,8 @@ package com.andrew264.habits.ui.settings
 
 import android.content.Intent
 import android.provider.Settings
-import android.view.HapticFeedbackConstants
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -15,7 +15,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -24,6 +23,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.andrew264.habits.domain.model.PersistentSettings
 import com.andrew264.habits.ui.common.components.SettingsRow
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import kotlinx.coroutines.flow.collectLatest
@@ -91,7 +91,8 @@ private fun MonitoringSettingsScreen(
     onWaterToggled: (Boolean) -> Unit,
     onOpenAppSettings: () -> Unit,
 ) {
-    val view = LocalView.current
+    val interactionSource = remember { MutableInteractionSource() }
+    HapticInteractionEffect(interactionSource)
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -175,10 +176,8 @@ private fun MonitoringSettingsScreen(
                     style = MaterialTheme.typography.titleLarge
                 )
                 Button(
-                    onClick = {
-                        onOpenAppSettings()
-                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                    },
+                    onClick = onOpenAppSettings,
+                    interactionSource = interactionSource,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Open App Info")

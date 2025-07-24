@@ -1,8 +1,8 @@
 package com.andrew264.habits.ui.water.home.components
 
-import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -17,10 +17,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.ui.water.home.WaterHomeUiState
@@ -37,7 +37,8 @@ internal fun ProgressSection(
         label = "WaterProgressAnimation",
         animationSpec = WavyProgressIndicatorDefaults.ProgressAnimationSpec
     )
-    val view = LocalView.current
+    val interactionSource = remember { MutableInteractionSource() }
+    HapticInteractionEffect(interactionSource)
     val strokeWidth = 8.dp
     val stroke = with(LocalDensity.current) {
         remember { Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round) }
@@ -61,10 +62,11 @@ internal fun ProgressSection(
         Column(
             modifier = Modifier
                 .clip(CircleShape)
-                .clickable {
-                    onEditTarget()
-                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                }
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onEditTarget
+                )
                 .padding(Dimens.PaddingLarge),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -83,7 +85,7 @@ internal fun ProgressSection(
                 )
                 Icon(
                     imageVector = Icons.Outlined.Edit,
-                    contentDescription = null, // Click action is on the parent Column
+                    contentDescription = null,
                     modifier = Modifier.size(20.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )

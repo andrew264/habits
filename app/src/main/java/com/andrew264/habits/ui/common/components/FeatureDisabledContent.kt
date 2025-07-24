@@ -1,6 +1,6 @@
 package com.andrew264.habits.ui.common.components
 
-import android.view.HapticFeedbackConstants
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ToggleOff
@@ -9,13 +9,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.theme.Dimens
 
 @Composable
@@ -27,7 +28,8 @@ fun FeatureDisabledContent(
     buttonText: String,
     onEnableClicked: () -> Unit
 ) {
-    val view = LocalView.current
+    val interactionSource = remember { MutableInteractionSource() }
+    HapticInteractionEffect(interactionSource)
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -55,10 +57,10 @@ fun FeatureDisabledContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(Dimens.PaddingExtraLarge))
-        Button(onClick = {
-            onEnableClicked()
-            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-        }) {
+        Button(
+            onClick = onEnableClicked,
+            interactionSource = interactionSource
+        ) {
             Text(buttonText)
         }
     }
@@ -74,4 +76,3 @@ fun FeatureDisabledContentPreview() {
         onEnableClicked = {}
     )
 }
-

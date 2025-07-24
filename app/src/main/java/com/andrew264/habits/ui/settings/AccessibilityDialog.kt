@@ -25,8 +25,8 @@ fun AccessibilityServiceDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    onConfirm()
                     view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                    onConfirm()
                 }
             ) {
                 Text("Go to Settings", fontWeight = FontWeight.Bold)
@@ -35,8 +35,8 @@ fun AccessibilityServiceDialog(
         dismissButton = {
             TextButton(
                 onClick = {
-                    onDismiss()
                     view.performHapticFeedback(HapticFeedbackConstants.REJECT)
+                    onDismiss()
                 }
             ) {
                 Text("Cancel")

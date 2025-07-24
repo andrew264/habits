@@ -1,7 +1,7 @@
 package com.andrew264.habits.ui.navigation
 
-import android.view.HapticFeedbackConstants
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -14,8 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import kotlinx.coroutines.CoroutineScope
@@ -29,7 +29,6 @@ fun AppNavigationRail(
     isCompact: Boolean,
     scope: CoroutineScope
 ) {
-    val view = LocalView.current
     if (isCompact) {
         ModalWideNavigationRail(
             state = state,
@@ -48,11 +47,13 @@ fun AppNavigationRail(
             state = state,
             header = {
                 val expanded = state.targetValue == WideNavigationRailValue.Expanded
+                val interactionSource = remember { MutableInteractionSource() }
+                HapticInteractionEffect(interactionSource)
                 IconButton(
                     onClick = {
                         scope.launch { if (expanded) state.collapse() else state.expand() }
-                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                     },
+                    interactionSource = interactionSource,
                     modifier = Modifier.padding(start = Dimens.PaddingExtraLarge),
                     shapes = IconButtonDefaults.shapes()
                 ) {
@@ -87,11 +88,12 @@ private fun AppNavigationRailContent(
     scope: CoroutineScope
 ) {
     val currentTopLevelRoute = topLevelBackStack.currentTopLevelRoute
-    val view = LocalView.current
 
     Column(Modifier.verticalScroll(rememberScrollState())) {
         railItems.forEach { screen ->
             val selected = currentTopLevelRoute == screen
+            val interactionSource = remember { MutableInteractionSource() }
+            HapticInteractionEffect(interactionSource)
             WideNavigationRailItem(
                 railExpanded = isRailExpanded,
                 icon = {
@@ -103,14 +105,14 @@ private fun AppNavigationRailContent(
                 label = { Text(screen.title) },
                 selected = selected,
                 onClick = {
-                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                     if (topLevelBackStack.currentTopLevelRoute != screen) {
                         topLevelBackStack.switchTopLevel(screen)
                     }
                     if (isCompact) {
                         scope.launch { railState.collapse() }
                     }
-                }
+                },
+                interactionSource = interactionSource
             )
         }
     }

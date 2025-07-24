@@ -31,8 +31,8 @@ fun ColorPickerDialog(
     onDismissRequest: () -> Unit,
     onConfirmation: (Color) -> Unit
 ) {
-    val view = LocalView.current
     val focusManager = LocalFocusManager.current
+    val view = LocalView.current
     val state = rememberSaveable(initialColor, saver = ColorPickerState.Saver) {
         ColorPickerState(initialColor)
     }
@@ -100,8 +100,8 @@ fun ColorPickerDialog(
                 ) {
                     TextButton(
                         onClick = {
-                            onDismissRequest()
                             view.performHapticFeedback(HapticFeedbackConstants.REJECT)
+                            onDismissRequest()
                         }
                     ) { Text("Cancel") }
 
@@ -109,9 +109,9 @@ fun ColorPickerDialog(
 
                     TextButton(
                         onClick = {
-                            onConfirmation(state.hsvColor.toColor())
                             view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-                        }
+                            onConfirmation(state.hsvColor.toColor())
+                        },
                     ) { Text("OK") }
                 }
             }

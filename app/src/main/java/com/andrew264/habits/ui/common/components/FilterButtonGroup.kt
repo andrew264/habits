@@ -1,6 +1,7 @@
 package com.andrew264.habits.ui.common.components
 
 import android.view.HapticFeedbackConstants
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -10,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.theme.HabitsTheme
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -22,11 +24,15 @@ fun <T> FilterButtonGroup(
     modifier: Modifier = Modifier,
 ) {
     val view = LocalView.current
-
     ButtonGroup(
         modifier = modifier,
         overflowIndicator = { menuState ->
-            IconButton(onClick = { menuState.show() }) {
+            val interactionSource = remember { MutableInteractionSource() }
+            HapticInteractionEffect(interactionSource)
+            IconButton(
+                onClick = { menuState.show() },
+                interactionSource = interactionSource
+            ) {
                 Icon(Icons.Default.MoreVert, "More options")
             }
         },
@@ -38,8 +44,10 @@ fun <T> FilterButtonGroup(
                     ElevatedToggleButton(
                         checked = selectedOption == option,
                         onCheckedChange = {
-                            onOptionSelected(option)
-                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                            if (selectedOption != option) {
+                                onOptionSelected(option)
+                                view.performHapticFeedback(HapticFeedbackConstants.TOGGLE_ON)
+                            }
                         },
                         shapes = when (index) {
                             0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
@@ -56,7 +64,6 @@ fun <T> FilterButtonGroup(
                         onClick = {
                             onOptionSelected(option)
                             menuState.dismiss()
-                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                         }
                     )
                 }

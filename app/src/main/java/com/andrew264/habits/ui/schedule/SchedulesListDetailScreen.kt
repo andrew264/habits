@@ -1,6 +1,6 @@
 package com.andrew264.habits.ui.schedule
 
-import android.view.HapticFeedbackConstants
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,11 +17,11 @@ import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaf
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.andrew264.habits.model.schedule.Schedule
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.navigation.sharedAxisXEnter
 import com.andrew264.habits.ui.navigation.sharedAxisXExit
 import com.andrew264.habits.ui.schedule.components.SchedulesListPane
@@ -36,7 +36,6 @@ fun SchedulesListDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scope = rememberCoroutineScope()
-    val view = LocalView.current
 
     LaunchedEffect(key1 = true) {
         viewModel.uiEvents.collect { event ->
@@ -49,7 +48,6 @@ fun SchedulesListDetailScreen(
                             duration = SnackbarDuration.Short
                         )
                         if (result == SnackbarResult.ActionPerformed) {
-                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                             viewModel.onUndoDelete()
                         } else if (event.actionLabel != null) {
                             viewModel.onDeletionConfirmed()
@@ -76,7 +74,6 @@ private fun SchedulesListDetailScreenContent(
 ) {
     val scaffoldNavigator = rememberListDetailPaneScaffoldNavigator<ScheduleSelection>()
     val scope = rememberCoroutineScope()
-    val view = LocalView.current
     val listState = rememberLazyListState()
     val expandedFab by remember {
         derivedStateOf { listState.firstVisibleItemIndex == 0 }
@@ -86,6 +83,8 @@ private fun SchedulesListDetailScreenContent(
     Scaffold(
         floatingActionButton = {
             if (selection == null) {
+                val fabInteractionSource = remember { MutableInteractionSource() }
+                HapticInteractionEffect(fabInteractionSource)
                 ExtendedFloatingActionButton(
                     onClick = {
                         scope.launch {
@@ -94,8 +93,8 @@ private fun SchedulesListDetailScreenContent(
                                 contentKey = ScheduleSelection(scheduleId = UUID.randomUUID().toString())
                             )
                         }
-                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                     },
+                    interactionSource = fabInteractionSource,
                     expanded = expandedFab,
                     icon = { Icon(Icons.Filled.Add, "New Schedule") },
                     text = { Text(text = "New Schedule") },
