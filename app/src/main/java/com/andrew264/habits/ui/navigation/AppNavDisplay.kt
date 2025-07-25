@@ -19,9 +19,9 @@ import com.andrew264.habits.ui.schedule.SchedulesListDetailScreen
 import com.andrew264.habits.ui.settings.MonitoringSettingsScreen
 import com.andrew264.habits.ui.usage.UsageStatsScreen
 import com.andrew264.habits.ui.usage.whitelist.WhitelistScreen
-import com.andrew264.habits.ui.water.home.WaterHomeScreen
-import com.andrew264.habits.ui.water.home.WaterHomeViewModel
-import com.andrew264.habits.ui.water.stats.WaterStatsScreen
+import com.andrew264.habits.ui.water.WaterScreen
+import com.andrew264.habits.ui.water.WaterStatsScreen
+import com.andrew264.habits.ui.water.WaterViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -32,7 +32,7 @@ fun AppNavDisplay(
     entryDecorators: List<NavEntryDecorator<*>>,
     snackbarHostState: SnackbarHostState,
     onNavigate: (AppRoute) -> Unit,
-    waterHomeViewModel: WaterHomeViewModel,
+    waterViewModel: WaterViewModel,
     onRequestActivityPermission: () -> Unit
 ) {
     NavDisplay(
@@ -51,7 +51,7 @@ fun AppNavDisplay(
                 }
             }
             entry<Water> {
-                WaterHomeScreen(viewModel = waterHomeViewModel)  // TODO: ugh, viewModel here, its disgusting; it is need so the MainScreen can take us here when we interact with water remainder notification
+                WaterScreen(viewModel = waterViewModel)  // TODO: ugh, viewModel here, its disgusting; it is need so the MainScreen can take us here when we interact with water remainder notification
             }
             entry<WaterStats> {
                 WaterStatsScreen()

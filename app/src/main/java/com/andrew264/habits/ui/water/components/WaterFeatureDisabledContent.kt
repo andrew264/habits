@@ -1,4 +1,4 @@
-package com.andrew264.habits.ui.water.home.components
+package com.andrew264.habits.ui.water.components
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*

@@ -1,4 +1,4 @@
-package com.andrew264.habits.ui.water.stats.components
+package com.andrew264.habits.ui.water.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Card

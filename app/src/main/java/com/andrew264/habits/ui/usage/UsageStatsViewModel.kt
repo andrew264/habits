@@ -26,12 +26,16 @@ data class AppDetails(
     val color: String,
     val dailyLimitMinutes: Int?,
     val sessionLimitMinutes: Int?,
+    // Screen Time
     val totalUsageMillis: Long,
     val usagePercentage: Float,
-    val sessionCount: Int,
     val averageSessionMillis: Long,
-    val peakUsageTimeLabel: String,
-    val historicalData: List<BarChartEntry>
+    val screenTimeHistoricalData: List<BarChartEntry>,
+    // Times Opened
+    val timesOpened: Int,
+    val timesOpenedHistoricalData: List<BarChartEntry>,
+    // Common
+    val peakUsageTimeLabel: String
 )
 
 data class UsageStatsUiState(
@@ -93,37 +97,50 @@ class UsageStatsViewModel @Inject constructor(
                 whitelistRepository.getWhitelistedApps(),
             ) { stats, whitelistedApps ->
                 val allAppUsage = stats.totalUsagePerApp
-                val appListSource = if (whitelistedApps.isEmpty()) allAppUsage.keys else whitelistedApps.map { it.packageName }
+                val allTimesOpened = stats.timesOpenedPerBin.flatMap { it.entries }
+                    .groupBy({ it.key }, { it.value })
+                    .mapValues { it.value.sum() }
+
+                val appListSource = if (whitelistedApps.isEmpty()) {
+                    (allAppUsage.keys + allTimesOpened.keys).distinct()
+                } else {
+                    whitelistedApps.map { it.packageName }
+                }
 
                 val appDetails = appListSource.mapNotNull { pkg ->
                     val whitelistedApp = whitelistedApps.find { it.packageName == pkg }
-                    val totalUsage = allAppUsage[pkg] ?: 0L
-
-                    // If no whitelist, show all apps. If whitelist, only show apps on it.
                     if (whitelistedApps.isNotEmpty() && whitelistedApp == null) return@mapNotNull null
 
+                    val totalUsage = allAppUsage[pkg] ?: 0L
+                    val timesOpened = allTimesOpened[pkg] ?: 0
+
                     val friendlyName = getAppName(pkg)
-                    val sessionCount = stats.timeBins.count { it.appUsage.containsKey(pkg) }
                     val usagePercentage = if (stats.totalScreenOnTime > 0) totalUsage.toFloat() / stats.totalScreenOnTime.toFloat() else 0f
-                    val averageSessionMillis = if (sessionCount > 0) totalUsage / sessionCount else 0L
+                    val averageSessionMillis = if (timesOpened > 0) totalUsage / timesOpened else 0L
 
                     var peakUsage = 0L
                     var peakBin: UsageTimeBin? = null
-                    val historicalData = stats.timeBins.mapNotNull { bin ->
+
+                    val screenTimeHistoricalData = stats.timeBins.map { bin ->
                         val usageInBin = bin.appUsage[pkg] ?: 0L
                         if (usageInBin > peakUsage) {
                             peakUsage = usageInBin
                             peakBin = bin
                         }
-                        if (usageInBin > 0) {
-                            val label = when (range) {
-                                UsageTimeRange.DAY -> FormatUtils.formatChartHourLabel(bin.startTime)
-                                UsageTimeRange.WEEK -> FormatUtils.formatChartDayLabel(bin.startTime)
-                            }
-                            BarChartEntry(value = usageInBin.toFloat(), label = label)
-                        } else {
-                            null
+                        val label = when (range) {
+                            UsageTimeRange.DAY -> FormatUtils.formatChartHourLabel(bin.startTime)
+                            UsageTimeRange.WEEK -> FormatUtils.formatChartDayLabel(bin.startTime)
                         }
+                        BarChartEntry(value = usageInBin.toFloat(), label = label)
+                    }
+
+                    val timesOpenedHistoricalData = stats.timeBins.mapIndexed { index, bin ->
+                        val opensInBin = stats.timesOpenedPerBin.getOrNull(index)?.get(pkg) ?: 0
+                        val label = when (range) {
+                            UsageTimeRange.DAY -> FormatUtils.formatChartHourLabel(bin.startTime)
+                            UsageTimeRange.WEEK -> FormatUtils.formatChartDayLabel(bin.startTime)
+                        }
+                        BarChartEntry(value = opensInBin.toFloat(), label = label)
                     }
 
                     val peakUsageTimeLabel = peakBin?.let {
@@ -141,10 +158,11 @@ class UsageStatsViewModel @Inject constructor(
                         sessionLimitMinutes = whitelistedApp?.sessionLimitMinutes,
                         totalUsageMillis = totalUsage,
                         usagePercentage = usagePercentage,
-                        sessionCount = sessionCount,
                         averageSessionMillis = averageSessionMillis,
-                        peakUsageTimeLabel = peakUsageTimeLabel,
-                        historicalData = historicalData
+                        screenTimeHistoricalData = screenTimeHistoricalData,
+                        timesOpened = timesOpened,
+                        timesOpenedHistoricalData = timesOpenedHistoricalData,
+                        peakUsageTimeLabel = peakUsageTimeLabel
                     )
                 }.sortedByDescending { it.totalUsageMillis }
 

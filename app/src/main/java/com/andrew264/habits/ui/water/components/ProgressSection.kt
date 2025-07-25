@@ -1,4 +1,4 @@
-package com.andrew264.habits.ui.water.home.components
+package com.andrew264.habits.ui.water.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
@@ -23,12 +23,12 @@ import androidx.compose.ui.unit.min
 import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
-import com.andrew264.habits.ui.water.home.WaterHomeUiState
+import com.andrew264.habits.ui.water.WaterUiState
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun ProgressSection(
-    uiState: WaterHomeUiState,
+    uiState: WaterUiState,
     onEditTarget: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -100,7 +100,7 @@ internal fun ProgressSection(
 internal fun ProgressSectionPreview() {
     HabitsTheme {
         ProgressSection(
-            uiState = WaterHomeUiState(todaysIntakeMl = 1500, progress = 0.6f),
+            uiState = WaterUiState(todaysIntakeMl = 1500, progress = 0.6f),
             onEditTarget = {}
         )
     }

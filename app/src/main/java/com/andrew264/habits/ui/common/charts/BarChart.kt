@@ -48,10 +48,6 @@ fun BarChart(
     topValue: Float? = null,
     yAxisLabelFormatter: (Float) -> String = { it.roundToInt().toString() }
 ) {
-    if (entries.isEmpty()) {
-        return
-    }
-
     val textMeasurer = rememberTextMeasurer()
     var selectedIndex by rememberSaveable { mutableStateOf<Int?>(null) }
 
@@ -102,7 +98,7 @@ fun BarChart(
                 detectTapGestures(
                     onTap = { offset ->
                         val yAxisWidth = 60.dp.toPx()
-                        if (offset.x > yAxisWidth) {
+                        if (entries.isNotEmpty() && offset.x > yAxisWidth) {
                             val chartAreaWidth = size.width - yAxisWidth
                             val barAreaWidth = chartAreaWidth / entries.size
                             val clickedIndex = ((offset.x - yAxisWidth) / barAreaWidth)
@@ -123,13 +119,47 @@ fun BarChart(
 
         if (chartAreaWidth <= 0 || chartAreaHeight <= 0) return@Canvas
 
-        val barAreaWidth = chartAreaWidth / entries.size
+        val barAreaWidth = if (entries.isNotEmpty()) chartAreaWidth / entries.size else 0f
         val barWidth = barAreaWidth * 0.6f
         val barSpacing = barAreaWidth * 0.4f
 
         drawYAxis(yAxisLabelInfo, yAxisWidth, chartAreaHeight, textMeasurer, yAxisTextStyle, gridColor)
-        drawXAxis(entries.map { it.label }, yAxisWidth, chartAreaHeight, barAreaWidth, textMeasurer, xAxisTextStyle, gridColor)
 
+        // Draw X Axis Line and Labels
+        drawLine(
+            color = gridColor,
+            start = Offset(yAxisWidth, chartAreaHeight),
+            end = Offset(size.width, chartAreaHeight),
+            strokeWidth = 1.dp.toPx()
+        )
+
+        if (entries.isNotEmpty()) {
+            val sampleLabelWidth = textMeasurer.measure(
+                text = entries.getOrNull(entries.size / 2)?.label ?: "Www",
+                style = xAxisTextStyle
+            ).size.width
+            val requiredWidthPerLabel = sampleLabelWidth + Dimens.PaddingSmall.toPx()
+            val labelInterval = if (barAreaWidth > 0 && barAreaWidth < requiredWidthPerLabel) {
+                ceil(requiredWidthPerLabel / barAreaWidth).toInt()
+            } else {
+                1
+            }
+            entries.forEachIndexed { index, entry ->
+                if (index % labelInterval == 0) {
+                    val textLayoutResult = textMeasurer.measure(
+                        text = entry.label,
+                        style = xAxisTextStyle
+                    )
+                    val x = yAxisWidth + index * barAreaWidth + barAreaWidth / 2 - textLayoutResult.size.width / 2
+                    drawText(
+                        textLayoutResult = textLayoutResult,
+                        topLeft = Offset(x, chartAreaHeight + Dimens.PaddingSmall.toPx())
+                    )
+                }
+            }
+        }
+
+        // Draw Bars
         entries.forEachIndexed { index, entry ->
             val barHeight = if (yAxisTopValue > 0) (entry.value / yAxisTopValue) * chartAreaHeight * animationProgress[index].value else 0f
             val barLeft = yAxisWidth + barSpacing / 2 + index * barAreaWidth

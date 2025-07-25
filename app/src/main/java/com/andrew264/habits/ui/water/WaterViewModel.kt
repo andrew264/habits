@@ -1,9 +1,9 @@
-package com.andrew264.habits.ui.water.home
+package com.andrew264.habits.ui.water
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andrew264.habits.domain.model.PersistentSettings
-import com.andrew264.habits.domain.usecase.GetWaterHomeUiStateUseCase
+import com.andrew264.habits.domain.usecase.GetWaterUiStateUseCase
 import com.andrew264.habits.domain.usecase.LogWaterUseCase
 import com.andrew264.habits.domain.usecase.UpdateWaterSettingsUseCase
 import com.andrew264.habits.domain.usecase.WaterSettingsUpdate
@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class WaterHomeUiState(
+data class WaterUiState(
     val settings: PersistentSettings = PersistentSettings(selectedScheduleId = null, isBedtimeTrackingEnabled = false, isAppUsageTrackingEnabled = false, usageLimitNotificationsEnabled = false, isWaterTrackingEnabled = false, waterDailyTargetMl = 2500, isWaterReminderEnabled = false, waterReminderIntervalMinutes = 60, waterReminderSnoozeMinutes = 15, waterReminderScheduleId = null),
     val allSchedules: List<Schedule> = emptyList(),
     val todaysIntakeMl: Int = 0,
@@ -23,8 +23,8 @@ data class WaterHomeUiState(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
-class WaterHomeViewModel @Inject constructor(
-    getWaterHomeUiStateUseCase: GetWaterHomeUiStateUseCase,
+class WaterViewModel @Inject constructor(
+    getWaterUiStateUseCase: GetWaterUiStateUseCase,
     private val logWaterUseCase: LogWaterUseCase,
     private val updateWaterSettingsUseCase: UpdateWaterSettingsUseCase
 ) : ViewModel() {
@@ -37,12 +37,12 @@ class WaterHomeViewModel @Inject constructor(
 
     private val refreshTrigger = MutableStateFlow(0)
 
-    val uiState: StateFlow<WaterHomeUiState> = refreshTrigger.flatMapLatest {
-        getWaterHomeUiStateUseCase.execute()
+    val uiState: StateFlow<WaterUiState> = refreshTrigger.flatMapLatest {
+        getWaterUiStateUseCase.execute()
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = WaterHomeUiState()
+        initialValue = WaterUiState()
     )
 
     fun refresh() {

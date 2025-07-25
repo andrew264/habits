@@ -32,20 +32,25 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import com.andrew264.habits.domain.model.UsageStatistics
+import com.andrew264.habits.domain.model.UsageTimeBin
 import com.andrew264.habits.ui.common.charts.StackedBarChart
 import com.andrew264.habits.ui.common.components.*
 import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.navigation.*
 import com.andrew264.habits.ui.theme.Dimens
+import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.ui.usage.components.AccessibilityWarningCard
 import com.andrew264.habits.ui.usage.components.AppListItem
 import com.andrew264.habits.ui.usage.components.StatisticsSummaryCard
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 @Composable
 fun UsageStatsScreen(
@@ -337,6 +342,160 @@ private fun UsageListContent(
                 }
         ) {
             PullToRefreshDefaults.LoadingIndicator(state = state, isRefreshing = isRefreshing)
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun UsageListContentPreview() {
+    val sampleAppDetails = listOf(
+        AppDetails(
+            packageName = "com.google.android.youtube",
+            friendlyName = "YouTube",
+            color = "#F44336",
+            dailyLimitMinutes = 120,
+            sessionLimitMinutes = 30,
+            totalUsageMillis = TimeUnit.HOURS.toMillis(2) + TimeUnit.MINUTES.toMillis(15),
+            usagePercentage = 0.45f,
+            averageSessionMillis = TimeUnit.MINUTES.toMillis(25),
+            screenTimeHistoricalData = emptyList(),
+            timesOpened = 5,
+            timesOpenedHistoricalData = emptyList(),
+            peakUsageTimeLabel = "Most used around 9 PM"
+        ),
+        AppDetails(
+            packageName = "com.instagram.android",
+            friendlyName = "Instagram",
+            color = "#E91E63",
+            dailyLimitMinutes = 60,
+            sessionLimitMinutes = null,
+            totalUsageMillis = TimeUnit.HOURS.toMillis(1) + TimeUnit.MINUTES.toMillis(5),
+            usagePercentage = 0.25f,
+            averageSessionMillis = TimeUnit.MINUTES.toMillis(10),
+            screenTimeHistoricalData = emptyList(),
+            timesOpened = 12,
+            timesOpenedHistoricalData = emptyList(),
+            peakUsageTimeLabel = "Most used around 1 PM"
+        )
+    )
+
+    val sampleStats = UsageStatistics(
+        totalScreenOnTime = TimeUnit.HOURS.toMillis(5),
+        pickupCount = 42,
+        totalUsagePerApp = mapOf(
+            "com.google.android.youtube" to TimeUnit.HOURS.toMillis(2) + TimeUnit.MINUTES.toMillis(15),
+            "com.instagram.android" to TimeUnit.HOURS.toMillis(1) + TimeUnit.MINUTES.toMillis(5)
+        ),
+        timeBins = (0..23).map {
+            UsageTimeBin(
+                startTime = System.currentTimeMillis() - TimeUnit.HOURS.toMillis((23 - it).toLong()),
+                endTime = System.currentTimeMillis() - TimeUnit.HOURS.toMillis((22 - it).toLong()),
+                totalScreenOnTime = (5..15).random() * 60_000L,
+                appUsage = mapOf(
+                    "com.google.android.youtube" to (1..5).random() * 60_000L,
+                    "com.instagram.android" to (1..5).random() * 60_000L
+                )
+            )
+        },
+        timesOpenedPerBin = (0..23).map {
+            mapOf(
+                "com.google.android.youtube" to (0..2).random(),
+                "com.instagram.android" to (0..3).random()
+            )
+        }
+    )
+
+    HabitsTheme {
+        Surface {
+            UsageListContent(
+                uiState = UsageStatsUiState(
+                    isLoading = false,
+                    isAppUsageTrackingEnabled = true,
+                    isAccessibilityServiceEnabled = true,
+                    usageLimitNotificationsEnabled = true,
+                    selectedRange = UsageTimeRange.DAY,
+                    stats = sampleStats,
+                    whitelistedApps = emptyList(),
+                    appDetails = sampleAppDetails,
+                    averageSessionMillis = 123456L
+                ),
+                onSetTimeRange = {},
+                onRefresh = {},
+                onAppSelected = {},
+                onNavigateToWhitelist = {},
+                onSetUsageLimitNotificationsEnabled = {},
+                onOpenAccessibilitySettings = {}
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "Usage List With Warning")
+@Composable
+private fun UsageListContentWithWarningPreview() {
+    val sampleAppDetails = listOf(
+        AppDetails(
+            packageName = "com.google.android.youtube",
+            friendlyName = "YouTube",
+            color = "#F44336",
+            dailyLimitMinutes = 120,
+            sessionLimitMinutes = 30,
+            totalUsageMillis = TimeUnit.HOURS.toMillis(2) + TimeUnit.MINUTES.toMillis(15),
+            usagePercentage = 0.45f,
+            averageSessionMillis = TimeUnit.MINUTES.toMillis(25),
+            screenTimeHistoricalData = emptyList(),
+            timesOpened = 5,
+            timesOpenedHistoricalData = emptyList(),
+            peakUsageTimeLabel = "Most used around 9 PM"
+        )
+    )
+
+    HabitsTheme {
+        Surface {
+            UsageListContent(
+                uiState = UsageStatsUiState(
+                    isLoading = false,
+                    isAppUsageTrackingEnabled = true,
+                    isAccessibilityServiceEnabled = false,
+                    usageLimitNotificationsEnabled = true,
+                    selectedRange = UsageTimeRange.DAY,
+                    stats = UsageStatistics(
+                        totalScreenOnTime = TimeUnit.HOURS.toMillis(5), pickupCount = 42, totalUsagePerApp = emptyMap(), timesOpenedPerBin = emptyList(),
+                        timeBins = emptyList()
+                    ),
+                    whitelistedApps = emptyList(),
+                    appDetails = sampleAppDetails,
+                    averageSessionMillis = 123456L
+                ),
+                onSetTimeRange = {},
+                onRefresh = {},
+                onAppSelected = {},
+                onNavigateToWhitelist = {},
+                onSetUsageLimitNotificationsEnabled = {},
+                onOpenAccessibilitySettings = {}
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "Usage Screen Disabled")
+@Composable
+private fun UsageStatsScreenDisabledPreview() {
+    HabitsTheme {
+        Surface {
+            UsageStatsScreen(
+                uiState = UsageStatsUiState(
+                    isLoading = false,
+                    isAppUsageTrackingEnabled = false
+                ),
+                onSetTimeRange = {},
+                onRefresh = {},
+                onNavigate = {},
+                onSetAppColor = { _, _ -> },
+                onSetUsageLimitNotificationsEnabled = {},
+                onSaveLimits = { _, _, _ -> }
+            )
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.andrew264.habits.ui.water.home.components.dialogs
+package com.andrew264.habits.ui.water.components.dialogs
 
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.layout.*

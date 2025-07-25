@@ -4,7 +4,8 @@ data class UsageStatistics(
     val timeBins: List<UsageTimeBin>,
     val totalScreenOnTime: Long,
     val pickupCount: Int,
-    val totalUsagePerApp: Map<String, Long> // PackageName to total millis
+    val totalUsagePerApp: Map<String, Long>, // PackageName to total millis
+    val timesOpenedPerBin: List<Map<String, Int>> = emptyList() // PackageName to count per bin
 )
 
 data class UsageTimeBin(

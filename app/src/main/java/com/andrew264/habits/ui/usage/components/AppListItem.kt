@@ -1,15 +1,12 @@
 package com.andrew264.habits.ui.usage.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -21,7 +18,6 @@ import com.andrew264.habits.ui.common.utils.rememberAppIcon
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.ui.usage.AppDetails
-import java.util.Locale
 
 @Composable
 fun AppListItem(
@@ -31,7 +27,7 @@ fun AppListItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = Dimens.PaddingSmall),
+            .padding(vertical = Dimens.PaddingMedium),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
     ) {
@@ -42,17 +38,21 @@ fun AppListItem(
             modifier = Modifier.size(40.dp)
         )
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = appDetails.friendlyName,
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            val sessionText = if (appDetails.sessionCount == 1) "1 session" else "${appDetails.sessionCount} sessions"
-            val percentageText = String.format(Locale.getDefault(), "%.1f%%", appDetails.usagePercentage * 100)
-            Text(
-                text = "$percentageText • $sessionText",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = appDetails.friendlyName,
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                Text(
+                    text = FormatUtils.formatDuration(appDetails.totalUsageMillis),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             Spacer(Modifier.height(Dimens.PaddingExtraSmall))
             LinearProgressIndicator(
                 progress = { appDetails.usagePercentage },
@@ -63,17 +63,6 @@ fun AppListItem(
                 trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
         }
-        Text(
-            text = FormatUtils.formatDuration(appDetails.totalUsageMillis),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Box(
-            modifier = Modifier
-                .size(24.dp)
-                .clip(CircleShape)
-                .background(Color(appDetails.color.toColorInt()))
-        )
     }
 }
 
@@ -88,10 +77,15 @@ private fun AppListItemPreview() {
         sessionLimitMinutes = 20,
         totalUsageMillis = (3600000L * 2) + (60000L * 33),
         usagePercentage = 0.35f,
-        sessionCount = 12,
         averageSessionMillis = 1234567L,
-        peakUsageTimeLabel = "Most used around 8 PM",
-        historicalData = listOf(BarChartEntry(1f, "8a"), BarChartEntry(5f, "12p"), BarChartEntry(10f, "8p"))
+        screenTimeHistoricalData = listOf(
+            BarChartEntry(1f, "8a"),
+            BarChartEntry(5f, "12p"),
+            BarChartEntry(10f, "8p")
+        ),
+        timesOpened = 23,
+        timesOpenedHistoricalData = emptyList(),
+        peakUsageTimeLabel = "Most used around 8 PM"
     )
     HabitsTheme {
         AppListItem(

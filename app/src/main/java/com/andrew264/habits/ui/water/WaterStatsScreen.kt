@@ -1,4 +1,4 @@
-package com.andrew264.habits.ui.water.stats
+package com.andrew264.habits.ui.water
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -19,7 +19,7 @@ import com.andrew264.habits.ui.common.components.EmptyState
 import com.andrew264.habits.ui.common.components.FilterButtonGroup
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
-import com.andrew264.habits.ui.water.stats.components.StatsContent
+import com.andrew264.habits.ui.water.components.StatsContent
 import java.time.LocalDate
 
 @Composable

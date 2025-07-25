@@ -58,6 +58,16 @@ class GetUsageStatisticsUseCase @Inject constructor(
             val appUsagePerBin = Array(binCount) { mutableMapOf<String, Long>() }
             val screenOnPerBin = LongArray(binCount)
 
+            // Calculate times opened per bin
+            val timesOpenedPerBin = Array(binCount) { mutableMapOf<String, Int>() }
+            for (event in appUsageEvents) {
+                if (event.startTimestamp in startTime..endTime) {
+                    val binIndex = ((event.startTimestamp - startTime) / binDuration).toInt().coerceIn(0, binCount - 1)
+                    val currentMap = timesOpenedPerBin[binIndex]
+                    currentMap[event.packageName] = (currentMap[event.packageName] ?: 0) + 1
+                }
+            }
+
             for (period in screenOnPeriods) {
                 val periodStart = max(period.first, startTime)
                 val periodEnd = min(period.second, endTime)
@@ -118,7 +128,8 @@ class GetUsageStatisticsUseCase @Inject constructor(
                 timeBins = bins,
                 totalScreenOnTime = totalScreenOnTime,
                 pickupCount = pickupCount,
-                totalUsagePerApp = totalUsagePerApp
+                totalUsagePerApp = totalUsagePerApp,
+                timesOpenedPerBin = timesOpenedPerBin.map { it.toMap() } // Convert to immutable map
             )
         }
     }

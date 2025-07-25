@@ -16,7 +16,7 @@ import androidx.navigation3.runtime.rememberSavedStateNavEntryDecorator
 import androidx.navigation3.ui.rememberSceneSetupNavEntryDecorator
 import androidx.window.core.layout.WindowSizeClass
 import com.andrew264.habits.ui.navigation.*
-import com.andrew264.habits.ui.water.home.WaterHomeViewModel
+import com.andrew264.habits.ui.water.WaterViewModel
 
 @OptIn(
     ExperimentalMaterial3Api::class,
@@ -26,7 +26,7 @@ import com.andrew264.habits.ui.water.home.WaterHomeViewModel
 private fun MainScreenLayout(
     topLevelBackStack: TopLevelBackStack,
     onWaterReminderClick: () -> Unit,
-    waterHomeViewModel: WaterHomeViewModel,
+    waterViewModel: WaterViewModel,
     onRequestActivityPermission: () -> Unit
 ) {
     val wideNavRailState = rememberWideNavigationRailState()
@@ -68,7 +68,7 @@ private fun MainScreenLayout(
                 ),
                 snackbarHostState = snackbarHostState,
                 onNavigate = { topLevelBackStack.add(it) },
-                waterHomeViewModel = waterHomeViewModel,
+                waterViewModel = waterViewModel,
                 onRequestActivityPermission = onRequestActivityPermission
             )
         }
@@ -86,7 +86,7 @@ fun MainScreen(
         TopLevelBackStack(Home)
     }
     val uiState by viewModel.uiState.collectAsState()
-    val waterHomeViewModel: WaterHomeViewModel = hiltViewModel()
+    val waterViewModel: WaterViewModel = hiltViewModel()
 
     // Handle one-time navigation events from the ViewModel
     LaunchedEffect(uiState.destinationRoute) {
@@ -109,8 +109,8 @@ fun MainScreen(
 
     MainScreenLayout(
         topLevelBackStack = topLevelBackStack,
-        onWaterReminderClick = waterHomeViewModel::onShowReminderDialog,
-        waterHomeViewModel = waterHomeViewModel,
+        onWaterReminderClick = waterViewModel::onShowReminderDialog,
+        waterViewModel = waterViewModel,
         onRequestActivityPermission = onRequestActivityPermission
     )
 }

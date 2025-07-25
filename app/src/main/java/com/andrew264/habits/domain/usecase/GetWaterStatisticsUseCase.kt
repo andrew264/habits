@@ -4,7 +4,7 @@ import com.andrew264.habits.domain.analyzer.WaterStatistics
 import com.andrew264.habits.domain.analyzer.WaterStatisticsAnalyzer
 import com.andrew264.habits.domain.repository.SettingsRepository
 import com.andrew264.habits.domain.repository.WaterRepository
-import com.andrew264.habits.ui.water.stats.StatsTimeRange
+import com.andrew264.habits.ui.water.StatsTimeRange
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import java.time.LocalDate

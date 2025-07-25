@@ -1,4 +1,4 @@
-package com.andrew264.habits.ui.water.stats
+package com.andrew264.habits.ui.water
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,11 +8,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
-
-enum class StatsTimeRange(val label: String) {
-    WEEK("Past 7 Days"),
-    MONTH("Past 30 Days")
-}
 
 data class WaterStatsUiState(
     val selectedRange: StatsTimeRange = StatsTimeRange.WEEK,

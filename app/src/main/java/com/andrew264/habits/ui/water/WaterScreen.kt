@@ -1,4 +1,4 @@
-package com.andrew264.habits.ui.water.home
+package com.andrew264.habits.ui.water
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
@@ -10,14 +10,14 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import com.andrew264.habits.domain.model.PersistentSettings
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
-import com.andrew264.habits.ui.water.home.components.InputSection
-import com.andrew264.habits.ui.water.home.components.ProgressSection
-import com.andrew264.habits.ui.water.home.components.WaterFeatureDisabledContent
-import com.andrew264.habits.ui.water.home.components.dialogs.ReminderSettingsDialog
-import com.andrew264.habits.ui.water.home.components.dialogs.TargetSettingsDialog
+import com.andrew264.habits.ui.water.components.InputSection
+import com.andrew264.habits.ui.water.components.ProgressSection
+import com.andrew264.habits.ui.water.components.WaterFeatureDisabledContent
+import com.andrew264.habits.ui.water.components.dialogs.ReminderSettingsDialog
+import com.andrew264.habits.ui.water.components.dialogs.TargetSettingsDialog
 
 @Composable
-fun WaterHomeScreen(viewModel: WaterHomeViewModel) {
+fun WaterScreen(viewModel: WaterViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     val showTargetDialog by viewModel.showTargetDialog.collectAsState()
     val showReminderDialog by viewModel.showReminderDialog.collectAsState()
@@ -53,7 +53,7 @@ fun WaterHomeScreen(viewModel: WaterHomeViewModel) {
             onEnableClicked = viewModel::onShowTargetDialog
         )
     } else {
-        WaterHomeScreen(
+        WaterScreenContent(
             uiState = uiState,
             onLogWater = viewModel::logWater,
             onEditTarget = viewModel::onShowTargetDialog
@@ -62,9 +62,9 @@ fun WaterHomeScreen(viewModel: WaterHomeViewModel) {
 }
 
 @Composable
-private fun WaterHomeScreen(
+private fun WaterScreenContent(
     modifier: Modifier = Modifier,
-    uiState: WaterHomeUiState,
+    uiState: WaterUiState,
     onLogWater: (Int) -> Unit,
     onEditTarget: () -> Unit
 ) {
@@ -114,11 +114,11 @@ private fun WaterHomeScreen(
 
 @Preview(name = "Water Home - Halfway", showBackground = true)
 @Composable
-private fun WaterHomeScreenHalfwayPreview() {
+private fun WaterScreenHalfwayPreview() {
     val settings = PersistentSettings(isWaterTrackingEnabled = true, waterDailyTargetMl = 2500, selectedScheduleId = null, isBedtimeTrackingEnabled = false, isAppUsageTrackingEnabled = false, usageLimitNotificationsEnabled = false, isWaterReminderEnabled = false, waterReminderIntervalMinutes = 60, waterReminderSnoozeMinutes = 15, waterReminderScheduleId = null)
     HabitsTheme {
-        WaterHomeScreen(
-            uiState = WaterHomeUiState(
+        WaterScreenContent(
+            uiState = WaterUiState(
                 settings = settings,
                 todaysIntakeMl = 1250,
                 progress = 0.5f
@@ -131,11 +131,11 @@ private fun WaterHomeScreenHalfwayPreview() {
 
 @Preview(name = "Water Home - Complete", showBackground = true)
 @Composable
-private fun WaterHomeScreenCompletePreview() {
+private fun WaterScreenCompletePreview() {
     val settings = PersistentSettings(isWaterTrackingEnabled = true, waterDailyTargetMl = 2000, selectedScheduleId = null, isBedtimeTrackingEnabled = false, isAppUsageTrackingEnabled = false, usageLimitNotificationsEnabled = false, isWaterReminderEnabled = false, waterReminderIntervalMinutes = 60, waterReminderSnoozeMinutes = 15, waterReminderScheduleId = null)
     HabitsTheme {
-        WaterHomeScreen(
-            uiState = WaterHomeUiState(
+        WaterScreenContent(
+            uiState = WaterUiState(
                 settings = settings,
                 todaysIntakeMl = 2400,
                 progress = 1.0f // Progress caps at 1.0
@@ -148,11 +148,11 @@ private fun WaterHomeScreenCompletePreview() {
 
 @Preview(name = "Water Home - Landscape", widthDp = 800, heightDp = 400, showBackground = true)
 @Composable
-private fun WaterHomeScreenLandscapePreview() {
+private fun WaterScreenLandscapePreview() {
     val settings = PersistentSettings(isWaterTrackingEnabled = true, waterDailyTargetMl = 2500, selectedScheduleId = null, isBedtimeTrackingEnabled = false, isAppUsageTrackingEnabled = false, usageLimitNotificationsEnabled = false, isWaterReminderEnabled = false, waterReminderIntervalMinutes = 60, waterReminderSnoozeMinutes = 15, waterReminderScheduleId = null)
     HabitsTheme {
-        WaterHomeScreen(
-            uiState = WaterHomeUiState(
+        WaterScreenContent(
+            uiState = WaterUiState(
                 settings = settings,
                 todaysIntakeMl = 1250,
                 progress = 0.5f
