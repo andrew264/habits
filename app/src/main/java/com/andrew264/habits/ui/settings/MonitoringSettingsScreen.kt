@@ -2,28 +2,28 @@ package com.andrew264.habits.ui.settings
 
 import android.content.Intent
 import android.provider.Settings
+import android.view.HapticFeedbackConstants
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.andrew264.habits.domain.model.PersistentSettings
-import com.andrew264.habits.ui.common.components.SettingsRow
-import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import kotlinx.coroutines.flow.collectLatest
@@ -78,6 +78,10 @@ fun MonitoringSettingsScreen(
             val uri = android.net.Uri.fromParts("package", context.packageName, null)
             intent.data = uri
             context.startActivity(intent)
+        },
+        onOpenAccessibilitySettings = {
+            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+            context.startActivity(intent)
         }
     )
 }
@@ -90,101 +94,138 @@ private fun MonitoringSettingsScreen(
     onUsageToggled: (Boolean) -> Unit,
     onWaterToggled: (Boolean) -> Unit,
     onOpenAppSettings: () -> Unit,
+    onOpenAccessibilitySettings: () -> Unit
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    HapticInteractionEffect(interactionSource)
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(Dimens.PaddingLarge),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
     ) {
+        item {
+            SectionHeader("Features")
+        }
 
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.padding(Dimens.PaddingLarge),
-                verticalArrangement = Arrangement.spacedBy(Dimens.PaddingMedium)
-            ) {
-                Text(
-                    text = "Features",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = "Enable or disable major features of the app.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
+        item {
+            SettingsListItem(
+                icon = Icons.Outlined.Alarm,
+                title = "Bedtime Tracking",
+                summary = "Monitor your sleep and bedtime habits",
+                checked = uiState.settings.isBedtimeTrackingEnabled,
+                onCheckedChange = onBedtimeToggled
+            )
+            HorizontalDivider()
+        }
 
-                SettingsRow(
-                    text = "Bedtime Tracking",
-                    description = "Uses the Sleep API and schedules to track sleep patterns. Requires Physical Activity permission.",
-                    checked = uiState.settings.isBedtimeTrackingEnabled,
-                    onCheckedChange = onBedtimeToggled
-                )
-                SettingsRow(
-                    text = "App Usage Tracking",
-                    description = "Uses the Accessibility Service to show how you spend time on your phone.",
-                    checked = uiState.settings.isAppUsageTrackingEnabled,
-                    onCheckedChange = onUsageToggled
-                )
+        item {
+            SettingsListItem(
+                icon = Icons.Outlined.Timeline,
+                title = "App Usage Tracking",
+                summary = "Track screen time and set limits for apps.",
+                checked = uiState.settings.isAppUsageTrackingEnabled,
+                onCheckedChange = onUsageToggled
+            )
+        }
 
-
-                AnimatedVisibility(visible = uiState.settings.isAppUsageTrackingEnabled && !uiState.isAccessibilityServiceEnabled) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = Dimens.PaddingExtraSmall),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Warning,
-                            contentDescription = "Warning",
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Text(
-                            text = "Service is not running. Please re-enable it in system settings.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-
-                SettingsRow(
-                    text = "Water Tracking",
-                    description = "Track daily water intake and set reminders.",
-                    checked = uiState.settings.isWaterTrackingEnabled,
-                    onCheckedChange = onWaterToggled
+        item {
+            AnimatedVisibility(visible = uiState.settings.isAppUsageTrackingEnabled && !uiState.isAccessibilityServiceEnabled) {
+                ListItem(
+                    headlineContent = { Text("Service is not running. Please re-enable it in accessibility settings.") },
+                    leadingContent = { Icon(Icons.Outlined.Warning, contentDescription = "Warning") },
+                    modifier = Modifier.clickable(onClick = onOpenAccessibilitySettings),
+                    colors = ListItemDefaults.colors(
+                        headlineColor = MaterialTheme.colorScheme.error,
+                        leadingIconColor = MaterialTheme.colorScheme.error
+                    )
                 )
             }
         }
 
+        item {
+            HorizontalDivider()
+        }
 
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.padding(Dimens.PaddingLarge),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(Dimens.PaddingMedium)
-            ) {
-                Text(
-                    text = "App Permissions & Info",
-                    style = MaterialTheme.typography.titleLarge
-                )
-                Button(
-                    onClick = onOpenAppSettings,
-                    interactionSource = interactionSource,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Open App Info")
-                }
-            }
+        item {
+            SettingsListItem(
+                icon = Icons.Outlined.WaterDrop,
+                title = "Water Tracking",
+                summary = "Track daily water intake and set reminders.",
+                checked = uiState.settings.isWaterTrackingEnabled,
+                onCheckedChange = onWaterToggled
+            )
+        }
+
+        item {
+            Spacer(Modifier.height(Dimens.PaddingLarge))
+        }
+
+        item {
+            SectionHeader("App Info")
+        }
+
+        item {
+            ListItem(
+                headlineContent = { Text("App Permissions & Info") },
+                leadingContent = { Icon(Icons.Outlined.Info, contentDescription = null) },
+                modifier = Modifier.clickable(onClick = onOpenAppSettings)
+            )
         }
     }
+}
+
+@Composable
+private fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingMedium)
+    )
+}
+
+@Composable
+private fun SettingsListItem(
+    icon: ImageVector,
+    title: String,
+    summary: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean = true
+) {
+    val view = LocalView.current
+    val interactionSource = remember { MutableInteractionSource() }
+
+    ListItem(
+        headlineContent = { Text(title) },
+        supportingContent = { Text(summary, style = MaterialTheme.typography.bodyMedium) },
+        leadingContent = { Icon(icon, contentDescription = null) },
+        trailingContent = {
+            Switch(
+                checked = checked,
+                onCheckedChange = null, // Handled by clickable modifier on parent
+                enabled = enabled,
+                interactionSource = interactionSource
+            )
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                interactionSource = interactionSource,
+                indication = LocalIndication.current,
+                enabled = enabled,
+                onClick = {
+                    val newChecked = !checked
+                    onCheckedChange(newChecked)
+                    val feedback = if (newChecked) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
+                    view.performHapticFeedback(feedback)
+                }
+            ),
+        colors = ListItemDefaults.colors(
+            headlineColor = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+            supportingColor = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
+            leadingIconColor = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+        )
+    )
 }
 
 @Preview(name = "Settings - All Enabled", showBackground = true)
@@ -211,7 +252,8 @@ private fun MonitoringSettingsScreenAllEnabledPreview() {
             onBedtimeToggled = {},
             onUsageToggled = {},
             onWaterToggled = {},
-            onOpenAppSettings = {}
+            onOpenAppSettings = {},
+            onOpenAccessibilitySettings = {}
         )
     }
 }
@@ -240,7 +282,8 @@ private fun MonitoringSettingsScreenWarningPreview() {
             onBedtimeToggled = {},
             onUsageToggled = {},
             onWaterToggled = {},
-            onOpenAppSettings = {}
+            onOpenAppSettings = {},
+            onOpenAccessibilitySettings = {}
         )
     }
 }
