@@ -8,6 +8,7 @@ import com.andrew264.habits.domain.usecase.LogWaterUseCase
 import com.andrew264.habits.domain.usecase.UpdateWaterSettingsUseCase
 import com.andrew264.habits.domain.usecase.WaterSettingsUpdate
 import com.andrew264.habits.model.schedule.Schedule
+import com.andrew264.habits.ui.theme.createPreviewPersistentSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -15,7 +16,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class WaterUiState(
-    val settings: PersistentSettings = PersistentSettings(selectedScheduleId = null, isBedtimeTrackingEnabled = false, isAppUsageTrackingEnabled = false, usageLimitNotificationsEnabled = false, isWaterTrackingEnabled = false, waterDailyTargetMl = 2500, isWaterReminderEnabled = false, waterReminderIntervalMinutes = 60, waterReminderSnoozeMinutes = 15, waterReminderScheduleId = null),
+    val settings: PersistentSettings = createPreviewPersistentSettings(),
     val allSchedules: List<Schedule> = emptyList(),
     val todaysIntakeMl: Int = 0,
     val progress: Float = 0f

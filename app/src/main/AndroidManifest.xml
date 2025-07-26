@@ -3,7 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!-- For querying all installed apps (Android 11+) -->
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
 
     <!-- For Sleep API -->
@@ -11,16 +12,16 @@
 
     <!-- For starting foreground service -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
 
     <!-- For notifications (Android 13+ / API 33+) -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- For scheduling exact alarms (Android 12+ / API 31+) -->
     <!-- For full compliance on Android 14+, you may need to declare a USE_EXACT_ALARM permission -->
     <!-- or use a non-exact alarm type if precision is not critical. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 
     <!-- Optional: To start service on boot -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -30,14 +31,13 @@
         android:name=".HabitsApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
+        android:enableOnBackInvokedCallback="true"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Habits"
-        android:enableOnBackInvokedCallback="true"
-        >
+        android:theme="@style/Theme.Habits">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -49,26 +49,38 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.blocker.BlockerActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Habits.Blocker" />
+
         <service
             android:name=".service.UserPresenceService"
             android:enabled="true"
             android:exported="false"
-            android:permission="android.permission.BIND_JOB_SERVICE"
             android:foregroundServiceType="health"
-            tools:ignore="ExportedService">
-        </service>
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            tools:ignore="ExportedService"></service>
 
         <receiver
             android:name=".receiver.SleepReceiver"
-            android:exported="false">
-        </receiver>
+            android:exported="false"></receiver>
 
-        <receiver android:name=".receiver.WaterReminderReceiver" android:exported="false" />
+        <receiver
+            android:name=".receiver.WaterReminderReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".receiver.SessionLimitReceiver"
+            android:exported="false" />
 
         <!-- Boot Receiver -->
-        <receiver android:name=".receiver.BootReceiver" android:exported="true">
+        <receiver
+            android:name=".receiver.BootReceiver"
+            android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 
@@ -85,9 +97,9 @@
 
         <service
             android:name=".service.AppUsageAccessibilityService"
+            android:exported="false"
             android:label="@string/app_name"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-            android:exported="false">
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>

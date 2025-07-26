@@ -11,6 +11,7 @@ interface SettingsRepository {
     // Usage Tracking Feature
     suspend fun updateAppUsageTrackingEnabled(isEnabled: Boolean)
     suspend fun updateUsageLimitNotificationsEnabled(isEnabled: Boolean)
+    suspend fun updateAppBlockingEnabled(isEnabled: Boolean)
 
     // For tracking daily limit notifications
     fun getNotifiedDailyPackages(): Flow<Set<String>>

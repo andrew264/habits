@@ -7,6 +7,7 @@ data class PersistentSettings(
     // App Usage Tracking Settings
     val isAppUsageTrackingEnabled: Boolean,
     val usageLimitNotificationsEnabled: Boolean,
+    val isAppBlockingEnabled: Boolean,
 
     // Water Tracking Settings
     val isWaterTrackingEnabled: Boolean,

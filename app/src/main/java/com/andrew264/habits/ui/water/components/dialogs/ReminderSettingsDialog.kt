@@ -22,6 +22,7 @@ import com.andrew264.habits.domain.model.PersistentSettings
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.ui.common.components.ScheduleSelector
 import com.andrew264.habits.ui.theme.Dimens
+import com.andrew264.habits.ui.theme.createPreviewPersistentSettings
 
 @Composable
 fun ReminderSettingsDialog(
@@ -109,18 +110,7 @@ fun ReminderSettingsDialog(
 @Preview
 @Composable
 internal fun ReminderSettingsDialogPreview() {
-    val settings = PersistentSettings(
-        selectedScheduleId = null,
-        isBedtimeTrackingEnabled = false,
-        isAppUsageTrackingEnabled = false,
-        usageLimitNotificationsEnabled = false,
-        isWaterTrackingEnabled = true,
-        waterDailyTargetMl = 0,
-        isWaterReminderEnabled = true,
-        waterReminderIntervalMinutes = 60,
-        waterReminderSnoozeMinutes = 15,
-        waterReminderScheduleId = "1"
-    )
+    val settings = createPreviewPersistentSettings()
     val allSchedules = listOf(
         Schedule(id = "1", name = "Schedule 1", groups = emptyList()),
         Schedule(id = "2", name = "Schedule 2", groups = emptyList())

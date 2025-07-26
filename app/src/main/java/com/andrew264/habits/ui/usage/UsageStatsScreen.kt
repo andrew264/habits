@@ -74,6 +74,7 @@ fun UsageStatsScreen(
         onRefresh = viewModel::refresh,
         onNavigate = onNavigate,
         onSetAppColor = viewModel::setAppColor,
+        onSetAppBlockingEnabled = viewModel::setAppBlockingEnabled,
         onSetUsageLimitNotificationsEnabled = viewModel::setUsageLimitNotificationsEnabled,
         onSaveLimits = { pkg, daily, session -> viewModel.saveAppLimits(pkg, daily, session) }
     )
@@ -87,6 +88,7 @@ private fun UsageStatsScreen(
     onRefresh: () -> Unit,
     onNavigate: (AppRoute) -> Unit,
     onSetAppColor: (packageName: String, colorHex: String) -> Unit,
+    onSetAppBlockingEnabled: (Boolean) -> Unit,
     onSetUsageLimitNotificationsEnabled: (Boolean) -> Unit,
     onSaveLimits: (packageName: String, dailyMinutes: Int?, sessionMinutes: Int?) -> Unit,
 ) {
@@ -129,6 +131,7 @@ private fun UsageStatsScreen(
                                 }
                             },
                             onNavigateToWhitelist = { onNavigate(Whitelist) },
+                            onSetAppBlockingEnabled = onSetAppBlockingEnabled,
                             onSetUsageLimitNotificationsEnabled = onSetUsageLimitNotificationsEnabled,
                             onOpenAccessibilitySettings = {
                                 val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
@@ -174,6 +177,7 @@ private fun UsageListContent(
     onRefresh: () -> Unit,
     onAppSelected: (AppDetails) -> Unit,
     onNavigateToWhitelist: () -> Unit,
+    onSetAppBlockingEnabled: (Boolean) -> Unit,
     onSetUsageLimitNotificationsEnabled: (Boolean) -> Unit,
     onOpenAccessibilitySettings: () -> Unit,
 ) {
@@ -250,13 +254,25 @@ private fun UsageListContent(
 
             item {
                 Card(modifier = Modifier.fillMaxWidth()) {
-                    SettingsRow(
-                        modifier = Modifier.padding(Dimens.PaddingLarge),
-                        text = "Enable Limit Notifications",
-                        description = "Get notified when you exceed a daily or session limit for an app.",
-                        checked = uiState.usageLimitNotificationsEnabled,
-                        onCheckedChange = onSetUsageLimitNotificationsEnabled
-                    )
+                    Column(
+                        modifier = Modifier.padding(vertical = Dimens.PaddingSmall)
+                    ) {
+                        SettingsRow(
+                            modifier = Modifier.padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingSmall),
+                            text = "Enable Limit Notifications",
+                            description = "Get notified when you exceed a usage limit.",
+                            checked = uiState.usageLimitNotificationsEnabled,
+                            onCheckedChange = onSetUsageLimitNotificationsEnabled
+                        )
+                        HorizontalDivider()
+                        SettingsRow(
+                            modifier = Modifier.padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingSmall),
+                            text = "Enable App Blocker",
+                            description = "Show an overlay when a usage limit is reached.",
+                            checked = uiState.isAppBlockingEnabled,
+                            onCheckedChange = onSetAppBlockingEnabled
+                        )
+                    }
                 }
             }
 
@@ -425,7 +441,8 @@ private fun UsageListContentPreview() {
                 onAppSelected = {},
                 onNavigateToWhitelist = {},
                 onSetUsageLimitNotificationsEnabled = {},
-                onOpenAccessibilitySettings = {}
+                onOpenAccessibilitySettings = {},
+                onSetAppBlockingEnabled = {}
             )
         }
     }
@@ -473,7 +490,8 @@ private fun UsageListContentWithWarningPreview() {
                 onAppSelected = {},
                 onNavigateToWhitelist = {},
                 onSetUsageLimitNotificationsEnabled = {},
-                onOpenAccessibilitySettings = {}
+                onOpenAccessibilitySettings = {},
+                onSetAppBlockingEnabled = {}
             )
         }
     }
@@ -494,7 +512,8 @@ private fun UsageStatsScreenDisabledPreview() {
                 onNavigate = {},
                 onSetAppColor = { _, _ -> },
                 onSetUsageLimitNotificationsEnabled = {},
-                onSaveLimits = { _, _, _ -> }
+                onSaveLimits = { _, _, _ -> },
+                onSetAppBlockingEnabled = {}
             )
         }
     }

@@ -12,6 +12,7 @@ object DataStoreKeys {
     // App Usage Tracking Feature
     val APP_USAGE_TRACKING_ENABLED = booleanPreferencesKey("app_usage_tracking_enabled")
     val USAGE_LIMIT_NOTIFICATIONS_ENABLED = booleanPreferencesKey("usage_limit_notifications_enabled")
+    val APP_BLOCKING_ENABLED = booleanPreferencesKey("app_blocking_enabled")
 
     // For tracking daily limit notifications
     val NOTIFIED_PACKAGES_DATE = stringPreferencesKey("notified_packages_date")

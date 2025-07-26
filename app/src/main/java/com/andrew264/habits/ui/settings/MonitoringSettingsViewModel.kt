@@ -7,6 +7,7 @@ import com.andrew264.habits.domain.model.PersistentSettings
 import com.andrew264.habits.domain.repository.SettingsRepository
 import com.andrew264.habits.domain.usecase.StartPresenceMonitoringUseCase
 import com.andrew264.habits.domain.usecase.StopPresenceMonitoringUseCase
+import com.andrew264.habits.ui.theme.createPreviewPersistentSettings
 import com.andrew264.habits.util.AccessibilityUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -15,7 +16,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class MonitoringSettingsUiState(
-    val settings: PersistentSettings = PersistentSettings(selectedScheduleId = null, isBedtimeTrackingEnabled = false, isAppUsageTrackingEnabled = false, isWaterTrackingEnabled = false, usageLimitNotificationsEnabled = false, waterDailyTargetMl = 2500, isWaterReminderEnabled = false, waterReminderIntervalMinutes = 60, waterReminderSnoozeMinutes = 15, waterReminderScheduleId = null),
+    val settings: PersistentSettings = createPreviewPersistentSettings(),
     val isAccessibilityServiceEnabled: Boolean = false
 )
 

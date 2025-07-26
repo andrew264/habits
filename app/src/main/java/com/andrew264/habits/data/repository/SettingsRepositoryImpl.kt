@@ -38,6 +38,7 @@ class SettingsRepositoryImpl @Inject constructor(@param:ApplicationContext priva
             // Usage
             val isAppUsageTrackingEnabled = preferences[DataStoreKeys.APP_USAGE_TRACKING_ENABLED] ?: false
             val usageLimitNotificationsEnabled = preferences[DataStoreKeys.USAGE_LIMIT_NOTIFICATIONS_ENABLED] ?: false
+            val isAppBlockingEnabled = preferences[DataStoreKeys.APP_BLOCKING_ENABLED] ?: false
 
             // Water
             val isWaterTrackingEnabled = preferences[DataStoreKeys.WATER_TRACKING_ENABLED] ?: false
@@ -52,6 +53,7 @@ class SettingsRepositoryImpl @Inject constructor(@param:ApplicationContext priva
                 selectedScheduleId = selectedScheduleId,
                 isBedtimeTrackingEnabled = isBedtimeTrackingEnabled,
                 isAppUsageTrackingEnabled = isAppUsageTrackingEnabled,
+                isAppBlockingEnabled = isAppBlockingEnabled,
                 usageLimitNotificationsEnabled = usageLimitNotificationsEnabled,
                 isWaterTrackingEnabled = isWaterTrackingEnabled,
                 waterDailyTargetMl = waterDailyTargetMl,
@@ -90,6 +92,11 @@ class SettingsRepositoryImpl @Inject constructor(@param:ApplicationContext priva
         }
     }
 
+    override suspend fun updateAppBlockingEnabled(isEnabled: Boolean) {
+        context.dataStore.edit { settings ->
+            settings[DataStoreKeys.APP_BLOCKING_ENABLED] = isEnabled
+        }
+    }
 
     override suspend fun updateWaterTrackingEnabled(isEnabled: Boolean) {
         context.dataStore.edit { settings ->

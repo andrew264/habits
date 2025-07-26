@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.andrew264.habits.domain.model.PersistentSettings
 import com.andrew264.habits.ui.theme.Dimens
+import com.andrew264.habits.ui.theme.createPreviewPersistentSettings
 
 @Composable
 fun TargetSettingsDialog(
@@ -81,17 +82,6 @@ fun TargetSettingsDialog(
 @Preview
 @Composable
 internal fun TargetSettingsDialogPreview() {
-    val settings = PersistentSettings(
-        selectedScheduleId = null,
-        isBedtimeTrackingEnabled = false,
-        isAppUsageTrackingEnabled = false,
-        usageLimitNotificationsEnabled = false,
-        isWaterTrackingEnabled = true,
-        waterDailyTargetMl = 2000,
-        isWaterReminderEnabled = false,
-        waterReminderIntervalMinutes = 60,
-        waterReminderSnoozeMinutes = 15,
-        waterReminderScheduleId = null
-    )
+    val settings = createPreviewPersistentSettings()
     TargetSettingsDialog(settings = settings, onDismiss = {}, onSave = { _, _ -> })
 }

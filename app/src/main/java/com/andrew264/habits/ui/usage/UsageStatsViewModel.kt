@@ -42,6 +42,7 @@ data class UsageStatsUiState(
     val isLoading: Boolean = true,
     val isAppUsageTrackingEnabled: Boolean = true,
     val usageLimitNotificationsEnabled: Boolean = false,
+    val isAppBlockingEnabled: Boolean = false,
     val isAccessibilityServiceEnabled: Boolean = false,
     val selectedRange: UsageTimeRange = UsageTimeRange.DAY,
     val stats: UsageStatistics? = null,
@@ -88,7 +89,8 @@ class UsageStatsViewModel @Inject constructor(
                     isLoading = false,
                     isAppUsageTrackingEnabled = false,
                     isAccessibilityServiceEnabled = isAccessibilityEnabled,
-                    usageLimitNotificationsEnabled = settings.usageLimitNotificationsEnabled
+                    usageLimitNotificationsEnabled = settings.usageLimitNotificationsEnabled,
+                    isAppBlockingEnabled = settings.isAppBlockingEnabled,
                 )
             )
         } else {
@@ -178,6 +180,7 @@ class UsageStatsViewModel @Inject constructor(
                     isAppUsageTrackingEnabled = true,
                     isAccessibilityServiceEnabled = isAccessibilityEnabled,
                     usageLimitNotificationsEnabled = settings.usageLimitNotificationsEnabled,
+                    isAppBlockingEnabled = settings.isAppBlockingEnabled,
                     selectedRange = range,
                     stats = stats,
                     whitelistedApps = whitelistedApps,
@@ -210,6 +213,12 @@ class UsageStatsViewModel @Inject constructor(
     fun setUsageLimitNotificationsEnabled(isEnabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.updateUsageLimitNotificationsEnabled(isEnabled)
+        }
+    }
+
+    fun setAppBlockingEnabled(isEnabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updateAppBlockingEnabled(isEnabled)
         }
     }
 

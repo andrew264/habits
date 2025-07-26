@@ -23,9 +23,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import com.andrew264.habits.domain.model.PersistentSettings
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
+import com.andrew264.habits.ui.theme.createPreviewPersistentSettings
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -231,18 +231,7 @@ private fun SettingsListItem(
 @Preview(name = "Settings - All Enabled", showBackground = true)
 @Composable
 private fun MonitoringSettingsScreenAllEnabledPreview() {
-    val settings = PersistentSettings(
-        selectedScheduleId = null,
-        isBedtimeTrackingEnabled = true,
-        isAppUsageTrackingEnabled = true,
-        usageLimitNotificationsEnabled = true,
-        isWaterTrackingEnabled = true,
-        waterDailyTargetMl = 2500,
-        isWaterReminderEnabled = true,
-        waterReminderIntervalMinutes = 60,
-        waterReminderSnoozeMinutes = 15,
-        waterReminderScheduleId = null
-    )
+    val settings = createPreviewPersistentSettings()
     HabitsTheme {
         MonitoringSettingsScreen(
             uiState = MonitoringSettingsUiState(
@@ -261,18 +250,7 @@ private fun MonitoringSettingsScreenAllEnabledPreview() {
 @Preview(name = "Settings - Accessibility Warning", showBackground = true)
 @Composable
 private fun MonitoringSettingsScreenWarningPreview() {
-    val settings = PersistentSettings(
-        selectedScheduleId = null,
-        isBedtimeTrackingEnabled = true,
-        isAppUsageTrackingEnabled = true,
-        usageLimitNotificationsEnabled = true,
-        isWaterTrackingEnabled = true,
-        waterDailyTargetMl = 2500,
-        isWaterReminderEnabled = true,
-        waterReminderIntervalMinutes = 60,
-        waterReminderSnoozeMinutes = 15,
-        waterReminderScheduleId = null
-    )
+    val settings = createPreviewPersistentSettings()
     HabitsTheme {
         MonitoringSettingsScreen(
             uiState = MonitoringSettingsUiState(

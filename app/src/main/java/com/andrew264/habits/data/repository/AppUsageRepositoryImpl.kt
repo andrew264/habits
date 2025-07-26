@@ -4,10 +4,14 @@ import android.util.Log
 import androidx.room.Transaction
 import com.andrew264.habits.data.dao.AppUsageEventDao
 import com.andrew264.habits.data.entity.AppUsageEventEntity
+import com.andrew264.habits.domain.manager.SnoozeManager
 import com.andrew264.habits.domain.model.AppUsageEvent
 import com.andrew264.habits.domain.repository.AppUsageRepository
+import com.andrew264.habits.domain.repository.WhitelistRepository
+import com.andrew264.habits.domain.scheduler.SessionAlarmScheduler
 import com.andrew264.habits.domain.usecase.CheckUsageLimitsUseCase
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -15,7 +19,10 @@ import javax.inject.Singleton
 @Singleton
 class AppUsageRepositoryImpl @Inject constructor(
     private val appUsageEventDao: AppUsageEventDao,
-    private val checkUsageLimitsUseCase: CheckUsageLimitsUseCase
+    private val checkUsageLimitsUseCase: CheckUsageLimitsUseCase,
+    private val whitelistRepository: WhitelistRepository,
+    private val sessionAlarmScheduler: SessionAlarmScheduler,
+    private val snoozeManager: SnoozeManager
 ) : AppUsageRepository {
 
     companion object {
@@ -31,27 +38,28 @@ class AppUsageRepositoryImpl @Inject constructor(
         Log.d(TAG, "startUsageSession for package: $packageName")
         val lastSession = appUsageEventDao.getOngoingEvent()
 
+        // Cancel any pending alarm from the previous app session.
+        sessionAlarmScheduler.cancel()
+
         if (lastSession == null) {
             Log.d(TAG, "No ongoing session. Starting a new one for $packageName.")
-            val newEvent = AppUsageEventEntity(packageName = packageName, startTimestamp = timestamp)
-            appUsageEventDao.insert(newEvent)
-            checkUsageLimitsUseCase.checkDailyLimit(packageName)
+            startNewSessionInternal(packageName, timestamp)
             return
         }
 
         if (lastSession.packageName == packageName) {
             Log.d(TAG, "New package is same as last. No changes needed.")
+            // This assumes an alarm is already scheduled. If the app was killed and restarted,
+            // this might be a problem. A boot receiver should handle rescheduling.
             return
         }
 
         val endedLastSession = lastSession.copy(endTimestamp = timestamp)
         appUsageEventDao.update(endedLastSession)
-        val lastSessionDuration = endedLastSession.endTimestamp!! - endedLastSession.startTimestamp
-        Log.d(TAG, "Ended last session for ${lastSession.packageName}. Duration: ${lastSessionDuration}ms")
+        Log.d(TAG, "Ended last session for ${lastSession.packageName}.")
+        snoozeManager.clearSnooze(lastSession.packageName)
 
-        checkUsageLimitsUseCase.checkSessionLimit(lastSession.packageName, lastSessionDuration)
-
-        if (lastSessionDuration < FLICKER_THRESHOLD_MS) {
+        if ((endedLastSession.endTimestamp!! - endedLastSession.startTimestamp) < FLICKER_THRESHOLD_MS) {
             Log.d(TAG, "Last session was a short flicker. Checking for merge possibility.")
             val sessionBeforeFlicker = appUsageEventDao.getSecondToLastEvent()
 
@@ -60,19 +68,28 @@ class AppUsageRepositoryImpl @Inject constructor(
                 appUsageEventDao.delete(endedLastSession)
                 appUsageEventDao.update(sessionBeforeFlicker.copy(endTimestamp = null))
                 Log.d(TAG, "Merge complete. Reactivated session for $packageName.")
+                // Reschedule alarm for the restored session.
+                scheduleSessionAlarm(packageName)
                 return
-            } else {
-                Log.d(TAG, "Flicker detected, but not a return to previous app. Proceeding normally.")
-                checkUsageLimitsUseCase.clearSessionNotified(lastSession.packageName)
             }
-        } else {
-            checkUsageLimitsUseCase.clearSessionNotified(lastSession.packageName)
         }
 
+        startNewSessionInternal(packageName, timestamp)
+    }
+
+    private suspend fun startNewSessionInternal(packageName: String, timestamp: Long) {
         Log.d(TAG, "Inserting new session for $packageName.")
         val newEvent = AppUsageEventEntity(packageName = packageName, startTimestamp = timestamp)
         appUsageEventDao.insert(newEvent)
         checkUsageLimitsUseCase.checkDailyLimit(packageName)
+        scheduleSessionAlarm(packageName)
+    }
+
+    private suspend fun scheduleSessionAlarm(packageName: String) {
+        val app = whitelistRepository.getWhitelistedApps().first().find { it.packageName == packageName }
+        app?.sessionLimitMinutes?.let { limit ->
+            sessionAlarmScheduler.schedule(packageName, limit)
+        }
     }
 
     override suspend fun endCurrentUsageSession(timestamp: Long) {
@@ -81,12 +98,12 @@ class AppUsageRepositoryImpl @Inject constructor(
             if (timestamp > ongoingEvent.startTimestamp) {
                 appUsageEventDao.update(ongoingEvent.copy(endTimestamp = timestamp))
                 Log.d(TAG, "Ended ongoing session for ${ongoingEvent.packageName} at $timestamp")
-                val duration = timestamp - ongoingEvent.startTimestamp
-                checkUsageLimitsUseCase.checkSessionLimit(ongoingEvent.packageName, duration)
             } else {
                 appUsageEventDao.update(ongoingEvent.copy(endTimestamp = ongoingEvent.startTimestamp))
                 Log.w(TAG, "Ended ongoing session with end time before start time. Invalidating session for ${ongoingEvent.packageName}.")
             }
+            sessionAlarmScheduler.cancel()
+            snoozeManager.clearSnooze(ongoingEvent.packageName)
         }
     }
 
