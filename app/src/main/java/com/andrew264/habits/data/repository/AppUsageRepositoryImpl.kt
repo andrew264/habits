@@ -86,6 +86,10 @@ class AppUsageRepositoryImpl @Inject constructor(
     }
 
     private suspend fun scheduleSessionAlarm(packageName: String) {
+        if (snoozeManager.isAppSnoozed(packageName)) {
+            Log.d(TAG, "Session alarm for $packageName not scheduled as it is currently snoozed.")
+            return
+        }
         val app = whitelistRepository.getWhitelistedApps().first().find { it.packageName == packageName }
         app?.sessionLimitMinutes?.let { limit ->
             sessionAlarmScheduler.schedule(packageName, limit)

@@ -132,7 +132,6 @@ class CheckUsageLimitsUseCase @Inject constructor(
             putExtra(EXTRA_TIME_USED_MS, timeUsedMs)
             putExtra(EXTRA_LIMIT_MINUTES, limitMinutes)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
         context.startActivity(intent)
         Log.d(TAG, "Launched BlockerActivity for $packageName")

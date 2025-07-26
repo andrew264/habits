@@ -53,7 +53,8 @@
             android:name=".ui.blocker.BlockerActivity"
             android:excludeFromRecents="true"
             android:exported="false"
-            android:launchMode="singleTop"
+            android:launchMode="singleInstance"
+            android:taskAffinity=""
             android:theme="@style/Theme.Habits.Blocker" />
 
         <service
@@ -62,11 +63,11 @@
             android:exported="false"
             android:foregroundServiceType="health"
             android:permission="android.permission.BIND_JOB_SERVICE"
-            tools:ignore="ExportedService"></service>
+            tools:ignore="ExportedService" />
 
         <receiver
             android:name=".receiver.SleepReceiver"
-            android:exported="false"></receiver>
+            android:exported="false" />
 
         <receiver
             android:name=".receiver.WaterReminderReceiver"

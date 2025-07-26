@@ -34,6 +34,13 @@ class AppUsageAccessibilityService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             val packageName = event.packageName
+
+            // Ignore system UI and our own app
+            if (packageName == "com.android.systemui" || packageName == applicationContext.packageName) {
+                Log.d(TAG, "Ignoring foreground change to system UI or self: $packageName")
+                return
+            }
+
             if (packageName != null && packageName != lastRecordedPackageName) {
                 Log.d(TAG, "Foreground app changed to: $packageName")
                 lastRecordedPackageName = packageName
