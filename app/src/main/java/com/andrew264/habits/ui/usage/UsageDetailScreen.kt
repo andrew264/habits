@@ -2,11 +2,9 @@ package com.andrew264.habits.ui.usage
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.*
@@ -23,7 +21,8 @@ import com.andrew264.habits.ui.common.color_picker.utils.toColorOrNull
 import com.andrew264.habits.ui.common.color_picker.utils.toHexCode
 import com.andrew264.habits.ui.common.components.DrawableImage
 import com.andrew264.habits.ui.common.components.FilterButtonGroup
-import com.andrew264.habits.ui.common.dialogs.DurationPickerDialog
+import com.andrew264.habits.ui.common.duration_picker.DurationPickerDialog
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.common.utils.FormatUtils
 import com.andrew264.habits.ui.common.utils.rememberAppIcon
 import com.andrew264.habits.ui.theme.Dimens
@@ -165,6 +164,8 @@ fun UsageDetailScreen(
                 }
             )
         }
+        val dailyLimitInteractionSource = remember { MutableInteractionSource() }
+        HapticInteractionEffect(dailyLimitInteractionSource)
         ListItem(
             headlineContent = { Text("Daily limit") },
             trailingContent = {
@@ -184,7 +185,10 @@ fun UsageDetailScreen(
                     )
                 }
             },
-            modifier = Modifier.clickable { showDailyLimitDialog = true }
+            modifier = Modifier.clickable(
+                interactionSource = dailyLimitInteractionSource,
+                indication = LocalIndication.current
+            ) { showDailyLimitDialog = true }
         )
 
         var showSessionLimitDialog by rememberSaveable { mutableStateOf(false) }
@@ -200,6 +204,8 @@ fun UsageDetailScreen(
                 }
             )
         }
+        val sessionLimitInteractionSource = remember { MutableInteractionSource() }
+        HapticInteractionEffect(sessionLimitInteractionSource)
         ListItem(
             headlineContent = { Text("Session limit") },
             trailingContent = {
@@ -219,7 +225,10 @@ fun UsageDetailScreen(
                     )
                 }
             },
-            modifier = Modifier.clickable { showSessionLimitDialog = true }
+            modifier = Modifier.clickable(
+                interactionSource = sessionLimitInteractionSource,
+                indication = LocalIndication.current
+            ) { showSessionLimitDialog = true }
         )
 
         var showColorDialog by rememberSaveable { mutableStateOf(false) }
@@ -235,6 +244,8 @@ fun UsageDetailScreen(
                 }
             )
         }
+        val colorInteractionSource = remember { MutableInteractionSource() }
+        HapticInteractionEffect(colorInteractionSource)
         ListItem(
             headlineContent = { Text("Display color") },
             trailingContent = {
@@ -247,7 +258,10 @@ fun UsageDetailScreen(
                         )
                 )
             },
-            modifier = Modifier.clickable { showColorDialog = true }
+            modifier = Modifier.clickable(
+                interactionSource = colorInteractionSource,
+                indication = LocalIndication.current
+            ) { showColorDialog = true }
         )
     }
 }
