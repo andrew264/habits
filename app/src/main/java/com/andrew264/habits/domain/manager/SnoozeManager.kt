@@ -1,6 +1,8 @@
 package com.andrew264.habits.domain.manager
 
+import com.andrew264.habits.domain.scheduler.SessionAlarmScheduler
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -10,7 +12,9 @@ import javax.inject.Singleton
  * TODO; should we use the database for this? problem for later me ig
  */
 @Singleton
-class SnoozeManager @Inject constructor() {
+class SnoozeManager @Inject constructor(
+    private val sessionAlarmScheduler: SessionAlarmScheduler
+) {
     private val snoozedApps = ConcurrentHashMap<String, Long>() // PackageName -> Snooze End Timestamp
 
     /**
@@ -22,6 +26,12 @@ class SnoozeManager @Inject constructor() {
     fun snoozeApp(packageName: String, durationMillis: Long) {
         val snoozeEndTime = System.currentTimeMillis() + durationMillis
         snoozedApps[packageName] = snoozeEndTime
+
+        // After snoozing, we must schedule a new alarm to check again.
+        val durationMinutes = TimeUnit.MILLISECONDS.toMinutes(durationMillis).toInt()
+        if (durationMinutes > 0) {
+            sessionAlarmScheduler.schedule(packageName, durationMinutes)
+        }
     }
 
     /**
