@@ -55,7 +55,7 @@ class BootReceiver : BroadcastReceiver() {
                     appUsageRepository.endCurrentUsageSession(System.currentTimeMillis())
 
                     // Restart presence service if it was active
-                    if (settings.isBedtimeTrackingEnabled) {
+                    if (settings.isBedtimeTrackingEnabled || settings.isAppUsageTrackingEnabled) {
                         Log.d(TAG, "Service was persisted as active. Attempting to start UserPresenceService.")
                         startPresenceMonitoringUseCase.execute()
                     } else {

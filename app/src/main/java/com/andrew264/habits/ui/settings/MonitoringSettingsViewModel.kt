@@ -57,7 +57,7 @@ class MonitoringSettingsViewModel @Inject constructor(
         // This collector reacts to the source of truth (the settings repository).
         viewModelScope.launch {
             settingsRepository.settingsFlow
-                .map { it.isBedtimeTrackingEnabled }
+                .map { it.isBedtimeTrackingEnabled || it.isAppUsageTrackingEnabled }
                 .distinctUntilChanged()
                 .collect { isEnabled ->
                     if (isEnabled) {

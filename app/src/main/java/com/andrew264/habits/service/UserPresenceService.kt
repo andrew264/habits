@@ -2,7 +2,10 @@ package com.andrew264.habits.service
 
 import android.Manifest
 import android.app.*
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.IBinder
@@ -12,6 +15,10 @@ import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.andrew264.habits.MainActivity
 import com.andrew264.habits.R
+import com.andrew264.habits.domain.model.PersistentSettings
+import com.andrew264.habits.domain.repository.AppUsageRepository
+import com.andrew264.habits.domain.repository.ScreenHistoryRepository
+import com.andrew264.habits.domain.repository.SettingsRepository
 import com.andrew264.habits.domain.repository.UserPresenceHistoryRepository
 import com.andrew264.habits.domain.usecase.EvaluateUserPresenceUseCase
 import com.andrew264.habits.domain.usecase.PresenceEvaluationInput
@@ -26,13 +33,14 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class UserPresenceService : Service() {
 
-    private var isSleepApiAvailable = false
+    private var deviceStateReceiver: BroadcastReceiver? = null
 
     companion object {
         private const val TAG = "UserPresenceService"
@@ -55,13 +63,20 @@ class UserPresenceService : Service() {
     @Inject
     lateinit var evaluateUserPresenceUseCase: EvaluateUserPresenceUseCase
 
+    @Inject
+    lateinit var settingsRepository: SettingsRepository
+
+    @Inject
+    lateinit var appUsageRepository: AppUsageRepository
+
+    @Inject
+    lateinit var screenHistoryRepository: ScreenHistoryRepository
+
     private val serviceJob = SupervisorJob()
     private val serviceScope = CoroutineScope(Dispatchers.Default + serviceJob)
 
     private val activityRecognitionClient by lazy { ActivityRecognition.getClient(this) }
     private var sleepApiPendingIntent: PendingIntent? = null
-
-    private var isServiceRunning = false
 
     private var currentPresenceState = UserPresenceState.UNKNOWN
 
@@ -73,7 +88,11 @@ class UserPresenceService : Service() {
         serviceScope.launch {
             userPresenceHistoryRepository.userPresenceState.collect { state ->
                 currentPresenceState = state
-                updateNotificationContentOnly()
+                val settings = settingsRepository.settingsFlow.first()
+                if (settings.isBedtimeTrackingEnabled || settings.isAppUsageTrackingEnabled) {
+                    val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                    notificationManager.notify(NOTIFICATION_ID, createNotification(settings))
+                }
             }
         }
     }
@@ -87,7 +106,9 @@ class UserPresenceService : Service() {
 
         when (intent?.action) {
             ACTION_START_SERVICE -> {
-                startAllMonitoringLogic()
+                serviceScope.launch {
+                    configureAndStartMonitoring()
+                }
             }
 
             ACTION_PROCESS_SLEEP_SEGMENT_EVENTS -> {
@@ -107,90 +128,69 @@ class UserPresenceService : Service() {
             }
 
             ACTION_STOP_SERVICE -> {
-                stopAllMonitoringLogic()
+                serviceScope.launch {
+                    stopMonitoringAndSelf()
+                }
             }
         }
         return START_STICKY
     }
 
-    private fun startAllMonitoringLogic() {
-        if (isServiceRunning) {
-            Log.d(TAG, "Start logic called, but service monitoring is already active.")
+    private suspend fun configureAndStartMonitoring() {
+        // Always clean up first to handle re-configuration
+        unsubscribeFromSleepUpdates()
+        unregisterDeviceStateReceiver()
+
+        val settings = settingsRepository.settingsFlow.first()
+        if (!settings.isBedtimeTrackingEnabled && !settings.isAppUsageTrackingEnabled) {
+            Log.i(TAG, "No monitoring features enabled. Stopping service.")
+            stopMonitoringAndSelf()
             return
         }
-        Log.i(TAG, "Starting Sleep API monitoring service logic.")
-        isServiceRunning = true
 
-        isSleepApiAvailable =
-            ContextCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED
-        Log.d(TAG, "Sleep API available: $isSleepApiAvailable")
+        Log.i(TAG, "Configuring monitoring. Bedtime: ${settings.isBedtimeTrackingEnabled}, Usage: ${settings.isAppUsageTrackingEnabled}")
 
-        if (isSleepApiAvailable) {
-            subscribeToSleepUpdates()
+        if (settings.isBedtimeTrackingEnabled) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED) {
+                subscribeToSleepUpdates()
+            }
+            evaluateUserPresenceUseCase.execute(PresenceEvaluationInput.InitialEvaluation)
         }
+
+        // Screen state is needed for both features
+        registerDeviceStateReceiver()
 
         ServiceCompat.startForeground(
             this,
             NOTIFICATION_ID,
-            createNotification(),
+            createNotification(settings),
             ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH
         )
-
-        // Perform initial evaluation
-        serviceScope.launch {
-            evaluateUserPresenceUseCase.execute(PresenceEvaluationInput.InitialEvaluation)
-        }
     }
 
-    private fun stopAllMonitoringLogic() {
-        if (!isServiceRunning) {
-            Log.d(TAG, "Stop logic called, but service monitoring is not active.")
-            return
-        }
-        Log.i(TAG, "Stopping Sleep API monitoring service logic.")
-        isServiceRunning = false
-
-        if (isSleepApiAvailable) {
-            unsubscribeFromSleepUpdates()
-        }
-        updateUserPresenceStateInternal(UserPresenceState.UNKNOWN, "Service Monitoring Stopped")
+    private fun stopMonitoringAndSelf() {
+        Log.i(TAG, "Stopping all monitoring.")
+        unsubscribeFromSleepUpdates()
+        unregisterDeviceStateReceiver()
+        userPresenceHistoryRepository.updateUserPresenceState(UserPresenceState.UNKNOWN)
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
 
-    private fun updateUserPresenceStateInternal(
-        newState: UserPresenceState,
-        reason: String
-    ) {
-        val oldState = currentPresenceState
-        if (oldState != newState) {
-            userPresenceHistoryRepository.updateUserPresenceState(newState)
-            Log.i(TAG, "STATE CHANGE: User presence -> $newState (Reason: $reason)")
-        }
-    }
-
-    private fun updateNotificationContentOnly() {
-        if (isServiceRunning) {
-            val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.notify(NOTIFICATION_ID, createNotification())
-        }
-    }
-
-
-    private fun createNotification(): Notification {
+    private fun createNotification(settings: PersistentSettings): Notification {
         val notificationIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra("destination_route", Bedtime::class.java.simpleName)
         }
         val pendingIntentFlags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        // Use a unique request code to prevent collisions with other notifications
         val pendingIntent =
             PendingIntent.getActivity(this, Bedtime::class.java.simpleName.hashCode(), notificationIntent, pendingIntentFlags)
 
-        val contentText = when (currentPresenceState) {
-            UserPresenceState.AWAKE -> "Bedtime tracking active. Current status: Awake."
-            UserPresenceState.SLEEPING -> "Bedtime tracking active. Current status: Sleeping."
-            UserPresenceState.UNKNOWN -> "Bedtime tracking is starting..."
+        val contentText = when {
+            settings.isBedtimeTrackingEnabled && settings.isAppUsageTrackingEnabled -> "Monitoring bedtime and app usage."
+            settings.isBedtimeTrackingEnabled -> "Monitoring bedtime. Status: ${currentPresenceState.name.lowercase()}."
+            settings.isAppUsageTrackingEnabled -> "Monitoring app usage."
+            else -> "Habits service is running."
         }
 
         return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
@@ -212,30 +212,26 @@ class UserPresenceService : Service() {
                 SleepSegmentRequest.getDefaultSleepSegmentRequest()
             ).addOnSuccessListener {
                 Log.i(TAG, "Successfully subscribed to Sleep API.")
-                isSleepApiAvailable = true
             }.addOnFailureListener { e ->
                 Log.e(TAG, "Failed to subscribe to Sleep API.", e)
-                isSleepApiAvailable = false
             }
         } else {
             Log.w(TAG, "Attempted to subscribe to Sleep API, but permission is missing.")
-            isSleepApiAvailable = false
         }
     }
 
     private fun unsubscribeFromSleepUpdates() {
-        Log.d(TAG, "Attempting to unsubscribe from Sleep API updates.")
         sleepApiPendingIntent?.let { pendingIntent ->
+            Log.d(TAG, "Attempting to unsubscribe from Sleep API updates.")
             activityRecognitionClient.removeSleepSegmentUpdates(pendingIntent)
                 .addOnSuccessListener {
                     Log.i(TAG, "Successfully unsubscribed from Sleep API updates.")
                     pendingIntent.cancel()
                     sleepApiPendingIntent = null
-                    isSleepApiAvailable = false
                 }.addOnFailureListener { e ->
                     Log.e(TAG, "Failed to unsubscribe from Sleep API updates.", e)
                 }
-        } ?: Log.d(TAG, "No active Sleep API subscription (PendingIntent was null).")
+        }
     }
 
     private fun getSleepPendingIntent(): PendingIntent {
@@ -245,10 +241,85 @@ class UserPresenceService : Service() {
         return PendingIntent.getBroadcast(this, SLEEP_API_PENDING_INTENT_REQUEST_CODE, intent, flags)
     }
 
+    private fun registerDeviceStateReceiver() {
+        if (deviceStateReceiver != null) return
+
+        deviceStateReceiver = object : BroadcastReceiver() {
+            private val job = SupervisorJob()
+            private val scope = CoroutineScope(Dispatchers.IO + job)
+
+            override fun onReceive(context: Context, intent: Intent) {
+                val pendingResult = goAsync()
+                val timestamp = System.currentTimeMillis()
+
+                scope.launch {
+                    try {
+                        val settings = settingsRepository.settingsFlow.first()
+                        Log.d(TAG, "Received action: ${intent.action}. Bedtime enabled: ${settings.isBedtimeTrackingEnabled}, Usage enabled: ${settings.isAppUsageTrackingEnabled}")
+
+                        when (intent.action) {
+                            Intent.ACTION_SCREEN_ON -> {
+                                if (settings.isBedtimeTrackingEnabled) {
+                                    evaluateUserPresenceUseCase.execute(PresenceEvaluationInput.ScreenOn)
+                                }
+                                if (settings.isBedtimeTrackingEnabled || settings.isAppUsageTrackingEnabled) {
+                                    screenHistoryRepository.addScreenEvent("SCREEN_ON", timestamp)
+                                }
+                            }
+
+                            Intent.ACTION_SCREEN_OFF -> {
+                                if (settings.isAppUsageTrackingEnabled) {
+                                    appUsageRepository.endCurrentUsageSession(timestamp)
+                                }
+                                if (settings.isBedtimeTrackingEnabled) {
+                                    evaluateUserPresenceUseCase.execute(PresenceEvaluationInput.ScreenOff)
+                                }
+                                if (settings.isBedtimeTrackingEnabled || settings.isAppUsageTrackingEnabled) {
+                                    screenHistoryRepository.addScreenEvent("SCREEN_OFF", timestamp)
+                                }
+                            }
+
+                            Intent.ACTION_USER_PRESENT -> {
+                                if (settings.isBedtimeTrackingEnabled) {
+                                    evaluateUserPresenceUseCase.execute(PresenceEvaluationInput.UserPresent)
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error processing device state change: ${e.message}", e)
+                    } finally {
+                        pendingResult.finish()
+                    }
+                }
+            }
+        }
+
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_USER_PRESENT)
+        }
+        registerReceiver(deviceStateReceiver, filter)
+        Log.d(TAG, "Device state receiver registered.")
+    }
+
+    private fun unregisterDeviceStateReceiver() {
+        deviceStateReceiver?.let {
+            try {
+                unregisterReceiver(it)
+                deviceStateReceiver = null
+                Log.d(TAG, "Device state receiver unregistered.")
+            } catch (_: IllegalArgumentException) {
+                Log.w(TAG, "Device state receiver already unregistered.")
+            }
+        }
+    }
+
+
     private fun createNotificationChannel() {
         val serviceChannel =
-            NotificationChannel(NOTIFICATION_CHANNEL_ID, "User Presence Service Channel", NotificationManager.IMPORTANCE_LOW)
-        serviceChannel.description = "Channel for habit tracker presence monitoring service"
+            NotificationChannel(NOTIFICATION_CHANNEL_ID, "Monitoring Service", NotificationManager.IMPORTANCE_LOW)
+        serviceChannel.description = "Channel for habit tracker monitoring service"
         val manager = getSystemService(NotificationManager::class.java)
         manager?.createNotificationChannel(serviceChannel)
     }
@@ -256,12 +327,10 @@ class UserPresenceService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "Service Destroying. Cleaning up all resources.")
-        if (isServiceRunning) {
-            updateUserPresenceStateInternal(UserPresenceState.UNKNOWN, "Service Destroyed")
-            stopAllMonitoringLogic()
+        serviceScope.launch {
+            stopMonitoringAndSelf()
         }
         serviceJob.cancel()
-        Log.d(TAG, "Service Destroyed. Final state: $currentPresenceState")
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

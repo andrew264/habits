@@ -85,17 +85,6 @@
             </intent-filter>
         </receiver>
 
-        <!-- Device State Receiver -->
-        <receiver
-            android:name=".receiver.DeviceStateReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.intent.action.SCREEN_ON" />
-                <action android:name="android.intent.action.SCREEN_OFF" />
-                <action android:name="android.intent.action.USER_PRESENT" />
-            </intent-filter>
-        </receiver>
-
         <service
             android:name=".service.AppUsageAccessibilityService"
             android:exported="false"
