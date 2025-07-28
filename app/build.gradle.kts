@@ -72,6 +72,8 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    testImplementation(libs.koltinx.coroutines.test)
+
     // icons
     implementation(libs.androidx.material.icons.core)
     implementation(libs.androidx.material.icons.extended)
@@ -91,12 +93,12 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
 
     // Hilt
-    implementation (libs.hilt.android)
-    ksp (libs.hilt.android.compiler)
-    ksp (libs.androidx.hilt.compiler)
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.android.compiler)
+    ksp(libs.androidx.hilt.compiler)
 
     // Room
-    implementation (libs.androidx.room.ktx)
+    implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.runtime)
     annotationProcessor(libs.androidx.room.compiler)
     ksp(libs.androidx.room.compiler)

@@ -63,9 +63,8 @@ object FormatUtils {
      * @return The short name of the day.
      */
     fun formatDayOfWeekShort(day: DayOfWeek): String {
-        return day.name.substring(0, 3).replaceFirstChar {
-            if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-        }
+        return java.time.DayOfWeek.valueOf(day.name)
+            .getDisplayName(TextStyle.SHORT, Locale.getDefault())
     }
 
     /**

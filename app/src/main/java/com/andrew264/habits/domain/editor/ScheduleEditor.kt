@@ -223,7 +223,7 @@ class ScheduleEditor @Inject constructor() {
                     } else {
                         group
                     }
-                }.filterNot { it.timeRanges.isEmpty() && it.days.isEmpty() }
+                }.filterNot { it.timeRanges.isEmpty() }
             )
             return ScheduleModificationResult(newSchedule, null)
         }

@@ -27,6 +27,9 @@ data class DailyCoverage(
 )
 
 
+// A key representing the shape of time ranges, ignoring UUIDs and original order.
+typealias RangeShape = List<Pair<Int, Int>>
+
 /**
  * Analyzes a list of schedule groups to provide summaries,
  * coverage calculation, and time checking.
@@ -186,11 +189,18 @@ class ScheduleAnalyzer(groups: List<ScheduleGroup>) {
      * @return A string summarizing the schedule.
      */
     fun createSummary(): String {
-        // Group days by their time ranges to find common schedules
-        val rangesToDays = mutableMapOf<List<TimeRange>, MutableList<DayOfWeek>>()
+        val rangesToDays = mutableMapOf<RangeShape, MutableList<DayOfWeek>>()
+        val canonicalRanges = mutableMapOf<RangeShape, List<TimeRange>>()
+
         for ((day, ranges) in schedulePerDay) {
             if (ranges.isNotEmpty()) {
-                rangesToDays.getOrPut(ranges) { mutableListOf() }.add(day)
+                val shape: RangeShape = ranges
+                    .map { it.fromMinuteOfDay to it.toMinuteOfDay }
+                    .sortedBy { it.first }
+
+                rangesToDays.getOrPut(shape) { mutableListOf() }.add(day)
+
+                canonicalRanges.putIfAbsent(shape, ranges.sortedBy { it.fromMinuteOfDay })
             }
         }
 
@@ -198,12 +208,13 @@ class ScheduleAnalyzer(groups: List<ScheduleGroup>) {
             return "No schedule set."
         }
 
-        // Build a summary string for each group of days with a common schedule
+        // Build a summary string for each group of days with a common schedule.
         return rangesToDays.entries
-            .sortedBy { it.value.first().ordinal } // Sort by the first day (e.g., Mon-Fri before Sat)
-            .joinToString("\n") { (ranges, days) ->
+            .sortedBy { (_, days) -> days.minOfOrNull { it.ordinal } ?: Int.MAX_VALUE } // Sort groups by their first day.
+            .joinToString("\n") { (shape, days) ->
                 val daysSummary = formatDayGroup(days)
-                val timeSummary = ranges.joinToString(", ") { range ->
+                val timeRanges = canonicalRanges[shape]!! // We know it's there.
+                val timeSummary = timeRanges.joinToString(", ") { range ->
                     val overnightIndicator = if (range.toMinuteOfDay < range.fromMinuteOfDay) " (+1d)" else ""
                     "${FormatUtils.formatTimeFromMinute(range.fromMinuteOfDay)} - ${FormatUtils.formatTimeFromMinute(range.toMinuteOfDay)}$overnightIndicator"
                 }
