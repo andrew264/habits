@@ -75,26 +75,24 @@ internal fun ScheduleListItem(
             state = dismissState,
             modifier = Modifier.clip(MaterialTheme.shapes.medium),
             onDismiss = { direction ->
-                when (direction) {
-                    SwipeToDismissBoxValue.StartToEnd -> {
-                        scope.launch {
+                scope.launch {
+                    when (direction) {
+                        SwipeToDismissBoxValue.StartToEnd -> {
                             view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
                             onEdit()
                             dismissState.reset()
                         }
-                    }
 
-                    SwipeToDismissBoxValue.EndToStart -> {
-                        scope.launch {
+                        SwipeToDismissBoxValue.EndToStart -> {
                             view.performHapticFeedback(HapticFeedbackConstants.REJECT)
                             val wasDeleted = onDelete()
                             if (!wasDeleted) {
                                 dismissState.reset()
                             }
                         }
-                    }
 
-                    SwipeToDismissBoxValue.Settled -> {
+                        SwipeToDismissBoxValue.Settled -> {
+                        }
                     }
                 }
             },
