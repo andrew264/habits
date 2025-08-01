@@ -96,8 +96,15 @@ private fun MonitoringSettingsScreen(
     onOpenAppSettings: () -> Unit,
     onOpenAccessibilitySettings: () -> Unit
 ) {
+    val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     LazyColumn(
         modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            start = Dimens.PaddingMedium,
+            end = Dimens.PaddingMedium,
+            top = Dimens.PaddingMedium,
+            bottom = Dimens.PaddingMedium + navBarPadding
+        ),
     ) {
         item {
             SectionHeader("Features")

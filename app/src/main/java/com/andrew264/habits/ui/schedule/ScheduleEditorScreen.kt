@@ -246,19 +246,28 @@ private fun ScheduleEditorScreen(
 
         if (!uiState.isLoading && uiState.viewMode == ScheduleViewMode.GROUPED) {
             val fabInteractionSource = remember { MutableInteractionSource() }
+            val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
             HapticInteractionEffect(fabInteractionSource)
-            ExtendedFloatingActionButton(
+            SmallExtendedFloatingActionButton(
+                text = { Text("New Group") },
+                icon = { Icon(Icons.Default.Add, "Create New Group") },
                 onClick = {
                     onAddGroup()
                 },
-                interactionSource = fabInteractionSource,
-                expanded = expandedFab,
-                icon = { Icon(Icons.Default.Add, "Create New Group") },
-                text = { Text("New Group") },
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(Dimens.PaddingLarge)
-            )
+                    .padding(
+                        start = Dimens.PaddingMedium,
+                        top = Dimens.PaddingMedium,
+                        end = Dimens.PaddingMedium,
+                        bottom = navBarPadding + Dimens.PaddingMedium
+                    )
+                    .align(Alignment.BottomEnd),
+                expanded = expandedFab,
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                interactionSource = fabInteractionSource,
+
+                )
         }
     }
 }

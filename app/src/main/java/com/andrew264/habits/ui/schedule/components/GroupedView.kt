@@ -51,10 +51,16 @@ fun GroupedView(
             description = "Groups allow you to apply the same time ranges to multiple days. Tap 'New Group' in the editor to add one."
         )
     } else {
+        val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
         LazyColumn(
             state = listState,
-            modifier = modifier.padding(bottom = 72.dp),
-            contentPadding = PaddingValues(start = Dimens.PaddingLarge, end = Dimens.PaddingLarge, bottom = Dimens.PaddingLarge),
+            contentPadding = PaddingValues(
+                start = Dimens.PaddingMedium,
+                end = Dimens.PaddingMedium,
+                top = Dimens.PaddingMedium,
+                bottom = Dimens.PaddingMedium + navBarPadding
+            ),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             items(schedule.groups, key = { it.id }) { group ->
@@ -138,7 +144,11 @@ fun GroupedView(
                             },
                             interactionSource = addTimeRangeInteractionSource,
                             modifier = Modifier.align(Alignment.End),
-                            shapes = ButtonDefaults.shapes()
+                            shapes = ButtonDefaults.shapes(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.tertiary,
+                                contentColor = MaterialTheme.colorScheme.onTertiary
+                            )
                         ) {
                             Icon(
                                 Icons.Default.Add,

@@ -1,10 +1,7 @@
 package com.andrew264.habits.ui.schedule
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -65,7 +62,7 @@ fun SchedulesListDetailScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SchedulesListDetailScreenContent(
     uiState: SchedulesUiState,
@@ -84,8 +81,11 @@ private fun SchedulesListDetailScreenContent(
         floatingActionButton = {
             if (selection == null) {
                 val fabInteractionSource = remember { MutableInteractionSource() }
+                val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
                 HapticInteractionEffect(fabInteractionSource)
-                ExtendedFloatingActionButton(
+                SmallExtendedFloatingActionButton(
+                    text = { Text(text = "New Schedule") },
+                    icon = { Icon(Icons.Filled.Add, "New Schedule") },
                     onClick = {
                         scope.launch {
                             scaffoldNavigator.navigateTo(
@@ -94,10 +94,10 @@ private fun SchedulesListDetailScreenContent(
                             )
                         }
                     },
-                    interactionSource = fabInteractionSource,
+                    modifier = Modifier.padding(bottom = navBarPadding + Dimens.PaddingMedium),
                     expanded = expandedFab,
-                    icon = { Icon(Icons.Filled.Add, "New Schedule") },
-                    text = { Text(text = "New Schedule") },
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    interactionSource = fabInteractionSource,
                 )
             }
         },

@@ -82,9 +82,15 @@ private fun WhitelistScreen(
         if (uiState.isLoading) {
             ContainedLoadingIndicator()
         } else {
+            val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = Dimens.PaddingLarge),
+                contentPadding = PaddingValues(
+                    start = Dimens.PaddingMedium,
+                    end = Dimens.PaddingMedium,
+                    top = Dimens.PaddingMedium,
+                    bottom = Dimens.PaddingMedium + navBarPadding
+                ),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 items(uiState.apps, key = { it.packageName }) { app ->

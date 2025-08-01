@@ -215,9 +215,15 @@ private fun UsageListContent(
                 onRefresh = onRefresh,
             )
     ) {
+        val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(all = Dimens.PaddingMedium),
+            contentPadding = PaddingValues(
+                start = Dimens.PaddingMedium,
+                end = Dimens.PaddingMedium,
+                top = Dimens.PaddingMedium,
+                bottom = Dimens.PaddingMedium + navBarPadding
+            ),
             verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
         ) {
             item {

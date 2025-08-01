@@ -67,7 +67,11 @@ fun TimeRangeRow(
                     FilledTonalButton(
                         onClick = { showFromPicker = true },
                         interactionSource = fromInteractionSource,
-                        shapes = ButtonDefaults.shapes()
+                        shapes = ButtonDefaults.shapes(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondary,
+                            contentColor = MaterialTheme.colorScheme.onSecondary
+                        )
                     ) {
                         Text(
                             text = FormatUtils.formatTimeFromMinute(timeRange.fromMinuteOfDay),
@@ -83,7 +87,11 @@ fun TimeRangeRow(
                     FilledTonalButton(
                         onClick = { showToPicker = true },
                         interactionSource = toInteractionSource,
-                        shapes = ButtonDefaults.shapes()
+                        shapes = ButtonDefaults.shapes(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondary,
+                            contentColor = MaterialTheme.colorScheme.onSecondary
+                        )
                     ) {
                         Text(
                             text = FormatUtils.formatTimeFromMinute(minuteOfDay = timeRange.toMinuteOfDay),

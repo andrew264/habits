@@ -37,10 +37,15 @@ fun PerDayView(
     onDeleteTimeRangeFromDay: (day: DayOfWeek, timeRange: TimeRange) -> Unit,
 ) {
     var expandedDays by rememberSaveable { mutableStateOf(emptySet<DayOfWeek>()) }
-
+    val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(Dimens.PaddingLarge),
+        contentPadding = PaddingValues(
+            start = Dimens.PaddingMedium,
+            end = Dimens.PaddingMedium,
+            top = Dimens.PaddingMedium,
+            bottom = Dimens.PaddingMedium + navBarPadding
+        ),
         verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
     ) {
         items(DayOfWeek.entries.toList(), key = { it.name }) { day ->
@@ -184,9 +189,13 @@ fun PerDayView(
                                 onClick = {
                                     onAddTimeRangeToDay(day, TimeRange(fromMinuteOfDay = 540, toMinuteOfDay = 600))
                                 },
-                                interactionSource = addInteractionSource,
+                                shapes = ButtonDefaults.shapes(),
                                 modifier = Modifier.align(Alignment.End),
-                                shapes = ButtonDefaults.shapes()
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.tertiary,
+                                    contentColor = MaterialTheme.colorScheme.onTertiary
+                                ),
+                                interactionSource = addInteractionSource,
                             ) {
                                 Icon(
                                     Icons.Default.Add,

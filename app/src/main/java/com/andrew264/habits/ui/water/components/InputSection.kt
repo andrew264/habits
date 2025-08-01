@@ -54,8 +54,9 @@ internal fun InputSection(
             }
     }
 
+    val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     Column(
-        modifier = modifier,
+        modifier = modifier.padding(bottom = navBarPadding),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Dimens.PaddingExtraLarge)
     ) {
@@ -148,16 +149,17 @@ internal fun InputSection(
                 )
             }
         )
-        Button(
+
+        ElevatedButton(
             onClick = {
                 onLogWater(sliderState.value.roundToInt())
                 view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
             },
+            shape = MaterialTheme.shapes.large,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(64.dp),
+                .height(72.dp),
             enabled = sliderState.value.roundToInt() > 0,
-            shape = MaterialTheme.shapes.large,
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.tertiary,
                 contentColor = MaterialTheme.colorScheme.onTertiary
@@ -169,7 +171,7 @@ internal fun InputSection(
                 modifier = Modifier.size(24.dp)
             )
             Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-            Text("Drink", style = MaterialTheme.typography.titleLargeEmphasized)
+            Text("Drink", style = MaterialTheme.typography.headlineMediumEmphasized)
         }
     }
 }
