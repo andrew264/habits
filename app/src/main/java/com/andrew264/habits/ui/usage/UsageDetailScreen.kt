@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun UsageDetailScreen(
     app: AppDetails,
@@ -55,7 +55,7 @@ fun UsageDetailScreen(
             horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingMedium)
         ) {
             val icon = rememberAppIcon(packageName = app.packageName)
-            DrawableImage(drawable = icon, contentDescription = null, modifier = Modifier.size(48.dp))
+            DrawableImage(drawable = icon, contentDescription = null, modifier = Modifier.size(48.dp), mask = MaterialShapes.Sunny)
             Text(app.friendlyName, style = MaterialTheme.typography.headlineMedium)
         }
 

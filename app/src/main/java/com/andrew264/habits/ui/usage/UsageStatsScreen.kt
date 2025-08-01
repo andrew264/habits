@@ -15,6 +15,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
+import androidx.compose.material.icons.outlined.Block
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.AnimatedPane
@@ -259,27 +261,22 @@ private fun UsageListContent(
             }
 
             item {
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier.padding(vertical = Dimens.PaddingSmall)
-                    ) {
-                        SettingsRow(
-                            modifier = Modifier.padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingSmall),
-                            text = "Enable Limit Notifications",
-                            description = "Get notified when you exceed a usage limit.",
-                            checked = uiState.usageLimitNotificationsEnabled,
-                            onCheckedChange = onSetUsageLimitNotificationsEnabled
-                        )
-                        HorizontalDivider()
-                        SettingsRow(
-                            modifier = Modifier.padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingSmall),
-                            text = "Enable App Blocker",
-                            description = "Show an overlay when a usage limit is reached.",
-                            checked = uiState.isAppBlockingEnabled,
-                            onCheckedChange = onSetAppBlockingEnabled
-                        )
-                    }
-                }
+                ToggleSettingsListItem(
+                    icon = Icons.Outlined.Notifications,
+                    title = "Enable Limit Notifications",
+                    summary = "Get notified when you exceed a usage limit.",
+                    checked = uiState.usageLimitNotificationsEnabled,
+                    onCheckedChange = onSetUsageLimitNotificationsEnabled,
+                    position = ListItemPosition.TOP
+                )
+                ToggleSettingsListItem(
+                    icon = Icons.Outlined.Block,
+                    title = "Enable App Blocker",
+                    summary = "Show an overlay when a usage limit is reached.",
+                    checked = uiState.isAppBlockingEnabled,
+                    onCheckedChange = onSetAppBlockingEnabled,
+                    position = ListItemPosition.BOTTOM
+                )
             }
 
             if (uiState.stats != null) {

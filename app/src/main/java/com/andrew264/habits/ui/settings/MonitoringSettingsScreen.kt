@@ -2,27 +2,30 @@ package com.andrew264.habits.ui.settings
 
 import android.content.Intent
 import android.provider.Settings
-import android.view.HapticFeedbackConstants
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.LocalIndication
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.outlined.Alarm
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Timeline
+import androidx.compose.material.icons.outlined.WaterDrop
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import com.andrew264.habits.ui.common.components.ListItemPosition
+import com.andrew264.habits.ui.common.components.NavigationSettingsListItem
+import com.andrew264.habits.ui.common.components.ToggleSettingsListItem
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.ui.theme.createPreviewPersistentSettings
@@ -86,6 +89,7 @@ fun MonitoringSettingsScreen(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MonitoringSettingsScreen(
     modifier: Modifier = Modifier,
@@ -96,66 +100,56 @@ private fun MonitoringSettingsScreen(
     onOpenAppSettings: () -> Unit,
     onOpenAccessibilitySettings: () -> Unit
 ) {
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            start = Dimens.PaddingMedium,
-            end = Dimens.PaddingMedium,
-            top = Dimens.PaddingMedium,
-            bottom = Dimens.PaddingMedium + navBarPadding
-        ),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(
+                start = Dimens.PaddingSmall,
+                end = Dimens.PaddingSmall,
+                top = Dimens.PaddingSmall,
+                bottom = Dimens.PaddingSmall + navBarPadding
+            )
+            .nestedScroll(scrollBehavior.nestedScrollConnection),
     ) {
         item {
             SectionHeader("Features")
         }
 
         item {
-            SettingsListItem(
+            ToggleSettingsListItem(
                 icon = Icons.Outlined.Alarm,
                 title = "Bedtime Tracking",
                 summary = "Monitor your sleep and bedtime habits",
                 checked = uiState.settings.isBedtimeTrackingEnabled,
-                onCheckedChange = onBedtimeToggled
+                onCheckedChange = onBedtimeToggled,
+                position = ListItemPosition.TOP
             )
-            HorizontalDivider()
         }
 
         item {
-            SettingsListItem(
+            ToggleSettingsListItem(
                 icon = Icons.Outlined.Timeline,
                 title = "App Usage Tracking",
                 summary = "Track screen time and set limits for apps.",
                 checked = uiState.settings.isAppUsageTrackingEnabled,
-                onCheckedChange = onUsageToggled
+                onCheckedChange = onUsageToggled,
+                position = ListItemPosition.MIDDLE,
+                isWarningVisible = uiState.settings.isAppUsageTrackingEnabled && !uiState.isAccessibilityServiceEnabled,
+                warningText = "Service is not running. Tap to fix in accessibility settings.",
+                onWarningClick = onOpenAccessibilitySettings
             )
         }
 
         item {
-            AnimatedVisibility(visible = uiState.settings.isAppUsageTrackingEnabled && !uiState.isAccessibilityServiceEnabled) {
-                ListItem(
-                    headlineContent = { Text("Service is not running. Please re-enable it in accessibility settings.") },
-                    leadingContent = { Icon(Icons.Outlined.Warning, contentDescription = "Warning") },
-                    modifier = Modifier.clickable(onClick = onOpenAccessibilitySettings),
-                    colors = ListItemDefaults.colors(
-                        headlineColor = MaterialTheme.colorScheme.error,
-                        leadingIconColor = MaterialTheme.colorScheme.error
-                    )
-                )
-            }
-        }
-
-        item {
-            HorizontalDivider()
-        }
-
-        item {
-            SettingsListItem(
+            ToggleSettingsListItem(
                 icon = Icons.Outlined.WaterDrop,
                 title = "Water Tracking",
                 summary = "Track daily water intake and set reminders.",
                 checked = uiState.settings.isWaterTrackingEnabled,
-                onCheckedChange = onWaterToggled
+                onCheckedChange = onWaterToggled,
+                position = ListItemPosition.BOTTOM
             )
         }
 
@@ -168,10 +162,11 @@ private fun MonitoringSettingsScreen(
         }
 
         item {
-            ListItem(
-                headlineContent = { Text("App Permissions & Info") },
-                leadingContent = { Icon(Icons.Outlined.Info, contentDescription = null) },
-                modifier = Modifier.clickable(onClick = onOpenAppSettings)
+            NavigationSettingsListItem(
+                icon = Icons.Outlined.Info,
+                title = "App Permissions & Info",
+                onClick = onOpenAppSettings,
+                position = ListItemPosition.SEPARATE
             )
         }
     }
@@ -186,52 +181,7 @@ private fun SectionHeader(title: String) {
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingMedium)
-    )
-}
-
-@Composable
-private fun SettingsListItem(
-    icon: ImageVector,
-    title: String,
-    summary: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    enabled: Boolean = true
-) {
-    val view = LocalView.current
-    val interactionSource = remember { MutableInteractionSource() }
-
-    ListItem(
-        headlineContent = { Text(title) },
-        supportingContent = { Text(summary, style = MaterialTheme.typography.bodyMedium) },
-        leadingContent = { Icon(icon, contentDescription = null) },
-        trailingContent = {
-            Switch(
-                checked = checked,
-                onCheckedChange = null, // Handled by clickable modifier on parent
-                enabled = enabled,
-                interactionSource = interactionSource
-            )
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(
-                interactionSource = interactionSource,
-                indication = LocalIndication.current,
-                enabled = enabled,
-                onClick = {
-                    val newChecked = !checked
-                    onCheckedChange(newChecked)
-                    val feedback = if (newChecked) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
-                    view.performHapticFeedback(feedback)
-                }
-            ),
-        colors = ListItemDefaults.colors(
-            headlineColor = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-            supportingColor = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
-            leadingIconColor = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-        )
+            .padding(horizontal = Dimens.PaddingSmall, vertical = Dimens.PaddingMedium)
     )
 }
 
