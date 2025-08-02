@@ -104,4 +104,7 @@ dependencies {
     annotationProcessor(libs.androidx.room.compiler)
     ksp(libs.androidx.room.compiler)
 
+    // Serialization
+    implementation(libs.kotlinx.serialization.json)
+
 }

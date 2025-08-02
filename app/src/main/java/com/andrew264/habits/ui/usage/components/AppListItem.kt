@@ -75,7 +75,6 @@ private fun AppListItemPreview() {
         packageName = "com.example.app",
         friendlyName = "Sample Application",
         color = "#4CAF50",
-        dailyLimitMinutes = 90,
         sessionLimitMinutes = 20,
         totalUsageMillis = (3600000L * 2) + (60000L * 33),
         usagePercentage = 0.35f,

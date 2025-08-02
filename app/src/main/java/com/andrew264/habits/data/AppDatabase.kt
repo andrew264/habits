@@ -23,7 +23,6 @@ import com.andrew264.habits.data.entity.schedule.ScheduleTimeRangeEntity
         WhitelistedAppEntity::class
     ],
     version = 1,
-    exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userPresenceEventDao(): UserPresenceEventDao

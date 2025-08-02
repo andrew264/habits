@@ -2,16 +2,19 @@ package com.andrew264.habits.ui.usage
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.*
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -21,8 +24,9 @@ import com.andrew264.habits.ui.common.color_picker.utils.toColorOrNull
 import com.andrew264.habits.ui.common.color_picker.utils.toHexCode
 import com.andrew264.habits.ui.common.components.DrawableImage
 import com.andrew264.habits.ui.common.components.FilterButtonGroup
+import com.andrew264.habits.ui.common.components.ListItemPosition
+import com.andrew264.habits.ui.common.components.NavigationSettingsListItem
 import com.andrew264.habits.ui.common.duration_picker.DurationPickerDialog
-import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.common.utils.FormatUtils
 import com.andrew264.habits.ui.common.utils.rememberAppIcon
 import com.andrew264.habits.ui.theme.Dimens
@@ -36,7 +40,7 @@ import kotlin.math.roundToInt
 fun UsageDetailScreen(
     app: AppDetails,
     onSetAppColor: (packageName: String, colorHex: String) -> Unit,
-    onSaveLimits: (dailyMinutes: Int?, sessionMinutes: Int?) -> Unit
+    onSaveLimits: (sessionMinutes: Int?) -> Unit
 ) {
     var selectedMetric by remember { mutableStateOf(UsageMetric.SCREEN_TIME) }
 
@@ -142,127 +146,67 @@ fun UsageDetailScreen(
         }
 
         // Settings Section
-        Text(
-            "SETTINGS",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .padding(vertical = Dimens.PaddingSmall)
-                .align(Alignment.Start)
-        )
+        Column {
+            var showSessionLimitDialog by rememberSaveable { mutableStateOf(false) }
+            if (showSessionLimitDialog) {
+                DurationPickerDialog(
+                    title = "Set Session limit",
+                    description = "Get a reminder after using this app for a continuous period. Set to 0 to clear.",
+                    initialTotalMinutes = app.sessionLimitMinutes ?: 0,
+                    onDismissRequest = { showSessionLimitDialog = false },
+                    onConfirm = { totalMinutes ->
+                        onSaveLimits(if (totalMinutes > 0) totalMinutes else null)
+                        showSessionLimitDialog = false
+                    }
+                )
+            }
 
-        var showDailyLimitDialog by rememberSaveable { mutableStateOf(false) }
-        if (showDailyLimitDialog) {
-            DurationPickerDialog(
-                title = "Set Daily limit",
-                description = "Set a time limit for this app. The limit will reset automatically. Set to 0 to clear.",
-                initialTotalMinutes = app.dailyLimitMinutes ?: 0,
-                onDismissRequest = { showDailyLimitDialog = false },
-                onConfirm = { totalMinutes ->
-                    onSaveLimits(if (totalMinutes > 0) totalMinutes else null, app.sessionLimitMinutes)
-                    showDailyLimitDialog = false
-                }
-            )
-        }
-        val dailyLimitInteractionSource = remember { MutableInteractionSource() }
-        HapticInteractionEffect(dailyLimitInteractionSource)
-        ListItem(
-            headlineContent = { Text("Daily limit") },
-            trailingContent = {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
-                ) {
-                    Text(
-                        text = if (app.dailyLimitMinutes != null) FormatUtils.formatDuration(app.dailyLimitMinutes * 60_000L) else "Not set",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Icon(
-                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            },
-            modifier = Modifier.clickable(
-                interactionSource = dailyLimitInteractionSource,
-                indication = LocalIndication.current
-            ) { showDailyLimitDialog = true }
-        )
-
-        var showSessionLimitDialog by rememberSaveable { mutableStateOf(false) }
-        if (showSessionLimitDialog) {
-            DurationPickerDialog(
-                title = "Set Session limit",
-                description = "Set a time limit for this app. The limit will reset automatically. Set to 0 to clear.",
-                initialTotalMinutes = app.sessionLimitMinutes ?: 0,
-                onDismissRequest = { showSessionLimitDialog = false },
-                onConfirm = { totalMinutes ->
-                    onSaveLimits(app.dailyLimitMinutes, if (totalMinutes > 0) totalMinutes else null)
-                    showSessionLimitDialog = false
-                }
-            )
-        }
-        val sessionLimitInteractionSource = remember { MutableInteractionSource() }
-        HapticInteractionEffect(sessionLimitInteractionSource)
-        ListItem(
-            headlineContent = { Text("Session limit") },
-            trailingContent = {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
-                ) {
+            NavigationSettingsListItem(
+                icon = Icons.Outlined.Timer,
+                title = "Session Limit",
+                onClick = { showSessionLimitDialog = true },
+                position = ListItemPosition.TOP,
+                valueContent = {
                     Text(
                         text = if (app.sessionLimitMinutes != null) FormatUtils.formatDuration(app.sessionLimitMinutes * 60_000L) else "Not set",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Icon(
-                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
-            },
-            modifier = Modifier.clickable(
-                interactionSource = sessionLimitInteractionSource,
-                indication = LocalIndication.current
-            ) { showSessionLimitDialog = true }
-        )
+            )
 
-        var showColorDialog by rememberSaveable { mutableStateOf(false) }
-        if (showColorDialog) {
-            ColorPickerDialog(
-                title = "Choose color for ${app.friendlyName}",
-                initialColor = app.color.toColorOrNull() ?: Color.Gray,
-                showAlphaSlider = false,
-                onDismissRequest = { showColorDialog = false },
-                onConfirmation = { newColor ->
-                    onSetAppColor(app.packageName, newColor.toHexCode(includeAlpha = false))
-                    showColorDialog = false
+            var showColorDialog by rememberSaveable { mutableStateOf(false) }
+            if (showColorDialog) {
+                ColorPickerDialog(
+                    title = "Choose color for ${app.friendlyName}",
+                    initialColor = app.color.toColorOrNull() ?: Color.Gray,
+                    showAlphaSlider = false,
+                    onDismissRequest = { showColorDialog = false },
+                    onConfirmation = { newColor ->
+                        onSetAppColor(app.packageName, newColor.toHexCode(includeAlpha = false))
+                        showColorDialog = false
+                    }
+                )
+            }
+
+            NavigationSettingsListItem(
+                icon = Icons.Outlined.Palette,
+                title = "Display Color",
+                onClick = { showColorDialog = true },
+                position = ListItemPosition.BOTTOM,
+                valueContent = {
+                    Box(
+                        modifier = Modifier
+                            .clip(MaterialShapes.Pill.toShape())
+                            .size(24.dp)
+                            .background(
+                                color = app.color.toColorOrNull() ?: Color.Gray,
+                                shape = MaterialTheme.shapes.small
+                            )
+                    )
                 }
             )
         }
-        val colorInteractionSource = remember { MutableInteractionSource() }
-        HapticInteractionEffect(colorInteractionSource)
-        ListItem(
-            headlineContent = { Text("Display color") },
-            trailingContent = {
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .background(
-                            color = app.color.toColorOrNull() ?: Color.Gray,
-                            shape = MaterialTheme.shapes.small
-                        )
-                )
-            },
-            modifier = Modifier.clickable(
-                interactionSource = colorInteractionSource,
-                indication = LocalIndication.current
-            ) { showColorDialog = true }
-        )
     }
 }
 
@@ -273,7 +217,6 @@ private fun UsageDetailScreenPreview() {
         packageName = "com.example.app",
         friendlyName = "Sample App",
         color = "#4CAF50",
-        dailyLimitMinutes = 90,
         sessionLimitMinutes = 20,
         totalUsageMillis = TimeUnit.MINUTES.toMillis(153),
         usagePercentage = 0.35f,
@@ -300,7 +243,7 @@ private fun UsageDetailScreenPreview() {
             UsageDetailScreen(
                 app = sampleAppDetails,
                 onSetAppColor = { _, _ -> },
-                onSaveLimits = { _, _ -> }
+                onSaveLimits = { _ -> }
             )
         }
     }

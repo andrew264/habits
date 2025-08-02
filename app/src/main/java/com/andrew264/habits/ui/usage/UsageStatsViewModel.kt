@@ -12,6 +12,7 @@ import com.andrew264.habits.domain.repository.WhitelistRepository
 import com.andrew264.habits.domain.usecase.GetUsageStatisticsUseCase
 import com.andrew264.habits.ui.common.charts.BarChartEntry
 import com.andrew264.habits.ui.common.utils.FormatUtils
+import com.andrew264.habits.ui.usage.whitelist.assignColorForPackage
 import com.andrew264.habits.util.AccessibilityUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -24,7 +25,6 @@ data class AppDetails(
     val packageName: String,
     val friendlyName: String,
     val color: String,
-    val dailyLimitMinutes: Int?,
     val sessionLimitMinutes: Int?,
     // Screen Time
     val totalUsageMillis: Long,
@@ -43,6 +43,7 @@ data class UsageStatsUiState(
     val isAppUsageTrackingEnabled: Boolean = true,
     val usageLimitNotificationsEnabled: Boolean = false,
     val isAppBlockingEnabled: Boolean = false,
+    val sharedDailyUsageLimitMinutes: Int? = null,
     val isAccessibilityServiceEnabled: Boolean = false,
     val selectedRange: UsageTimeRange = UsageTimeRange.DAY,
     val stats: UsageStatistics? = null,
@@ -91,6 +92,7 @@ class UsageStatsViewModel @Inject constructor(
                     isAccessibilityServiceEnabled = isAccessibilityEnabled,
                     usageLimitNotificationsEnabled = settings.usageLimitNotificationsEnabled,
                     isAppBlockingEnabled = settings.isAppBlockingEnabled,
+                    sharedDailyUsageLimitMinutes = settings.sharedDailyUsageLimitMinutes
                 )
             )
         } else {
@@ -156,7 +158,6 @@ class UsageStatsViewModel @Inject constructor(
                         packageName = pkg,
                         friendlyName = friendlyName,
                         color = whitelistedApp?.colorHex ?: "#808080",
-                        dailyLimitMinutes = whitelistedApp?.dailyLimitMinutes,
                         sessionLimitMinutes = whitelistedApp?.sessionLimitMinutes,
                         totalUsageMillis = totalUsage,
                         usagePercentage = usagePercentage,
@@ -181,6 +182,7 @@ class UsageStatsViewModel @Inject constructor(
                     isAccessibilityServiceEnabled = isAccessibilityEnabled,
                     usageLimitNotificationsEnabled = settings.usageLimitNotificationsEnabled,
                     isAppBlockingEnabled = settings.isAppBlockingEnabled,
+                    sharedDailyUsageLimitMinutes = settings.sharedDailyUsageLimitMinutes,
                     selectedRange = range,
                     stats = stats,
                     whitelistedApps = whitelistedApps,
@@ -222,13 +224,21 @@ class UsageStatsViewModel @Inject constructor(
         }
     }
 
-    fun saveAppLimits(packageName: String, dailyLimit: Int?, sessionLimit: Int?) {
+    fun setSharedDailyLimit(minutes: Int?) {
         viewModelScope.launch {
-            val app = uiState.value.whitelistedApps.find { it.packageName == packageName } ?: return@launch
-            val updatedApp = app.copy(
-                dailyLimitMinutes = dailyLimit,
-                sessionLimitMinutes = sessionLimit
-            )
+            settingsRepository.updateSharedDailyUsageLimit(minutes)
+        }
+    }
+
+    fun saveAppLimits(packageName: String, sessionLimit: Int?) {
+        viewModelScope.launch {
+            val existingApp = uiState.value.whitelistedApps.find { it.packageName == packageName }
+            val updatedApp = existingApp?.copy(sessionLimitMinutes = sessionLimit)
+                ?: WhitelistedApp(
+                    packageName = packageName,
+                    colorHex = assignColorForPackage(packageName),
+                    sessionLimitMinutes = sessionLimit
+                )
             whitelistRepository.updateWhitelistedApp(updatedApp)
         }
     }
@@ -238,8 +248,14 @@ class UsageStatsViewModel @Inject constructor(
         colorHex: String
     ) {
         viewModelScope.launch {
-            val app = uiState.value.whitelistedApps.find { it.packageName == packageName } ?: return@launch
-            whitelistRepository.updateWhitelistedApp(app.copy(colorHex = colorHex))
+            val existingApp = uiState.value.whitelistedApps.find { it.packageName == packageName }
+            val updatedApp = existingApp?.copy(colorHex = colorHex)
+                ?: WhitelistedApp(
+                    packageName = packageName,
+                    colorHex = colorHex,
+                    sessionLimitMinutes = null
+                )
+            whitelistRepository.updateWhitelistedApp(updatedApp)
         }
     }
 

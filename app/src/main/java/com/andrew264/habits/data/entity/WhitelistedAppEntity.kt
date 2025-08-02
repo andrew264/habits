@@ -11,8 +11,6 @@ data class WhitelistedAppEntity(
     val packageName: String,
     @ColumnInfo(name = "color_hex")
     val colorHex: String,
-    @ColumnInfo(name = "daily_limit_minutes", defaultValue = "NULL")
-    val dailyLimitMinutes: Int? = null,
     @ColumnInfo(name = "session_limit_minutes", defaultValue = "NULL")
     val sessionLimitMinutes: Int? = null
 )

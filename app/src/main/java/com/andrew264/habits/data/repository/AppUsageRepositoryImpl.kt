@@ -81,8 +81,12 @@ class AppUsageRepositoryImpl @Inject constructor(
         Log.d(TAG, "Inserting new session for $packageName.")
         val newEvent = AppUsageEventEntity(packageName = packageName, startTimestamp = timestamp)
         appUsageEventDao.insert(newEvent)
-        checkUsageLimitsUseCase.checkDailyLimit(packageName)
-        scheduleSessionAlarm(packageName)
+
+        val whitelistedApps = whitelistRepository.getWhitelistedApps().first()
+        if (whitelistedApps.any { it.packageName == packageName }) {
+            checkUsageLimitsUseCase.checkSharedDailyLimit(packageName)
+            scheduleSessionAlarm(packageName)
+        }
     }
 
     private suspend fun scheduleSessionAlarm(packageName: String) {

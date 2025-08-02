@@ -5,8 +5,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -16,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -31,6 +31,7 @@ enum class ListItemPosition {
     SEPARATE
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ToggleSettingsListItem(
     icon: ImageVector,
@@ -57,20 +58,12 @@ fun ToggleSettingsListItem(
     }
 
     Column(modifier = modifier) {
-        Surface(shape = clipShape) {
+        Surface(
+            shape = clipShape,
+            color = MaterialTheme.colorScheme.surfaceContainerHighest
+        ) {
             Column {
-                ListItem(
-                    headlineContent = { Text(title) },
-                    supportingContent = { Text(summary, style = MaterialTheme.typography.bodyMedium) },
-                    leadingContent = { Icon(icon, contentDescription = null) },
-                    trailingContent = {
-                        Switch(
-                            checked = checked,
-                            onCheckedChange = null, // Handled by clickable modifier on parent
-                            enabled = enabled,
-                            interactionSource = interactionSource
-                        )
-                    },
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable(
@@ -83,28 +76,57 @@ fun ToggleSettingsListItem(
                                 val feedback = if (newChecked) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
                                 view.performHapticFeedback(feedback)
                             }
-                        ),
-                    colors = ListItemDefaults.colors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                        headlineColor = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-                        supportingColor = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
-                        leadingIconColor = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                        )
+                        .padding(Dimens.PaddingLarge),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingExtraLarge)
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
                     )
-                )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.bodyLargeEmphasized,
+                            color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                        )
+                        Spacer(modifier = Modifier.height(Dimens.PaddingExtraSmall))
+                        Text(
+                            text = summary,
+                            style = MaterialTheme.typography.bodyMediumEmphasized,
+                            color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                        )
+                    }
+                    Switch(
+                        checked = checked,
+                        onCheckedChange = null, // Handled by clickable modifier on parent
+                        enabled = enabled,
+                        interactionSource = interactionSource
+                    )
+                }
 
                 AnimatedVisibility(visible = isWarningVisible && warningText != null) {
-                    ListItem(
-                        headlineContent = { Text(warningText!!) },
-                        leadingContent = { Icon(Icons.Outlined.Warning, contentDescription = "Warning") },
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable(onClick = onWarningClick ?: {}),
-                        colors = ListItemDefaults.colors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                            headlineColor = MaterialTheme.colorScheme.error,
-                            leadingIconColor = MaterialTheme.colorScheme.error
+                            .clickable(onClick = onWarningClick ?: {})
+                            .padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingMedium),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Warning,
+                            contentDescription = "Warning",
+                            tint = MaterialTheme.colorScheme.error
                         )
-                    )
+                        Text(
+                            text = warningText!!,
+                            style = MaterialTheme.typography.bodyMediumEmphasized,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
         }
@@ -115,36 +137,37 @@ fun ToggleSettingsListItem(
     }
 }
 
-@Preview
+@Preview(heightDp = 400, showBackground = true)
 @Composable
 fun ToggleSettingsListItemPreview() {
     val checkedState = remember { mutableStateOf(true) }
-    ToggleSettingsListItem(
-        icon = Icons.Filled.Info,
-        title = "Sample Toggle Item",
-        summary = "This is a sample summary for the toggle item.",
-        checked = checkedState.value,
-        onCheckedChange = { checkedState.value = it },
-        position = ListItemPosition.SEPARATE
-    )
+    Column(
+        modifier = Modifier.padding(Dimens.PaddingMedium),
+        verticalArrangement = Arrangement.Center
+    ) {
+        ToggleSettingsListItem(
+            icon = Icons.Filled.Info,
+            title = "Sample Toggle Item",
+            summary = "This is a sample summary for the toggle item.",
+            checked = checkedState.value,
+            onCheckedChange = { checkedState.value = it },
+            position = ListItemPosition.TOP
+        )
+        ToggleSettingsListItem(
+            icon = Icons.Filled.Info,
+            title = "Sample Toggle Item with Warning",
+            summary = "This item has a warning associated with it.",
+            checked = checkedState.value,
+            onCheckedChange = { checkedState.value = it },
+            isWarningVisible = true,
+            warningText = "This is a warning message!",
+            onWarningClick = {},
+            position = ListItemPosition.BOTTOM
+        )
+    }
 }
 
-@Preview
-@Composable
-fun ToggleSettingsListItemWithWarningPreview() {
-    ToggleSettingsListItem(
-        icon = Icons.Filled.Info,
-        title = "Sample Toggle Item with Warning",
-        summary = "This item has a warning associated with it.",
-        checked = true,
-        onCheckedChange = {},
-        isWarningVisible = true,
-        warningText = "This is a warning message!",
-        onWarningClick = {},
-        position = ListItemPosition.SEPARATE
-    )
-}
-
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun NavigationSettingsListItem(
     icon: ImageVector,
@@ -152,7 +175,8 @@ fun NavigationSettingsListItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    position: ListItemPosition = ListItemPosition.SEPARATE
+    position: ListItemPosition = ListItemPosition.SEPARATE,
+    valueContent: @Composable (RowScope.() -> Unit)? = null
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val view = LocalView.current
@@ -165,12 +189,12 @@ fun NavigationSettingsListItem(
     }
 
     Column(modifier = modifier) {
-        Surface(shape = clipShape) {
-            ListItem(
-                headlineContent = { Text(title) },
-                leadingContent = { Icon(icon, contentDescription = null) },
-                trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-                modifier = modifier
+        Surface(
+            shape = clipShape,
+            color = MaterialTheme.colorScheme.surfaceContainerHighest
+        ) {
+            Row(
+                modifier = Modifier
                     .fillMaxWidth()
                     .clickable(
                         interactionSource = interactionSource,
@@ -180,14 +204,36 @@ fun NavigationSettingsListItem(
                             onClick()
                             view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                         }
-                    ),
-                colors = ListItemDefaults.colors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    headlineColor = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-                    leadingIconColor = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
-                    trailingIconColor = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                    )
+                    .padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingExtraLarge),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
                 )
-            )
+                Spacer(modifier = Modifier.width(Dimens.PaddingLarge))
+                Text(
+                    text = title,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodyLargeEmphasized,
+                    color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
+                ) {
+                    if (valueContent != null) {
+                        valueContent()
+                    }
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                    )
+                }
+            }
         }
         if (position == ListItemPosition.TOP || position == ListItemPosition.MIDDLE) {
             HorizontalDivider(color = MaterialTheme.colorScheme.surface, thickness = 2.dp)
@@ -202,6 +248,9 @@ fun NavigationSettingsListItemPreview() {
         icon = Icons.Filled.Info,
         title = "Sample Navigation Item",
         onClick = {},
-        position = ListItemPosition.SEPARATE
+        position = ListItemPosition.SEPARATE,
+        valueContent = {
+            Text("Value", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     )
 }

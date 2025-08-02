@@ -160,11 +160,19 @@ class UserPresenceService : Service() {
         // Screen state is needed for both features
         registerDeviceStateReceiver()
 
+        val serviceType = if (settings.isBedtimeTrackingEnabled && ContextCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED) {
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH
+        } else {
+            // Fallback to dataSync if only usage tracking is on, or if bedtime tracking is on but permission is missing.
+            // The service still runs for usage tracking in that case.
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+        }
+
         ServiceCompat.startForeground(
             this,
             NOTIFICATION_ID,
             createNotification(settings),
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH
+            serviceType
         )
     }
 

@@ -13,6 +13,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.json.Json
 import java.io.IOException
 import java.time.LocalDate
 import javax.inject.Inject
@@ -22,6 +23,10 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 
 @Singleton
 class SettingsRepositoryImpl @Inject constructor(@param:ApplicationContext private val context: Context) : SettingsRepository {
+
+    private val json = Json {
+        ignoreUnknownKeys = true
+    }
 
     override val settingsFlow: Flow<PersistentSettings> = context.dataStore.data
         .catch { exception ->
@@ -39,6 +44,19 @@ class SettingsRepositoryImpl @Inject constructor(@param:ApplicationContext priva
             val isAppUsageTrackingEnabled = preferences[DataStoreKeys.APP_USAGE_TRACKING_ENABLED] ?: false
             val usageLimitNotificationsEnabled = preferences[DataStoreKeys.USAGE_LIMIT_NOTIFICATIONS_ENABLED] ?: false
             val isAppBlockingEnabled = preferences[DataStoreKeys.APP_BLOCKING_ENABLED] ?: false
+            val sharedDailyUsageLimitMinutes = preferences[DataStoreKeys.SHARED_DAILY_USAGE_LIMIT_MINUTES]
+            val dailyLimitSnoozeUntilTimestamp = preferences[DataStoreKeys.DAILY_LIMIT_SNOOZE_UNTIL_TIMESTAMP]
+            val sessionSnoozeTimestampsJson = preferences[DataStoreKeys.SESSION_SNOOZE_TIMESTAMPS_JSON]
+            val sessionSnoozeTimestamps = if (sessionSnoozeTimestampsJson != null) {
+                try {
+                    json.decodeFromString<Map<String, Long>>(sessionSnoozeTimestampsJson)
+                } catch (_: Exception) {
+                    emptyMap()
+                }
+            } else {
+                emptyMap()
+            }
+            val notifiedSharedDailyLimitDate = preferences[DataStoreKeys.NOTIFIED_SHARED_DAILY_LIMIT_DATE]
 
             // Water
             val isWaterTrackingEnabled = preferences[DataStoreKeys.WATER_TRACKING_ENABLED] ?: false
@@ -55,6 +73,10 @@ class SettingsRepositoryImpl @Inject constructor(@param:ApplicationContext priva
                 isAppUsageTrackingEnabled = isAppUsageTrackingEnabled,
                 isAppBlockingEnabled = isAppBlockingEnabled,
                 usageLimitNotificationsEnabled = usageLimitNotificationsEnabled,
+                sharedDailyUsageLimitMinutes = sharedDailyUsageLimitMinutes,
+                dailyLimitSnoozeUntilTimestamp = dailyLimitSnoozeUntilTimestamp,
+                sessionSnoozeTimestamps = sessionSnoozeTimestamps,
+                notifiedSharedDailyLimitDate = notifiedSharedDailyLimitDate,
                 isWaterTrackingEnabled = isWaterTrackingEnabled,
                 waterDailyTargetMl = waterDailyTargetMl,
                 isWaterReminderEnabled = isWaterReminderEnabled,
@@ -98,6 +120,37 @@ class SettingsRepositoryImpl @Inject constructor(@param:ApplicationContext priva
         }
     }
 
+    override suspend fun updateSharedDailyUsageLimit(minutes: Int?) {
+        context.dataStore.edit { settings ->
+            if (minutes != null) {
+                settings[DataStoreKeys.SHARED_DAILY_USAGE_LIMIT_MINUTES] = minutes
+            } else {
+                settings.remove(DataStoreKeys.SHARED_DAILY_USAGE_LIMIT_MINUTES)
+            }
+        }
+    }
+
+    override suspend fun updateDailyLimitSnooze(timestamp: Long?) {
+        context.dataStore.edit { settings ->
+            if (timestamp != null) {
+                settings[DataStoreKeys.DAILY_LIMIT_SNOOZE_UNTIL_TIMESTAMP] = timestamp
+            } else {
+                settings.remove(DataStoreKeys.DAILY_LIMIT_SNOOZE_UNTIL_TIMESTAMP)
+            }
+        }
+    }
+
+    override suspend fun updateSessionSnoozeTimestamps(snoozes: Map<String, Long>) {
+        context.dataStore.edit { settings ->
+            if (snoozes.isEmpty()) {
+                settings.remove(DataStoreKeys.SESSION_SNOOZE_TIMESTAMPS_JSON)
+            } else {
+                val jsonString = json.encodeToString(snoozes)
+                settings[DataStoreKeys.SESSION_SNOOZE_TIMESTAMPS_JSON] = jsonString
+            }
+        }
+    }
+
     override suspend fun updateWaterTrackingEnabled(isEnabled: Boolean) {
         context.dataStore.edit { settings ->
             settings[DataStoreKeys.WATER_TRACKING_ENABLED] = isEnabled
@@ -134,29 +187,21 @@ class SettingsRepositoryImpl @Inject constructor(@param:ApplicationContext priva
         }
     }
 
-    override fun getNotifiedDailyPackages(): Flow<Set<String>> {
+    override fun getNotifiedSharedDailyLimitDate(): Flow<String?> {
         return context.dataStore.data.map { preferences ->
             val today = LocalDate.now().toString()
-            val storedDate = preferences[DataStoreKeys.NOTIFIED_PACKAGES_DATE]
+            val storedDate = preferences[DataStoreKeys.NOTIFIED_SHARED_DAILY_LIMIT_DATE]
             if (today == storedDate) {
-                preferences[DataStoreKeys.NOTIFIED_PACKAGES_LIST] ?: emptySet()
+                storedDate
             } else {
-                emptySet()
+                null
             }
         }
     }
 
-    override suspend fun addNotifiedDailyPackage(packageName: String) {
+    override suspend fun setNotifiedSharedDailyLimitDate(date: String) {
         context.dataStore.edit { settings ->
-            val today = LocalDate.now().toString()
-            val storedDate = settings[DataStoreKeys.NOTIFIED_PACKAGES_DATE]
-            val currentSet = if (today == storedDate) {
-                settings[DataStoreKeys.NOTIFIED_PACKAGES_LIST] ?: emptySet()
-            } else {
-                emptySet()
-            }
-            settings[DataStoreKeys.NOTIFIED_PACKAGES_DATE] = today
-            settings[DataStoreKeys.NOTIFIED_PACKAGES_LIST] = currentSet + packageName
+            settings[DataStoreKeys.NOTIFIED_SHARED_DAILY_LIMIT_DATE] = date
         }
     }
 }

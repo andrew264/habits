@@ -2,8 +2,8 @@ package com.andrew264.habits.data.preferences
 
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.core.stringSetPreferencesKey
 
 object DataStoreKeys {
     val SELECTED_SCHEDULE_ID = stringPreferencesKey("selected_schedule_id")
@@ -13,10 +13,10 @@ object DataStoreKeys {
     val APP_USAGE_TRACKING_ENABLED = booleanPreferencesKey("app_usage_tracking_enabled")
     val USAGE_LIMIT_NOTIFICATIONS_ENABLED = booleanPreferencesKey("usage_limit_notifications_enabled")
     val APP_BLOCKING_ENABLED = booleanPreferencesKey("app_blocking_enabled")
-
-    // For tracking daily limit notifications
-    val NOTIFIED_PACKAGES_DATE = stringPreferencesKey("notified_packages_date")
-    val NOTIFIED_PACKAGES_LIST = stringSetPreferencesKey("notified_packages_list")
+    val SHARED_DAILY_USAGE_LIMIT_MINUTES = intPreferencesKey("shared_daily_usage_limit_minutes")
+    val DAILY_LIMIT_SNOOZE_UNTIL_TIMESTAMP = longPreferencesKey("daily_limit_snooze_until_timestamp")
+    val SESSION_SNOOZE_TIMESTAMPS_JSON = stringPreferencesKey("session_snooze_timestamps_json")
+    val NOTIFIED_SHARED_DAILY_LIMIT_DATE = stringPreferencesKey("notified_shared_daily_limit_date")
 
     // Water Tracking Feature
     val WATER_TRACKING_ENABLED = booleanPreferencesKey("water_tracking_enabled")

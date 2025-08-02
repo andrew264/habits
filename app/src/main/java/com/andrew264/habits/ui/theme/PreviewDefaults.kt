@@ -15,6 +15,10 @@ fun createPreviewPersistentSettings(
     isAppUsageTrackingEnabled: Boolean = true,
     usageLimitNotificationsEnabled: Boolean = true,
     isAppBlockingEnabled: Boolean = false,
+    sharedDailyUsageLimitMinutes: Int = 60,
+    dailyLimitSnoozeUntilTimestamp: Long? = null,
+    sessionSnoozeTimestamps: Map<String, Long> = emptyMap(),
+    notifiedSharedDailyLimitDate: String? = null,
     isWaterTrackingEnabled: Boolean = true,
     waterDailyTargetMl: Int = 2500,
     isWaterReminderEnabled: Boolean = true,
@@ -28,11 +32,15 @@ fun createPreviewPersistentSettings(
         isAppUsageTrackingEnabled = isAppUsageTrackingEnabled,
         usageLimitNotificationsEnabled = usageLimitNotificationsEnabled,
         isAppBlockingEnabled = isAppBlockingEnabled,
+        sharedDailyUsageLimitMinutes = sharedDailyUsageLimitMinutes,
+        dailyLimitSnoozeUntilTimestamp = dailyLimitSnoozeUntilTimestamp,
+        sessionSnoozeTimestamps = sessionSnoozeTimestamps,
+        notifiedSharedDailyLimitDate = notifiedSharedDailyLimitDate,
         isWaterTrackingEnabled = isWaterTrackingEnabled,
         waterDailyTargetMl = waterDailyTargetMl,
         isWaterReminderEnabled = isWaterReminderEnabled,
         waterReminderIntervalMinutes = waterReminderIntervalMinutes,
         waterReminderSnoozeMinutes = waterReminderSnoozeMinutes,
-        waterReminderScheduleId = waterReminderScheduleId
+        waterReminderScheduleId = waterReminderScheduleId,
     )
 }

@@ -13,6 +13,7 @@
     <!-- For starting foreground service -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
 
     <!-- For notifications (Android 13+ / API 33+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -61,7 +62,7 @@
             android:name=".service.UserPresenceService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="health"
+            android:foregroundServiceType="health|dataSync"
             android:permission="android.permission.BIND_JOB_SERVICE"
             tools:ignore="ExportedService" />
 

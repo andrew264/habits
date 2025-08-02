@@ -78,26 +78,31 @@ class CheckUsageLimitsUseCase @Inject constructor(
         }
     }
 
-    suspend fun checkDailyLimit(packageName: String) {
-        if (snoozeManager.isAppSnoozed(packageName)) {
-            Log.d(TAG, "Daily limit check for $packageName skipped, app is snoozed.")
+    suspend fun checkSharedDailyLimit(triggeringPackage: String) {
+        if (snoozeManager.isDailyLimitSnoozed()) {
+            Log.d(TAG, "Shared daily limit check skipped, currently snoozed.")
             return
         }
 
         val settings = settingsRepository.settingsFlow.first()
         if (!settings.isAppUsageTrackingEnabled) return
 
-        val notifiedPackagesToday = settingsRepository.getNotifiedDailyPackages().first()
-        if (packageName in notifiedPackagesToday) return
+        val notifiedDate = settingsRepository.getNotifiedSharedDailyLimitDate().first()
+        if (notifiedDate == LocalDate.now().toString()) {
+            Log.d(TAG, "Shared daily limit already triggered today.")
+            return
+        }
 
-        val app = whitelistRepository.getWhitelistedApps().first().find { it.packageName == packageName }
-        val limitMinutes = app?.dailyLimitMinutes ?: return
+        val limitMinutes = settings.sharedDailyUsageLimitMinutes ?: return
         val limitMs = TimeUnit.MINUTES.toMillis(limitMinutes.toLong())
+
+        val whitelistedPackages = whitelistRepository.getWhitelistedApps().first().map { it.packageName }.toSet()
+        if (whitelistedPackages.isEmpty()) return
 
         val todayStartMs = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
         val events = appUsageEventDao.getEventsInRange(todayStartMs, System.currentTimeMillis()).first()
         val usageTodayMs = events
-            .filter { it.packageName == packageName }
+            .filter { it.packageName in whitelistedPackages }
             .sumOf { event ->
                 val end = event.endTimestamp ?: System.currentTimeMillis()
                 val start = event.startTimestamp
@@ -105,21 +110,21 @@ class CheckUsageLimitsUseCase @Inject constructor(
             }
 
         if (usageTodayMs >= limitMs) {
-            Log.d(TAG, "Daily limit exceeded for $packageName")
-            settingsRepository.addNotifiedDailyPackage(packageName)
+            Log.d(TAG, "Shared daily limit exceeded. Total usage: $usageTodayMs ms")
+            settingsRepository.setNotifiedSharedDailyLimitDate(LocalDate.now().toString())
 
             if (settings.isAppBlockingEnabled) {
                 launchBlocker(
-                    packageName = packageName,
-                    limitType = "daily",
+                    packageName = triggeringPackage,
+                    limitType = "daily_shared",
                     timeUsedMs = usageTodayMs,
                     limitMinutes = limitMinutes
                 )
             } else if (settings.usageLimitNotificationsEnabled) {
                 sendNotification(
-                    packageName,
+                    triggeringPackage, // Use a consistent ID for the notification
                     "Daily Limit Reached",
-                    "You've used ${getAppName(packageName)} for over $limitMinutes minutes today."
+                    "You've used your whitelisted apps for over $limitMinutes minutes today."
                 )
             }
         }
@@ -134,7 +139,7 @@ class CheckUsageLimitsUseCase @Inject constructor(
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(intent)
-        Log.d(TAG, "Launched BlockerActivity for $packageName")
+        Log.d(TAG, "Launched BlockerActivity for $packageName, type: $limitType")
     }
 
     private fun sendNotification(packageName: String, title: String, content: String) {

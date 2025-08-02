@@ -12,10 +12,13 @@ interface SettingsRepository {
     suspend fun updateAppUsageTrackingEnabled(isEnabled: Boolean)
     suspend fun updateUsageLimitNotificationsEnabled(isEnabled: Boolean)
     suspend fun updateAppBlockingEnabled(isEnabled: Boolean)
+    suspend fun updateSharedDailyUsageLimit(minutes: Int?)
+    suspend fun updateDailyLimitSnooze(timestamp: Long?)
+    suspend fun updateSessionSnoozeTimestamps(snoozes: Map<String, Long>)
 
     // For tracking daily limit notifications
-    fun getNotifiedDailyPackages(): Flow<Set<String>>
-    suspend fun addNotifiedDailyPackage(packageName: String)
+    fun getNotifiedSharedDailyLimitDate(): Flow<String?>
+    suspend fun setNotifiedSharedDailyLimitDate(date: String)
 
     // Water Tracking Feature
     suspend fun updateWaterTrackingEnabled(isEnabled: Boolean)

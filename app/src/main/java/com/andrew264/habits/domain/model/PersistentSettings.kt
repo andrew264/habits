@@ -8,6 +8,10 @@ data class PersistentSettings(
     val isAppUsageTrackingEnabled: Boolean,
     val usageLimitNotificationsEnabled: Boolean,
     val isAppBlockingEnabled: Boolean,
+    val sharedDailyUsageLimitMinutes: Int?,
+    val dailyLimitSnoozeUntilTimestamp: Long?,
+    val sessionSnoozeTimestamps: Map<String, Long>,
+    val notifiedSharedDailyLimitDate: String?,
 
     // Water Tracking Settings
     val isWaterTrackingEnabled: Boolean,

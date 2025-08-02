@@ -75,38 +75,56 @@ class BlockerViewModel @Inject constructor(
         }
 
         val formattedLimit = FormatUtils.formatDuration(TimeUnit.MINUTES.toMillis(limitMinutes.toLong()))
-        val (limitTitle, limitDescription) = when (limitType) {
-            "session" -> "Session Limit: $formattedLimit" to "You set this goal to help manage your time in the app."
-            "daily" -> "Daily Limit: $formattedLimit" to "You set this goal to help manage your time on this app."
-            else -> "Usage Limit Reached" to "You've reached the usage limit you set."
-        }
         val formattedUsage = FormatUtils.formatDuration(timeUsedMs)
 
-        val infoItems = listOf(
-            InfoItem(
-                icon = Icons.Outlined.Timer,
-                title = limitTitle,
-                description = limitDescription
-            ),
-            InfoItem(
-                icon = Icons.Outlined.BarChart,
-                title = "Time Spent: $formattedUsage",
-                description = "This screen is a reminder to take a break and stay mindful of your usage habits."
+        _uiState.value = when (limitType) {
+            "daily_shared" -> BlockerUiState(
+                appIcon = appIcon,
+                appName = appName,
+                title = "Daily Goal Reached",
+                description = "You've used your tracked apps for over $formattedLimit today.",
+                infoItems = listOf(
+                    InfoItem(
+                        icon = Icons.Outlined.Timer,
+                        title = "Daily Limit: $formattedLimit",
+                        description = "This is the shared goal you set for all tracked apps."
+                    ),
+                    InfoItem(
+                        icon = Icons.Outlined.BarChart,
+                        title = "Total Time Spent: $formattedUsage",
+                        description = "This screen is a reminder to take a break and stay mindful of your habits."
+                    )
+                )
             )
-        )
 
-        _uiState.value = BlockerUiState(
-            appIcon = appIcon,
-            appName = appName,
-            title = "Time's up for $appName",
-            description = "You've reached your $limitType limit of $formattedLimit.",
-            infoItems = infoItems
-        )
+            else -> BlockerUiState( // "session"
+                appIcon = appIcon,
+                appName = appName,
+                title = "Time for a Break",
+                description = "You've used $appName for over $formattedLimit continuously.",
+                infoItems = listOf(
+                    InfoItem(
+                        icon = Icons.Outlined.Timer,
+                        title = "Session Limit: $formattedLimit",
+                        description = "You set this goal to help manage your time in the app."
+                    ),
+                    InfoItem(
+                        icon = Icons.Outlined.BarChart,
+                        title = "Current Session: $formattedUsage",
+                        description = "This screen is a reminder to take a break and use your time intentionally."
+                    )
+                )
+            )
+        }
     }
 
     fun onSnoozeClicked() {
         viewModelScope.launch {
-            snoozeManager.snoozeApp(packageName, TimeUnit.MINUTES.toMillis(5))
+            if (limitType == "daily_shared") {
+                snoozeManager.snoozeDailyLimit(TimeUnit.MINUTES.toMillis(5))
+            } else {
+                snoozeManager.snoozeApp(packageName, TimeUnit.MINUTES.toMillis(5))
+            }
             _events.emit(BlockerEvent.Finish)
         }
     }

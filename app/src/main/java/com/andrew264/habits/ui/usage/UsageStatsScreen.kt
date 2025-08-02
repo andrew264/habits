@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.AnimatedPane
@@ -27,6 +28,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -43,7 +45,9 @@ import com.andrew264.habits.domain.model.UsageStatistics
 import com.andrew264.habits.domain.model.UsageTimeBin
 import com.andrew264.habits.ui.common.charts.StackedBarChart
 import com.andrew264.habits.ui.common.components.*
+import com.andrew264.habits.ui.common.duration_picker.DurationPickerDialog
 import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
+import com.andrew264.habits.ui.common.utils.FormatUtils
 import com.andrew264.habits.ui.navigation.*
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
@@ -78,7 +82,8 @@ fun UsageStatsScreen(
         onSetAppColor = viewModel::setAppColor,
         onSetAppBlockingEnabled = viewModel::setAppBlockingEnabled,
         onSetUsageLimitNotificationsEnabled = viewModel::setUsageLimitNotificationsEnabled,
-        onSaveLimits = { pkg, daily, session -> viewModel.saveAppLimits(pkg, daily, session) }
+        onSaveLimits = { pkg, session -> viewModel.saveAppLimits(pkg, session) },
+        onSetSharedDailyLimit = viewModel::setSharedDailyLimit
     )
 }
 
@@ -92,7 +97,8 @@ private fun UsageStatsScreen(
     onSetAppColor: (packageName: String, colorHex: String) -> Unit,
     onSetAppBlockingEnabled: (Boolean) -> Unit,
     onSetUsageLimitNotificationsEnabled: (Boolean) -> Unit,
-    onSaveLimits: (packageName: String, dailyMinutes: Int?, sessionMinutes: Int?) -> Unit,
+    onSaveLimits: (packageName: String, sessionMinutes: Int?) -> Unit,
+    onSetSharedDailyLimit: (minutes: Int?) -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -138,7 +144,8 @@ private fun UsageStatsScreen(
                             onOpenAccessibilitySettings = {
                                 val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
                                 context.startActivity(intent)
-                            }
+                            },
+                            onSetSharedDailyLimit = onSetSharedDailyLimit
                         )
                     }
                 },
@@ -154,7 +161,7 @@ private fun UsageStatsScreen(
                                 UsageDetailScreen(
                                     app = selectedApp,
                                     onSetAppColor = onSetAppColor,
-                                    onSaveLimits = { daily, session -> onSaveLimits(selectedApp.packageName, daily, session) }
+                                    onSaveLimits = { session -> onSaveLimits(selectedApp.packageName, session) }
                                 )
                             }
                         } else {
@@ -182,6 +189,7 @@ private fun UsageListContent(
     onSetAppBlockingEnabled: (Boolean) -> Unit,
     onSetUsageLimitNotificationsEnabled: (Boolean) -> Unit,
     onOpenAccessibilitySettings: () -> Unit,
+    onSetSharedDailyLimit: (minutes: Int?) -> Unit
 ) {
     val isRefreshing = uiState.isLoading && uiState.stats != null
     val state = rememberPullToRefreshState()
@@ -218,6 +226,21 @@ private fun UsageListContent(
             )
     ) {
         val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+        var showSharedLimitDialog by rememberSaveable { mutableStateOf(false) }
+
+        if (showSharedLimitDialog) {
+            DurationPickerDialog(
+                title = "Set Shared Daily Limit",
+                description = "Set a total time limit for all whitelisted apps. This limit will reset at midnight. Set to 0 to clear.",
+                initialTotalMinutes = uiState.sharedDailyUsageLimitMinutes ?: 0,
+                onDismissRequest = { showSharedLimitDialog = false },
+                onConfirm = { totalMinutes ->
+                    onSetSharedDailyLimit(if (totalMinutes > 0) totalMinutes else null)
+                    showSharedLimitDialog = false
+                }
+            )
+        }
+
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
@@ -261,13 +284,26 @@ private fun UsageListContent(
             }
 
             item {
+                NavigationSettingsListItem(
+                    icon = Icons.Outlined.Timer,
+                    title = "Shared Daily Limit",
+                    onClick = { showSharedLimitDialog = true },
+                    position = ListItemPosition.TOP,
+                    valueContent = {
+                        Text(
+                            text = if (uiState.sharedDailyUsageLimitMinutes != null) FormatUtils.formatDuration(uiState.sharedDailyUsageLimitMinutes * 60_000L) else "Not set",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                )
                 ToggleSettingsListItem(
                     icon = Icons.Outlined.Notifications,
                     title = "Enable Limit Notifications",
                     summary = "Get notified when you exceed a usage limit.",
                     checked = uiState.usageLimitNotificationsEnabled,
                     onCheckedChange = onSetUsageLimitNotificationsEnabled,
-                    position = ListItemPosition.TOP
+                    position = ListItemPosition.MIDDLE
                 )
                 ToggleSettingsListItem(
                     icon = Icons.Outlined.Block,
@@ -373,7 +409,6 @@ private fun UsageListContentPreview() {
             packageName = "com.google.android.youtube",
             friendlyName = "YouTube",
             color = "#F44336",
-            dailyLimitMinutes = 120,
             sessionLimitMinutes = 30,
             totalUsageMillis = TimeUnit.HOURS.toMillis(2) + TimeUnit.MINUTES.toMillis(15),
             usagePercentage = 0.45f,
@@ -387,7 +422,6 @@ private fun UsageListContentPreview() {
             packageName = "com.instagram.android",
             friendlyName = "Instagram",
             color = "#E91E63",
-            dailyLimitMinutes = 60,
             sessionLimitMinutes = null,
             totalUsageMillis = TimeUnit.HOURS.toMillis(1) + TimeUnit.MINUTES.toMillis(5),
             usagePercentage = 0.25f,
@@ -431,6 +465,7 @@ private fun UsageListContentPreview() {
                 uiState = UsageStatsUiState(
                     isLoading = false,
                     isAppUsageTrackingEnabled = true,
+                    sharedDailyUsageLimitMinutes = 345,
                     isAccessibilityServiceEnabled = true,
                     usageLimitNotificationsEnabled = true,
                     selectedRange = UsageTimeRange.DAY,
@@ -445,6 +480,7 @@ private fun UsageListContentPreview() {
                 onNavigateToWhitelist = {},
                 onSetUsageLimitNotificationsEnabled = {},
                 onOpenAccessibilitySettings = {},
+                onSetSharedDailyLimit = {},
                 onSetAppBlockingEnabled = {}
             )
         }
@@ -459,7 +495,6 @@ private fun UsageListContentWithWarningPreview() {
             packageName = "com.google.android.youtube",
             friendlyName = "YouTube",
             color = "#F44336",
-            dailyLimitMinutes = 120,
             sessionLimitMinutes = 30,
             totalUsageMillis = TimeUnit.HOURS.toMillis(2) + TimeUnit.MINUTES.toMillis(15),
             usagePercentage = 0.45f,
@@ -494,7 +529,8 @@ private fun UsageListContentWithWarningPreview() {
                 onNavigateToWhitelist = {},
                 onSetUsageLimitNotificationsEnabled = {},
                 onOpenAccessibilitySettings = {},
-                onSetAppBlockingEnabled = {}
+                onSetAppBlockingEnabled = {},
+                onSetSharedDailyLimit = {}
             )
         }
     }
@@ -515,8 +551,9 @@ private fun UsageStatsScreenDisabledPreview() {
                 onNavigate = {},
                 onSetAppColor = { _, _ -> },
                 onSetUsageLimitNotificationsEnabled = {},
-                onSaveLimits = { _, _, _ -> },
-                onSetAppBlockingEnabled = {}
+                onSaveLimits = { _, _ -> },
+                onSetAppBlockingEnabled = {},
+                onSetSharedDailyLimit = {}
             )
         }
     }

@@ -23,6 +23,7 @@ lifecycleViewmodelNav3 = "1.0.0-alpha04"
 kotlinSerialization = "2.2.0"
 kotlinxCorotinesTestVersion = "1.10.2"
 graphicsShapes = "1.0.1"
+kotlinxSerializationJson = "1.9.0"
 
 
 [libraries]
@@ -44,6 +45,7 @@ play-services-location = { group = "com.google.android.gms", name = "play-servic
 androidx-graphics-shapes = { group = "androidx.graphics", name = "graphics-shapes", version.ref = "graphicsShapes" }
 
 koltinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCorotinesTestVersion" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 
 # navigation
 androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "nav3Core" }

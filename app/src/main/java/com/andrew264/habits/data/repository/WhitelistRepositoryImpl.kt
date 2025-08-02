@@ -32,7 +32,6 @@ private fun WhitelistedAppEntity.toDomainModel(): WhitelistedApp {
     return WhitelistedApp(
         packageName = this.packageName,
         colorHex = this.colorHex,
-        dailyLimitMinutes = this.dailyLimitMinutes,
         sessionLimitMinutes = this.sessionLimitMinutes
     )
 }
@@ -41,7 +40,6 @@ private fun WhitelistedApp.toEntity(): WhitelistedAppEntity {
     return WhitelistedAppEntity(
         packageName = this.packageName,
         colorHex = this.colorHex,
-        dailyLimitMinutes = this.dailyLimitMinutes,
         sessionLimitMinutes = this.sessionLimitMinutes
     )
 }

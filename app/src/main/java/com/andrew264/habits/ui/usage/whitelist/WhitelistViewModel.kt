@@ -13,7 +13,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.math.abs
 
 data class WhitelistUiState(
     val isLoading: Boolean = true,
@@ -115,24 +114,10 @@ class WhitelistViewModel @Inject constructor(
                 val newWhitelistedApp = WhitelistedApp(
                     packageName = app.packageName,
                     colorHex = assignColorForPackage(app.packageName),
-                    dailyLimitMinutes = null,
                     sessionLimitMinutes = null
                 )
                 whitelistRepository.updateWhitelistedApp(newWhitelistedApp)
             }
         }
     }
-}
-
-private val appColorPalette = listOf(
-    "#F44336", "#E91E63", "#9C27B0", "#673AB7", "#3F51B5",
-    "#2196F3", "#03A9F4", "#00BCD4", "#009688", "#4CAF50",
-    "#8BC34A", "#FFC107", "#FF9800", "#FF5722", "#795548",
-    "#607D8B"
-)
-
-
-fun assignColorForPackage(packageName: String): String {
-    val index = abs(packageName.hashCode()) % appColorPalette.size
-    return appColorPalette[index]
 }
