@@ -48,7 +48,7 @@ import com.andrew264.habits.ui.common.components.FilterButtonGroup
 import com.andrew264.habits.ui.common.components.ScheduleSelector
 import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.navigation.AppRoute
-import com.andrew264.habits.ui.navigation.MonitoringSettings
+import com.andrew264.habits.ui.navigation.Settings
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -103,7 +103,7 @@ private fun BedtimeScreen(
                 title = "Bedtime Tracking Disabled",
                 description = "This feature uses sleep schedules and the Sleep API to track your sleep patterns. You can enable it in the Monitoring settings.",
                 buttonText = "Go to Settings",
-                onEnableClicked = { onNavigate(MonitoringSettings) }
+                onEnableClicked = { onNavigate(Settings) }
             )
         }
 

@@ -73,9 +73,9 @@ data object Usage : TopLevelRoute {
 
 @Parcelize
 @Serializable
-data object MonitoringSettings : TopLevelRoute {
+data object Settings : TopLevelRoute {
     @IgnoredOnParcel
-    override val title = "Monitoring"
+    override val title = "Settings"
 
     @IgnoredOnParcel
     override val selectedIcon = Icons.Filled.Settings
@@ -119,5 +119,5 @@ val railItems: List<TopLevelRoute> = listOf(
     Usage,
     Bedtime,
     Schedules,
-    MonitoringSettings
+    Settings
 )

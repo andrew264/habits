@@ -15,18 +15,18 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class MonitoringSettingsUiState(
+data class SettingsUiState(
     val settings: PersistentSettings = createPreviewPersistentSettings(),
     val isAccessibilityServiceEnabled: Boolean = false
 )
 
-sealed interface MonitoringSettingsEvent {
-    object RequestActivityPermission : MonitoringSettingsEvent
-    object ShowAccessibilityDialog : MonitoringSettingsEvent
+sealed interface SettingsEvent {
+    object RequestActivityPermission : SettingsEvent
+    object ShowAccessibilityDialog : SettingsEvent
 }
 
 @HiltViewModel
-class MonitoringSettingsViewModel @Inject constructor(
+class SettingsViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val settingsRepository: SettingsRepository,
     startPresenceMonitoringUseCase: StartPresenceMonitoringUseCase,
@@ -34,21 +34,21 @@ class MonitoringSettingsViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _isAccessibilityEnabled = MutableStateFlow(false)
-    private val _events = MutableSharedFlow<MonitoringSettingsEvent>()
+    private val _events = MutableSharedFlow<SettingsEvent>()
     val events = _events.asSharedFlow()
 
-    val uiState: StateFlow<MonitoringSettingsUiState> = combine(
+    val uiState: StateFlow<SettingsUiState> = combine(
         settingsRepository.settingsFlow,
         _isAccessibilityEnabled
     ) { settings, isAccessibilityEnabled ->
-        MonitoringSettingsUiState(
+        SettingsUiState(
             settings = settings,
             isAccessibilityServiceEnabled = isAccessibilityEnabled
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = MonitoringSettingsUiState()
+        initialValue = SettingsUiState()
     )
 
     init {
@@ -74,7 +74,7 @@ class MonitoringSettingsViewModel @Inject constructor(
             if (enable) {
                 // We don't have the permission yet. Signal the UI to request it.
                 // The actual setting will be updated in MainViewModel after the user responds.
-                _events.emit(MonitoringSettingsEvent.RequestActivityPermission)
+                _events.emit(SettingsEvent.RequestActivityPermission)
             } else {
                 // Turning it off requires no permission. Just update the setting.
                 // The collector in init() will handle stopping the service.
@@ -89,7 +89,7 @@ class MonitoringSettingsViewModel @Inject constructor(
                 if (AccessibilityUtils.isAccessibilityServiceEnabled(context)) {
                     settingsRepository.updateAppUsageTrackingEnabled(true)
                 } else {
-                    _events.emit(MonitoringSettingsEvent.ShowAccessibilityDialog)
+                    _events.emit(SettingsEvent.ShowAccessibilityDialog)
                 }
             } else {
                 settingsRepository.updateAppUsageTrackingEnabled(false)

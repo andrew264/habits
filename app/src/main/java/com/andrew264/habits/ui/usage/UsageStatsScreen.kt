@@ -114,7 +114,7 @@ private fun UsageStatsScreen(
                 title = "Usage Tracking Disabled",
                 description = "This feature uses the Accessibility Service to show you how you spend time on your phone. You can enable it in the Monitoring settings.",
                 buttonText = "Go to Settings",
-                onEnableClicked = { onNavigate(MonitoringSettings) }
+                onEnableClicked = { onNavigate(Settings) }
             )
         }
 

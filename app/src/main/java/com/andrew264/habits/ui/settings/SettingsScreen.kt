@@ -31,9 +31,9 @@ import com.andrew264.habits.ui.theme.createPreviewPersistentSettings
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
-fun MonitoringSettingsScreen(
+fun SettingsScreen(
     modifier: Modifier = Modifier,
-    viewModel: MonitoringSettingsViewModel = hiltViewModel(),
+    viewModel: SettingsViewModel = hiltViewModel(),
     onRequestActivityPermission: () -> Unit,
     onNavigate: (AppRoute) -> Unit
 ) {
@@ -48,11 +48,11 @@ fun MonitoringSettingsScreen(
     LaunchedEffect(Unit) {
         viewModel.events.collectLatest { event ->
             when (event) {
-                MonitoringSettingsEvent.RequestActivityPermission -> {
+                SettingsEvent.RequestActivityPermission -> {
                     onRequestActivityPermission()
                 }
 
-                MonitoringSettingsEvent.ShowAccessibilityDialog -> {
+                SettingsEvent.ShowAccessibilityDialog -> {
                     showAccessibilityDialog = true
                 }
             }
@@ -70,7 +70,7 @@ fun MonitoringSettingsScreen(
         )
     }
 
-    MonitoringSettingsScreen(
+    SettingsScreen(
         modifier = modifier,
         uiState = uiState,
         onBedtimeToggled = viewModel::onBedtimeTrackingToggled,
@@ -92,9 +92,9 @@ fun MonitoringSettingsScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MonitoringSettingsScreen(
+private fun SettingsScreen(
     modifier: Modifier = Modifier,
-    uiState: MonitoringSettingsUiState,
+    uiState: SettingsUiState,
     onBedtimeToggled: (Boolean) -> Unit,
     onUsageToggled: (Boolean) -> Unit,
     onWaterToggled: (Boolean) -> Unit,
@@ -198,11 +198,11 @@ private fun SectionHeader(title: String) {
 
 @Preview(name = "Settings - All Enabled", showBackground = true)
 @Composable
-private fun MonitoringSettingsScreenAllEnabledPreview() {
+private fun SettingsScreenAllEnabledPreview() {
     val settings = createPreviewPersistentSettings()
     HabitsTheme {
-        MonitoringSettingsScreen(
-            uiState = MonitoringSettingsUiState(
+        SettingsScreen(
+            uiState = SettingsUiState(
                 settings = settings,
                 isAccessibilityServiceEnabled = true
             ),
@@ -218,11 +218,11 @@ private fun MonitoringSettingsScreenAllEnabledPreview() {
 
 @Preview(name = "Settings - Accessibility Warning", showBackground = true)
 @Composable
-private fun MonitoringSettingsScreenWarningPreview() {
+private fun SettingsScreenWarningPreview() {
     val settings = createPreviewPersistentSettings()
     HabitsTheme {
-        MonitoringSettingsScreen(
-            uiState = MonitoringSettingsUiState(
+        SettingsScreen(
+            uiState = SettingsUiState(
                 settings = settings,
                 isAccessibilityServiceEnabled = false
             ),

@@ -17,7 +17,7 @@ import androidx.navigation3.ui.NavDisplay
 import com.andrew264.habits.ui.bedtime.BedtimeScreen
 import com.andrew264.habits.ui.privacy.DataManagementScreen
 import com.andrew264.habits.ui.schedule.SchedulesListDetailScreen
-import com.andrew264.habits.ui.settings.MonitoringSettingsScreen
+import com.andrew264.habits.ui.settings.SettingsScreen
 import com.andrew264.habits.ui.usage.UsageStatsScreen
 import com.andrew264.habits.ui.usage.whitelist.WhitelistScreen
 import com.andrew264.habits.ui.water.WaterScreen
@@ -60,8 +60,8 @@ fun AppNavDisplay(
             entry<Schedules> {
                 SchedulesListDetailScreen(snackbarHostState = snackbarHostState)
             }
-            entry<MonitoringSettings> {
-                MonitoringSettingsScreen(
+            entry<Settings> {
+                SettingsScreen(
                     onRequestActivityPermission = onRequestActivityPermission,
                     onNavigate = onNavigate
                 )
