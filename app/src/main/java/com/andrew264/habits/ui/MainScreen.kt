@@ -1,11 +1,11 @@
 package com.andrew264.habits.ui
 
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -14,14 +14,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.rememberSavedStateNavEntryDecorator
 import androidx.navigation3.ui.rememberSceneSetupNavEntryDecorator
-import androidx.window.core.layout.WindowSizeClass
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.navigation.*
 import com.andrew264.habits.ui.water.WaterViewModel
 
-@OptIn(
-    ExperimentalMaterial3Api::class,
-    ExperimentalMaterial3ExpressiveApi::class
-)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MainScreenLayout(
     topLevelBackStack: TopLevelBackStack,
@@ -29,27 +26,37 @@ private fun MainScreenLayout(
     waterViewModel: WaterViewModel,
     onRequestActivityPermission: () -> Unit
 ) {
-    val wideNavRailState = rememberWideNavigationRailState()
-    val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    val isCompact = currentWindowAdaptiveInfo().windowSizeClass.isHeightAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
-
-    Row(Modifier.fillMaxSize()) {
-        AppNavigationRail(
-            topLevelBackStack = topLevelBackStack,
-            state = wideNavRailState,
-            isCompact = isCompact,
-            scope = scope
-        )
-
+    NavigationSuiteScaffold(
+        navigationItems = {
+            railItems.forEach { screen ->
+                val selected = topLevelBackStack.currentTopLevelRoute == screen
+                val interactionSource = remember { MutableInteractionSource() }
+                HapticInteractionEffect(interactionSource)
+                NavigationSuiteItem(
+                    selected = selected,
+                    onClick = {
+                        if (topLevelBackStack.currentTopLevelRoute != screen) {
+                            topLevelBackStack.switchTopLevel(screen)
+                        }
+                    },
+                    icon = {
+                        Icon(
+                            if (selected) screen.selectedIcon else screen.unselectedIcon,
+                            contentDescription = screen.title
+                        )
+                    },
+                    label = { Text(screen.title) },
+                    interactionSource = interactionSource
+                )
+            }
+        },
+    ) {
         Scaffold(
             topBar = {
                 MainTopAppBar(
                     topLevelBackStack = topLevelBackStack,
-                    railState = wideNavRailState,
-                    isCompact = isCompact,
-                    scope = scope,
                     onWaterReminderClick = onWaterReminderClick
                 )
             },

@@ -83,6 +83,7 @@ dependencies {
     implementation(libs.androidx.adaptive)
     implementation(libs.androidx.adaptive.navigation)
     implementation(libs.androidx.adaptive.layout)
+    implementation(libs.androidx.adaptive.navigation.suite)
 
     // datastore
     implementation(libs.androidx.datastore.preferences)
