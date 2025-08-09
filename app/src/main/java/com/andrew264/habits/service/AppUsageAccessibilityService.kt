@@ -32,27 +32,24 @@ class AppUsageAccessibilityService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-            val packageName = event.packageName
+        if (event?.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            return
+        }
 
-            // Ignore system UI and our own app
-            if (packageName == "com.android.systemui" || packageName == applicationContext.packageName) {
-                Log.d(TAG, "Ignoring foreground change to system UI or self: $packageName")
-                return
-            }
+        val packageName = event.packageName
+        if (packageName == null || packageName == lastRecordedPackageName) {
+            return
+        }
+        lastRecordedPackageName = packageName
+        Log.d(TAG, "Foreground app changed to: $packageName")
 
-            if (packageName != null && packageName != lastRecordedPackageName) {
-                Log.d(TAG, "Foreground app changed to: $packageName")
-                lastRecordedPackageName = packageName
-                serviceScope.launch {
-                    val settings = settingsRepository.settingsFlow.first()
-                    if (settings.isAppUsageTrackingEnabled) {
-                        appUsageRepository.startUsageSession(
-                            packageName.toString(),
-                            System.currentTimeMillis()
-                        )
-                    }
-                }
+        serviceScope.launch {
+            val settings = settingsRepository.settingsFlow.first()
+            if (settings.isAppUsageTrackingEnabled) {
+                appUsageRepository.startUsageSession(
+                    packageName.toString(),
+                    System.currentTimeMillis()
+                )
             }
         }
     }
