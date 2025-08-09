@@ -25,6 +25,7 @@ import com.andrew264.habits.ui.common.components.NavigationSettingsListItem
 import com.andrew264.habits.ui.common.components.ToggleSettingsListItem
 import com.andrew264.habits.ui.navigation.AppRoute
 import com.andrew264.habits.ui.navigation.Privacy
+import com.andrew264.habits.ui.navigation.Schedules
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.ui.theme.createPreviewPersistentSettings
@@ -152,6 +153,23 @@ private fun SettingsScreen(
                 checked = uiState.settings.isWaterTrackingEnabled,
                 onCheckedChange = onWaterToggled,
                 position = ListItemPosition.BOTTOM
+            )
+        }
+
+        item {
+            Spacer(Modifier.height(Dimens.PaddingLarge))
+        }
+
+        item {
+            SectionHeader("Management")
+        }
+
+        item {
+            NavigationSettingsListItem(
+                icon = Icons.Outlined.Schedule,
+                title = "Create and manage schedules",
+                onClick = { onNavigate(Schedules) },
+                position = ListItemPosition.SEPARATE
             )
         }
 

@@ -27,6 +27,7 @@ fun MainTopAppBar(
         is Whitelist -> "Manage Whitelist"
         is WaterStats -> "Hydration Statistics"
         is Privacy -> "Delete Data"
+        is Schedules -> "Schedules"
         else -> ""
     }
 

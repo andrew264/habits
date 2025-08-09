@@ -47,19 +47,6 @@ data object Water : TopLevelRoute {
 
 @Parcelize
 @Serializable
-data object Schedules : TopLevelRoute {
-    @IgnoredOnParcel
-    override val title = "Schedules"
-
-    @IgnoredOnParcel
-    override val selectedIcon = Icons.Filled.Schedule
-
-    @IgnoredOnParcel
-    override val unselectedIcon = Icons.Outlined.Schedule
-}
-
-@Parcelize
-@Serializable
 data object Usage : TopLevelRoute {
     @IgnoredOnParcel
     override val title = "Usage"
@@ -99,6 +86,10 @@ data object Bedtime : TopLevelRoute {
 
 @Parcelize
 @Serializable
+data object Schedules : AppRoute
+
+@Parcelize
+@Serializable
 data object Privacy : AppRoute
 
 @Parcelize
@@ -118,6 +109,5 @@ val railItems: List<TopLevelRoute> = listOf(
     Water,
     Usage,
     Bedtime,
-    Schedules,
     Settings
 )
