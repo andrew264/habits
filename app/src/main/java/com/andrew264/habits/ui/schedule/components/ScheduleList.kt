@@ -19,19 +19,13 @@ internal fun ScheduleList(
     onDelete: suspend (Schedule) -> Boolean,
     onEdit: (scheduleId: String) -> Unit
 ) {
-    val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     LazyColumn(
         state = listState,
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = Dimens.PaddingLarge),
         verticalArrangement = Arrangement.spacedBy(Dimens.PaddingMedium),
-        contentPadding = PaddingValues(
-            start = Dimens.PaddingMedium,
-            end = Dimens.PaddingMedium,
-            top = Dimens.PaddingMedium,
-            bottom = Dimens.PaddingMedium + navBarPadding
-        ),
+        contentPadding = PaddingValues(all = Dimens.PaddingMedium),
     ) {
         items(schedules, key = { it.id }) { schedule ->
             ScheduleListItem(

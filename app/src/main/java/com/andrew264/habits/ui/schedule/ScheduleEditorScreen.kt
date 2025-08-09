@@ -246,7 +246,6 @@ private fun ScheduleEditorScreen(
 
         if (!uiState.isLoading && uiState.viewMode == ScheduleViewMode.GROUPED) {
             val fabInteractionSource = remember { MutableInteractionSource() }
-            val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
             HapticInteractionEffect(fabInteractionSource)
             SmallExtendedFloatingActionButton(
@@ -256,12 +255,7 @@ private fun ScheduleEditorScreen(
                     onAddGroup()
                 },
                 modifier = Modifier
-                    .padding(
-                        start = Dimens.PaddingMedium,
-                        top = Dimens.PaddingMedium,
-                        end = Dimens.PaddingMedium,
-                        bottom = navBarPadding + Dimens.PaddingMedium
-                    )
+                    .padding(Dimens.PaddingMedium)
                     .align(Alignment.BottomEnd),
                 expanded = expandedFab,
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,

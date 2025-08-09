@@ -51,15 +51,10 @@ fun GroupedView(
             description = "Groups allow you to apply the same time ranges to multiple days. Tap 'New Group' in the editor to add one."
         )
     } else {
-        val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-
         LazyColumn(
             state = listState,
             contentPadding = PaddingValues(
-                start = Dimens.PaddingMedium,
-                end = Dimens.PaddingMedium,
-                top = Dimens.PaddingMedium,
-                bottom = Dimens.PaddingMedium + navBarPadding
+                all = Dimens.PaddingMedium
             ),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {

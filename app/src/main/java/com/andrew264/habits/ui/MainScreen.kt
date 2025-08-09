@@ -1,7 +1,6 @@
 package com.andrew264.habits.ui
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
@@ -9,7 +8,6 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.rememberSavedStateNavEntryDecorator
@@ -63,8 +61,7 @@ private fun MainScreenLayout(
                     onWaterReminderClick = onWaterReminderClick
                 )
             },
-            snackbarHost = { SnackbarHost(snackbarHostState) },
-            contentWindowInsets = WindowInsets(0.dp)
+            snackbarHost = { SnackbarHost(snackbarHostState) }
         ) { innerPadding ->
             AppNavDisplay(
                 modifier = Modifier.padding(innerPadding),

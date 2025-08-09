@@ -225,7 +225,6 @@ private fun UsageListContent(
                 onRefresh = onRefresh,
             )
     ) {
-        val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
         var showSharedLimitDialog by rememberSaveable { mutableStateOf(false) }
 
         if (showSharedLimitDialog) {
@@ -243,12 +242,7 @@ private fun UsageListContent(
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = Dimens.PaddingMedium,
-                end = Dimens.PaddingMedium,
-                top = Dimens.PaddingMedium,
-                bottom = Dimens.PaddingMedium + navBarPadding
-            ),
+            contentPadding = PaddingValues(all = Dimens.PaddingMedium),
             verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
         ) {
             item {

@@ -104,16 +104,10 @@ private fun SettingsScreen(
     onNavigate: (AppRoute) -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(
-                start = Dimens.PaddingSmall,
-                end = Dimens.PaddingSmall,
-                top = Dimens.PaddingSmall,
-                bottom = Dimens.PaddingSmall + navBarPadding
-            )
+            .padding(all = Dimens.PaddingSmall)
             .nestedScroll(scrollBehavior.nestedScrollConnection),
     ) {
         item {

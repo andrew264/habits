@@ -54,9 +54,8 @@ internal fun InputSection(
             }
     }
 
-    val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     Column(
-        modifier = modifier.padding(bottom = navBarPadding),
+        modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Dimens.PaddingExtraLarge)
     ) {
