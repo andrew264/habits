@@ -40,4 +40,10 @@ interface UserPresenceEventDao {
      */
     @Query("SELECT * FROM user_presence_history WHERE timestamp < :startTime ORDER BY timestamp DESC LIMIT 1")
     suspend fun getLatestEventBefore(startTime: Long): UserPresenceEvent?
+
+    @Query("DELETE FROM user_presence_history WHERE timestamp >= :startTime")
+    suspend fun deleteEventsFrom(startTime: Long)
+
+    @Query("DELETE FROM user_presence_history")
+    suspend fun deleteAllEvents()
 }

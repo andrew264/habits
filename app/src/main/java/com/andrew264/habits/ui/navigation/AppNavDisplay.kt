@@ -15,6 +15,7 @@ import androidx.navigation3.runtime.entry
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.andrew264.habits.ui.bedtime.BedtimeScreen
+import com.andrew264.habits.ui.privacy.DataManagementScreen
 import com.andrew264.habits.ui.schedule.SchedulesListDetailScreen
 import com.andrew264.habits.ui.settings.MonitoringSettingsScreen
 import com.andrew264.habits.ui.usage.UsageStatsScreen
@@ -60,7 +61,10 @@ fun AppNavDisplay(
                 SchedulesListDetailScreen(snackbarHostState = snackbarHostState)
             }
             entry<MonitoringSettings> {
-                MonitoringSettingsScreen(onRequestActivityPermission = onRequestActivityPermission)
+                MonitoringSettingsScreen(
+                    onRequestActivityPermission = onRequestActivityPermission,
+                    onNavigate = onNavigate
+                )
             }
             entry<Usage> {
                 UsageStatsScreen(onNavigate = onNavigate)
@@ -70,6 +74,9 @@ fun AppNavDisplay(
             }
             entry<Whitelist> {
                 WhitelistScreen()
+            }
+            entry<Privacy> {
+                DataManagementScreen(snackbarHostState = snackbarHostState)
             }
         },
         transitionSpec = { sharedAxisX(forward = true) },

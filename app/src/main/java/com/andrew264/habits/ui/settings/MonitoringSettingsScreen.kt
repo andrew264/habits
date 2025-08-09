@@ -5,10 +5,7 @@ import android.provider.Settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Alarm
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Timeline
-import androidx.compose.material.icons.outlined.WaterDrop
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,6 +23,8 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import com.andrew264.habits.ui.common.components.ListItemPosition
 import com.andrew264.habits.ui.common.components.NavigationSettingsListItem
 import com.andrew264.habits.ui.common.components.ToggleSettingsListItem
+import com.andrew264.habits.ui.navigation.AppRoute
+import com.andrew264.habits.ui.navigation.Privacy
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.ui.theme.createPreviewPersistentSettings
@@ -35,7 +34,8 @@ import kotlinx.coroutines.flow.collectLatest
 fun MonitoringSettingsScreen(
     modifier: Modifier = Modifier,
     viewModel: MonitoringSettingsViewModel = hiltViewModel(),
-    onRequestActivityPermission: () -> Unit
+    onRequestActivityPermission: () -> Unit,
+    onNavigate: (AppRoute) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -85,7 +85,8 @@ fun MonitoringSettingsScreen(
         onOpenAccessibilitySettings = {
             val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
             context.startActivity(intent)
-        }
+        },
+        onNavigate = onNavigate
     )
 }
 
@@ -98,7 +99,8 @@ private fun MonitoringSettingsScreen(
     onUsageToggled: (Boolean) -> Unit,
     onWaterToggled: (Boolean) -> Unit,
     onOpenAppSettings: () -> Unit,
-    onOpenAccessibilitySettings: () -> Unit
+    onOpenAccessibilitySettings: () -> Unit,
+    onNavigate: (AppRoute) -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -158,7 +160,16 @@ private fun MonitoringSettingsScreen(
         }
 
         item {
-            SectionHeader("App Info")
+            SectionHeader("Data & Privacy")
+        }
+
+        item {
+            NavigationSettingsListItem(
+                icon = Icons.Outlined.DeleteForever,
+                title = "Delete Data",
+                onClick = { onNavigate(Privacy) },
+                position = ListItemPosition.TOP
+            )
         }
 
         item {
@@ -166,7 +177,7 @@ private fun MonitoringSettingsScreen(
                 icon = Icons.Outlined.Info,
                 title = "App Permissions & Info",
                 onClick = onOpenAppSettings,
-                position = ListItemPosition.SEPARATE
+                position = ListItemPosition.BOTTOM
             )
         }
     }
@@ -199,7 +210,8 @@ private fun MonitoringSettingsScreenAllEnabledPreview() {
             onUsageToggled = {},
             onWaterToggled = {},
             onOpenAppSettings = {},
-            onOpenAccessibilitySettings = {}
+            onOpenAccessibilitySettings = {},
+            onNavigate = {}
         )
     }
 }
@@ -218,7 +230,8 @@ private fun MonitoringSettingsScreenWarningPreview() {
             onUsageToggled = {},
             onWaterToggled = {},
             onOpenAppSettings = {},
-            onOpenAccessibilitySettings = {}
+            onOpenAccessibilitySettings = {},
+            onNavigate = {}
         )
     }
 }

@@ -99,6 +99,10 @@ data object Bedtime : TopLevelRoute {
 
 @Parcelize
 @Serializable
+data object Privacy : AppRoute
+
+@Parcelize
+@Serializable
 data object WaterStats : AppRoute
 
 @Parcelize

@@ -35,4 +35,10 @@ interface AppUsageEventDao {
         startTime: Long,
         endTime: Long
     ): Flow<List<AppUsageEventEntity>>
+
+    @Query("DELETE FROM app_usage_history WHERE start_timestamp >= :startTime")
+    suspend fun deleteEventsFrom(startTime: Long)
+
+    @Query("DELETE FROM app_usage_history")
+    suspend fun deleteAllEvents()
 }

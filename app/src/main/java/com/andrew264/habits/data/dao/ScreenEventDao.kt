@@ -16,4 +16,10 @@ interface ScreenEventDao {
         startTime: Long,
         endTime: Long
     ): Flow<List<ScreenEventEntity>>
+
+    @Query("DELETE FROM screen_history WHERE timestamp >= :startTime")
+    suspend fun deleteEventsFrom(startTime: Long)
+
+    @Query("DELETE FROM screen_history")
+    suspend fun deleteAllEvents()
 }
