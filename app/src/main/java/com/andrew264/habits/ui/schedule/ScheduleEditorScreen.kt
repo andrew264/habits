@@ -6,12 +6,12 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
@@ -25,6 +25,7 @@ import com.andrew264.habits.ui.schedule.components.GroupedView
 import com.andrew264.habits.ui.schedule.components.PerDayView
 import com.andrew264.habits.ui.theme.Dimens
 import kotlinx.coroutines.flow.collectLatest
+import java.util.Locale
 
 @Composable
 fun ScheduleEditorScreen(
@@ -57,6 +58,7 @@ fun ScheduleEditorScreen(
     ScheduleEditorScreen(
         uiState = uiState,
         perDayRepresentation = perDayRepresentation,
+        onNavigateUp = onNavigateUp,
         onSaveSchedule = viewModel::saveSchedule,
         onSetViewMode = viewModel::setViewMode,
         onUpdateScheduleName = viewModel::updateScheduleName,
@@ -79,6 +81,7 @@ fun ScheduleEditorScreen(
 private fun ScheduleEditorScreen(
     uiState: ScheduleEditorUiState,
     perDayRepresentation: Map<DayOfWeek, List<TimeRange>>,
+    onNavigateUp: () -> Unit,
     onSaveSchedule: () -> Unit,
     onSetViewMode: (ScheduleViewMode) -> Unit,
     onUpdateScheduleName: (String) -> Unit,
@@ -94,19 +97,69 @@ private fun ScheduleEditorScreen(
     onDeleteTimeRangeFromDay: (day: DayOfWeek, timeRange: TimeRange) -> Unit,
 ) {
     val view = LocalView.current
-
     val listState = rememberLazyListState()
     val expandedFab by remember {
         derivedStateOf { listState.firstVisibleItemIndex == 0 }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(if (uiState.isNewSchedule) "New Schedule" else "Edit Schedule") },
+                subtitle = {
+                    uiState.scheduleCoverage?.let {
+                        Text(
+                            "${String.format(Locale.getDefault(), "%.1f", it.totalHours)} hours/week",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                },
+                navigationIcon = {
+                    val interactionSource = remember { MutableInteractionSource() }
+                    HapticInteractionEffect(interactionSource)
+                    IconButton(onClick = onNavigateUp, interactionSource = interactionSource) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                    }
+                },
+                actions = {
+                    val interactionSource = remember { MutableInteractionSource() }
+                    HapticInteractionEffect(interactionSource)
+                    IconButton(
+                        onClick = onSaveSchedule, interactionSource = interactionSource,
+                        shapes = IconButtonDefaults.shapes(),
+                        modifier = Modifier
+                            .width(64.dp)
+                            .height(48.dp)
+                            .padding(end = Dimens.PaddingSmall),
+                        colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+                    ) {
+                        Icon(Icons.Default.Done, "Save Schedule")
+                    }
+                }
+            )
+        },
+        floatingActionButton = {
+            if (!uiState.isLoading && uiState.viewMode == ScheduleViewMode.GROUPED) {
+                val fabInteractionSource = remember { MutableInteractionSource() }
+                HapticInteractionEffect(fabInteractionSource)
+                SmallExtendedFloatingActionButton(
+                    text = { Text("New Group") },
+                    icon = { Icon(Icons.Default.Add, "Create New Group") },
+                    onClick = onAddGroup,
+                    expanded = expandedFab,
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    interactionSource = fabInteractionSource
+                )
+            }
+        }
+    ) { paddingValues ->
         if (uiState.isLoading) {
-            ContainedLoadingIndicator()
+            ContainedLoadingIndicator(Modifier.padding(paddingValues))
         } else {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .padding(paddingValues)
             ) {
 
                 Column(
@@ -115,36 +168,14 @@ private fun ScheduleEditorScreen(
                         .padding(Dimens.PaddingLarge),
                     verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
-                    ) {
-
-                        OutlinedTextField(
-                            value = uiState.schedule?.name.orEmpty(),
-                            onValueChange = onUpdateScheduleName,
-                            label = { Text("Schedule Name") },
-                            placeholder = { Text("Enter schedule name") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
-                        FilledTonalButton(
-                            onClick = {
-                                onSaveSchedule()
-                                view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-                            },
-                            shapes = ButtonDefaults.shapes()
-                        ) {
-                            Icon(
-                                Icons.Default.Done,
-                                contentDescription = "Save Schedule",
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(Modifier.width(Dimens.PaddingSmall))
-                            Text("Save")
-                        }
-                    }
-
+                    OutlinedTextField(
+                        value = uiState.schedule?.name.orEmpty(),
+                        onValueChange = onUpdateScheduleName,
+                        label = { Text("Schedule Name") },
+                        placeholder = { Text("Enter schedule name") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
 
                     val options = ScheduleViewMode.entries
                     ButtonGroup(
@@ -203,7 +234,6 @@ private fun ScheduleEditorScreen(
                     }
                 }
 
-
                 Box(
                     modifier = Modifier.weight(1f)
                 ) {
@@ -241,27 +271,6 @@ private fun ScheduleEditorScreen(
                     }
                 }
             }
-        }
-
-
-        if (!uiState.isLoading && uiState.viewMode == ScheduleViewMode.GROUPED) {
-            val fabInteractionSource = remember { MutableInteractionSource() }
-
-            HapticInteractionEffect(fabInteractionSource)
-            SmallExtendedFloatingActionButton(
-                text = { Text("New Group") },
-                icon = { Icon(Icons.Default.Add, "Create New Group") },
-                onClick = {
-                    onAddGroup()
-                },
-                modifier = Modifier
-                    .padding(Dimens.PaddingMedium)
-                    .align(Alignment.BottomEnd),
-                expanded = expandedFab,
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                interactionSource = fabInteractionSource,
-
-                )
         }
     }
 }

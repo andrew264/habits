@@ -104,6 +104,10 @@ data class ScheduleEditor(val scheduleId: String?) : AppRoute
 @Serializable
 data object Whitelist : AppRoute
 
+@Parcelize
+@Serializable
+data object UsageSettings : AppRoute
+
 val railItems: List<TopLevelRoute> = listOf(
     Home,
     Water,

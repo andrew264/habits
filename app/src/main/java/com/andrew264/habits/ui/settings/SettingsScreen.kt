@@ -6,10 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -91,7 +88,7 @@ fun SettingsScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SettingsScreen(
     modifier: Modifier = Modifier,
@@ -103,94 +100,107 @@ private fun SettingsScreen(
     onOpenAccessibilitySettings: () -> Unit,
     onNavigate: (AppRoute) -> Unit
 ) {
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(all = Dimens.PaddingSmall)
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
-    ) {
-        item {
-            SectionHeader("Features")
-        }
-
-        item {
-            ToggleSettingsListItem(
-                icon = Icons.Outlined.Alarm,
-                title = "Bedtime Tracking",
-                summary = "Monitor your sleep and bedtime habits",
-                checked = uiState.settings.isBedtimeTrackingEnabled,
-                onCheckedChange = onBedtimeToggled,
-                position = ListItemPosition.TOP
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    Scaffold(
+        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            LargeFlexibleTopAppBar(
+                title = { Text(text = "Settings") },
+                scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                )
             )
         }
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentPadding = PaddingValues(all = Dimens.PaddingSmall)
+        ) {
+            item {
+                SectionHeader("Features")
+            }
 
-        item {
-            ToggleSettingsListItem(
-                icon = Icons.Outlined.Timeline,
-                title = "App Usage Tracking",
-                summary = "Track screen time and set limits for apps.",
-                checked = uiState.settings.isAppUsageTrackingEnabled,
-                onCheckedChange = onUsageToggled,
-                position = ListItemPosition.MIDDLE,
-                isWarningVisible = uiState.settings.isAppUsageTrackingEnabled && !uiState.isAccessibilityServiceEnabled,
-                warningText = "Service is not running. Tap to fix in accessibility settings.",
-                onWarningClick = onOpenAccessibilitySettings
-            )
-        }
+            item {
+                ToggleSettingsListItem(
+                    icon = Icons.Outlined.Alarm,
+                    title = "Bedtime Tracking",
+                    summary = "Monitor your sleep and bedtime habits",
+                    checked = uiState.settings.isBedtimeTrackingEnabled,
+                    onCheckedChange = onBedtimeToggled,
+                    position = ListItemPosition.TOP
+                )
+            }
 
-        item {
-            ToggleSettingsListItem(
-                icon = Icons.Outlined.WaterDrop,
-                title = "Water Tracking",
-                summary = "Track daily water intake and set reminders.",
-                checked = uiState.settings.isWaterTrackingEnabled,
-                onCheckedChange = onWaterToggled,
-                position = ListItemPosition.BOTTOM
-            )
-        }
+            item {
+                ToggleSettingsListItem(
+                    icon = Icons.Outlined.Timeline,
+                    title = "App Usage Tracking",
+                    summary = "Track screen time and set limits for apps.",
+                    checked = uiState.settings.isAppUsageTrackingEnabled,
+                    onCheckedChange = onUsageToggled,
+                    position = ListItemPosition.MIDDLE,
+                    isWarningVisible = uiState.settings.isAppUsageTrackingEnabled && !uiState.isAccessibilityServiceEnabled,
+                    warningText = "Service is not running. Tap to fix in accessibility settings.",
+                    onWarningClick = onOpenAccessibilitySettings
+                )
+            }
 
-        item {
-            Spacer(Modifier.height(Dimens.PaddingLarge))
-        }
+            item {
+                ToggleSettingsListItem(
+                    icon = Icons.Outlined.WaterDrop,
+                    title = "Water Tracking",
+                    summary = "Track daily water intake and set reminders.",
+                    checked = uiState.settings.isWaterTrackingEnabled,
+                    onCheckedChange = onWaterToggled,
+                    position = ListItemPosition.BOTTOM
+                )
+            }
 
-        item {
-            SectionHeader("Management")
-        }
+            item {
+                Spacer(Modifier.height(Dimens.PaddingLarge))
+            }
 
-        item {
-            NavigationSettingsListItem(
-                icon = Icons.Outlined.Schedule,
-                title = "Create and manage schedules",
-                onClick = { onNavigate(Schedules) },
-                position = ListItemPosition.SEPARATE
-            )
-        }
+            item {
+                SectionHeader("Management")
+            }
 
-        item {
-            Spacer(Modifier.height(Dimens.PaddingLarge))
-        }
+            item {
+                NavigationSettingsListItem(
+                    icon = Icons.Outlined.Schedule,
+                    title = "Create and manage schedules",
+                    onClick = { onNavigate(Schedules) },
+                    position = ListItemPosition.SEPARATE
+                )
+            }
 
-        item {
-            SectionHeader("Data & Privacy")
-        }
+            item {
+                Spacer(Modifier.height(Dimens.PaddingLarge))
+            }
 
-        item {
-            NavigationSettingsListItem(
-                icon = Icons.Outlined.DeleteForever,
-                title = "Delete Data",
-                onClick = { onNavigate(Privacy) },
-                position = ListItemPosition.TOP
-            )
-        }
+            item {
+                SectionHeader("Data & Privacy")
+            }
 
-        item {
-            NavigationSettingsListItem(
-                icon = Icons.Outlined.Info,
-                title = "App Permissions & Info",
-                onClick = onOpenAppSettings,
-                position = ListItemPosition.BOTTOM
-            )
+            item {
+                NavigationSettingsListItem(
+                    icon = Icons.Outlined.DeleteForever,
+                    title = "Delete Data",
+                    onClick = { onNavigate(Privacy) },
+                    position = ListItemPosition.TOP
+                )
+            }
+
+            item {
+                NavigationSettingsListItem(
+                    icon = Icons.Outlined.Info,
+                    title = "App Permissions & Info",
+                    onClick = onOpenAppSettings,
+                    position = ListItemPosition.BOTTOM
+                )
+            }
         }
     }
 }

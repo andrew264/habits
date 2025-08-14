@@ -5,10 +5,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -17,30 +21,44 @@ import com.andrew264.habits.domain.analyzer.HourlyWaterIntake
 import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
 import com.andrew264.habits.ui.common.components.EmptyState
 import com.andrew264.habits.ui.common.components.FilterButtonGroup
+import com.andrew264.habits.ui.common.components.SimpleTopAppBar
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.ui.water.components.StatsContent
 import java.time.LocalDate
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WaterStatsScreen(
-    viewModel: WaterStatsViewModel = hiltViewModel()
+    viewModel: WaterStatsViewModel = hiltViewModel(),
+    onNavigateUp: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
-    WaterStatsScreenContent(
-        uiState = uiState,
-        onSetTimeRange = viewModel::setTimeRange
-    )
+    Scaffold(
+        topBar = {
+            SimpleTopAppBar(title = "Hydration Statistics", onNavigateUp = onNavigateUp, scrollBehavior = scrollBehavior)
+        }
+    ) { paddingValues ->
+        WaterStatsScreen(
+            modifier = Modifier
+                .padding(paddingValues)
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
+            uiState = uiState,
+            onSetTimeRange = viewModel::setTimeRange
+        )
+    }
 }
 
 @Composable
-private fun WaterStatsScreenContent(
+private fun WaterStatsScreen(
+    modifier: Modifier = Modifier,
     uiState: WaterStatsUiState,
     onSetTimeRange: (StatsTimeRange) -> Unit,
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(Dimens.PaddingLarge),
@@ -92,7 +110,7 @@ private fun WaterStatsScreenWithDataPreview() {
         daysGoalMet = 4
     )
     HabitsTheme {
-        WaterStatsScreenContent(
+        WaterStatsScreen(
             uiState = WaterStatsUiState(isLoading = false, stats = fakeStats),
             onSetTimeRange = {}
         )
@@ -103,7 +121,7 @@ private fun WaterStatsScreenWithDataPreview() {
 @Composable
 private fun WaterStatsScreenEmptyPreview() {
     HabitsTheme {
-        WaterStatsScreenContent(
+        WaterStatsScreen(
             uiState = WaterStatsUiState(isLoading = false, stats = null),
             onSetTimeRange = {}
         )
@@ -114,7 +132,7 @@ private fun WaterStatsScreenEmptyPreview() {
 @Composable
 private fun WaterStatsScreenLoadingPreview() {
     HabitsTheme {
-        WaterStatsScreenContent(
+        WaterStatsScreen(
             uiState = WaterStatsUiState(isLoading = true, stats = null),
             onSetTimeRange = {}
         )

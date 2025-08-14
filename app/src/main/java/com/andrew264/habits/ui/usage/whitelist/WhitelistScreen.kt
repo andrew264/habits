@@ -12,30 +12,47 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
 import com.andrew264.habits.ui.common.components.DrawableImage
+import com.andrew264.habits.ui.common.components.SimpleTopAppBar
 import com.andrew264.habits.ui.common.utils.rememberAppIcon
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WhitelistScreen(viewModel: WhitelistViewModel = hiltViewModel()) {
+fun WhitelistScreen(
+    viewModel: WhitelistViewModel = hiltViewModel(),
+    onNavigateUp: () -> Unit
+) {
     val uiState by viewModel.uiState.collectAsState()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
-    WhitelistScreen(
-        uiState = uiState,
-        onSearchTextChanged = viewModel::onSearchTextChanged,
-        onToggleShowSystemApps = viewModel::onToggleShowSystemApps,
-        onToggleWhitelist = viewModel::onToggleWhitelist
-    )
+    Scaffold(
+        topBar = {
+            SimpleTopAppBar(title = "Manage Whitelist", onNavigateUp = onNavigateUp, scrollBehavior = scrollBehavior)
+        }
+    ) { paddingValues ->
+        WhitelistScreen(
+            modifier = Modifier
+                .padding(paddingValues)
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
+            uiState = uiState,
+            onSearchTextChanged = viewModel::onSearchTextChanged,
+            onToggleShowSystemApps = viewModel::onToggleShowSystemApps,
+            onToggleWhitelist = viewModel::onToggleWhitelist
+        )
+    }
 }
 
 @Composable
 private fun WhitelistScreen(
+    modifier: Modifier = Modifier,
     uiState: WhitelistUiState,
     onSearchTextChanged: (String) -> Unit,
     onToggleShowSystemApps: (Boolean) -> Unit,
@@ -44,7 +61,7 @@ private fun WhitelistScreen(
     val view = LocalView.current
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(horizontal = Dimens.PaddingLarge)
     ) {

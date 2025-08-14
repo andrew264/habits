@@ -1,60 +1,33 @@
 package com.andrew264.habits.ui.usage
 
-import android.content.Intent
-import android.provider.Settings
-import android.view.HapticFeedbackConstants
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.LocalIndication
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
-import androidx.compose.material.icons.outlined.Block
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Timer
-import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Surface
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.layout.AdaptStrategy
 import androidx.compose.material3.adaptive.layout.AnimatedPane
+import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldDefaults
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.navigation.NavigableListDetailPaneScaffold
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
-import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
-import androidx.compose.material3.pulltorefresh.pullToRefresh
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.andrew264.habits.domain.model.UsageStatistics
 import com.andrew264.habits.domain.model.UsageTimeBin
-import com.andrew264.habits.ui.common.charts.StackedBarChart
-import com.andrew264.habits.ui.common.components.*
-import com.andrew264.habits.ui.common.duration_picker.DurationPickerDialog
-import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
-import com.andrew264.habits.ui.common.utils.FormatUtils
-import com.andrew264.habits.ui.navigation.*
-import com.andrew264.habits.ui.theme.Dimens
+import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
+import com.andrew264.habits.ui.common.components.EmptyState
+import com.andrew264.habits.ui.common.components.FeatureDisabledContent
+import com.andrew264.habits.ui.navigation.AppRoute
+import com.andrew264.habits.ui.navigation.Settings
+import com.andrew264.habits.ui.navigation.sharedAxisXEnter
+import com.andrew264.habits.ui.navigation.sharedAxisXExit
 import com.andrew264.habits.ui.theme.HabitsTheme
-import com.andrew264.habits.ui.usage.components.AccessibilityWarningCard
-import com.andrew264.habits.ui.usage.components.AppListItem
-import com.andrew264.habits.ui.usage.components.StatisticsSummaryCard
-import kotlinx.coroutines.flow.distinctUntilChanged
+import com.andrew264.habits.ui.usage.components.UsageListContent
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
@@ -80,14 +53,11 @@ fun UsageStatsScreen(
         onRefresh = viewModel::refresh,
         onNavigate = onNavigate,
         onSetAppColor = viewModel::setAppColor,
-        onSetAppBlockingEnabled = viewModel::setAppBlockingEnabled,
-        onSetUsageLimitNotificationsEnabled = viewModel::setUsageLimitNotificationsEnabled,
-        onSaveLimits = { pkg, session -> viewModel.saveAppLimits(pkg, session) },
-        onSetSharedDailyLimit = viewModel::setSharedDailyLimit
+        onSaveLimits = { pkg, session -> viewModel.saveAppLimits(pkg, session) }
     )
 }
 
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun UsageStatsScreen(
     uiState: UsageStatsUiState,
@@ -95,14 +65,17 @@ private fun UsageStatsScreen(
     onRefresh: () -> Unit,
     onNavigate: (AppRoute) -> Unit,
     onSetAppColor: (packageName: String, colorHex: String) -> Unit,
-    onSetAppBlockingEnabled: (Boolean) -> Unit,
-    onSetUsageLimitNotificationsEnabled: (Boolean) -> Unit,
-    onSaveLimits: (packageName: String, sessionMinutes: Int?) -> Unit,
-    onSetSharedDailyLimit: (minutes: Int?) -> Unit
+    onSaveLimits: (packageName: String, sessionMinutes: Int?) -> Unit
 ) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val scaffoldNavigator = rememberListDetailPaneScaffoldNavigator<UsageSelection>()
+    val scaffoldNavigator = rememberListDetailPaneScaffoldNavigator<UsageSelection>(
+        adaptStrategies =
+            ListDetailPaneScaffoldDefaults.adaptStrategies(
+                extraPaneAdaptStrategy =
+                    AdaptStrategy.Reflow(reflowUnder = ListDetailPaneScaffoldRole.Detail)
+            )
+    )
+    val listState = rememberLazyListState()
 
     when {
         uiState.isLoading && uiState.stats == null -> {
@@ -128,6 +101,7 @@ private fun UsageStatsScreen(
                     ) {
                         UsageListContent(
                             uiState = uiState,
+                            listState = listState,
                             onSetTimeRange = onSetTimeRange,
                             onRefresh = onRefresh,
                             onAppSelected = { app ->
@@ -138,14 +112,8 @@ private fun UsageStatsScreen(
                                     )
                                 }
                             },
-                            onNavigateToWhitelist = { onNavigate(Whitelist) },
-                            onSetAppBlockingEnabled = onSetAppBlockingEnabled,
-                            onSetUsageLimitNotificationsEnabled = onSetUsageLimitNotificationsEnabled,
-                            onOpenAccessibilitySettings = {
-                                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-                                context.startActivity(intent)
-                            },
-                            onSetSharedDailyLimit = onSetSharedDailyLimit
+                            onNavigate = onNavigate,
+                            isDetailPaneVisible = scaffoldNavigator.currentDestination?.contentKey != null
                         )
                     }
                 },
@@ -156,12 +124,23 @@ private fun UsageStatsScreen(
                     ) {
                         val selection = scaffoldNavigator.currentDestination?.contentKey
                         if (selection?.packageName != null) {
-                            val selectedApp = uiState.appDetails.find { it.packageName == selection.packageName }
+                            val selectedApp =
+                                uiState.appDetails.find { it.packageName == selection.packageName }
                             if (selectedApp != null) {
                                 UsageDetailScreen(
                                     app = selectedApp,
                                     onSetAppColor = onSetAppColor,
-                                    onSaveLimits = { session -> onSaveLimits(selectedApp.packageName, session) }
+                                    onSaveLimits = { session ->
+                                        onSaveLimits(
+                                            selectedApp.packageName,
+                                            session
+                                        )
+                                    },
+                                    onNavigateUp = {
+                                        scope.launch {
+                                            scaffoldNavigator.navigateBack()
+                                        }
+                                    }
                                 )
                             }
                         } else {
@@ -178,226 +157,9 @@ private fun UsageStatsScreen(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun UsageListContent(
-    uiState: UsageStatsUiState,
-    onSetTimeRange: (UsageTimeRange) -> Unit,
-    onRefresh: () -> Unit,
-    onAppSelected: (AppDetails) -> Unit,
-    onNavigateToWhitelist: () -> Unit,
-    onSetAppBlockingEnabled: (Boolean) -> Unit,
-    onSetUsageLimitNotificationsEnabled: (Boolean) -> Unit,
-    onOpenAccessibilitySettings: () -> Unit,
-    onSetSharedDailyLimit: (minutes: Int?) -> Unit
-) {
-    val isRefreshing = uiState.isLoading && uiState.stats != null
-    val state = rememberPullToRefreshState()
-
-    val scaleFraction = {
-        if (isRefreshing) 1f
-        else LinearOutSlowInEasing.transform(state.distanceFraction).coerceIn(0f, 1f)
-    }
-
-    val view = LocalView.current
-    LaunchedEffect(state) {
-        var wasBeyondThreshold = state.distanceFraction >= 1.0f
-        snapshotFlow { state.distanceFraction >= 1.0f }
-            .distinctUntilChanged()
-            .collect { isBeyondThreshold ->
-                if (isBeyondThreshold) {
-                    view.performHapticFeedback(HapticFeedbackConstants.GESTURE_THRESHOLD_ACTIVATE)
-                } else {
-                    if (wasBeyondThreshold) {
-                        view.performHapticFeedback(HapticFeedbackConstants.GESTURE_THRESHOLD_DEACTIVATE)
-                    }
-                }
-                wasBeyondThreshold = isBeyondThreshold
-            }
-    }
-
-    Box(
-        Modifier
-            .fillMaxSize()
-            .pullToRefresh(
-                state = state,
-                isRefreshing = isRefreshing,
-                onRefresh = onRefresh,
-            )
-    ) {
-        var showSharedLimitDialog by rememberSaveable { mutableStateOf(false) }
-
-        if (showSharedLimitDialog) {
-            DurationPickerDialog(
-                title = "Set Shared Daily Limit",
-                description = "Set a total time limit for all whitelisted apps. This limit will reset at midnight. Set to 0 to clear.",
-                initialTotalMinutes = uiState.sharedDailyUsageLimitMinutes ?: 0,
-                onDismissRequest = { showSharedLimitDialog = false },
-                onConfirm = { totalMinutes ->
-                    onSetSharedDailyLimit(if (totalMinutes > 0) totalMinutes else null)
-                    showSharedLimitDialog = false
-                }
-            )
-        }
-
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(all = Dimens.PaddingMedium),
-            verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
-        ) {
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    FilterButtonGroup(
-                        options = UsageTimeRange.entries,
-                        selectedOption = uiState.selectedRange,
-                        onOptionSelected = onSetTimeRange,
-                        getLabel = { it.label }
-                    )
-                }
-            }
-
-            uiState.stats?.let { stats ->
-                item {
-                    StatisticsSummaryCard(
-                        totalScreenOnTime = stats.totalScreenOnTime,
-                        pickupCount = stats.pickupCount,
-                        averageSessionMillis = uiState.averageSessionMillis
-                    )
-                }
-            }
-
-            if (!uiState.isAccessibilityServiceEnabled) {
-                item {
-                    AnimatedVisibility(visible = uiState.isAppUsageTrackingEnabled && !uiState.isAccessibilityServiceEnabled) {
-                        AccessibilityWarningCard(onOpenAccessibilitySettings)
-                    }
-                }
-            }
-
-            item {
-                NavigationSettingsListItem(
-                    icon = Icons.Outlined.Timer,
-                    title = "Shared Daily Limit",
-                    onClick = { showSharedLimitDialog = true },
-                    position = ListItemPosition.TOP,
-                    valueContent = {
-                        Text(
-                            text = if (uiState.sharedDailyUsageLimitMinutes != null) FormatUtils.formatDuration(uiState.sharedDailyUsageLimitMinutes * 60_000L) else "Not set",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                )
-                ToggleSettingsListItem(
-                    icon = Icons.Outlined.Notifications,
-                    title = "Enable Limit Notifications",
-                    summary = "Get notified when you exceed a usage limit.",
-                    checked = uiState.usageLimitNotificationsEnabled,
-                    onCheckedChange = onSetUsageLimitNotificationsEnabled,
-                    position = ListItemPosition.MIDDLE
-                )
-                ToggleSettingsListItem(
-                    icon = Icons.Outlined.Block,
-                    title = "Enable App Blocker",
-                    summary = "Show an overlay when a usage limit is reached.",
-                    checked = uiState.isAppBlockingEnabled,
-                    onCheckedChange = onSetAppBlockingEnabled,
-                    position = ListItemPosition.BOTTOM
-                )
-            }
-
-            if (uiState.stats != null) {
-                item {
-                    StackedBarChart(
-                        bins = uiState.stats.timeBins,
-                        range = uiState.selectedRange,
-                        whitelistedAppColors = uiState.whitelistedApps.associate { it.packageName to it.colorHex },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
-                    )
-                }
-            }
-
-            item {
-                val interactionSource = remember { MutableInteractionSource() }
-                HapticInteractionEffect(interactionSource)
-                FilledTonalButton(
-                    onClick = onNavigateToWhitelist,
-                    interactionSource = interactionSource,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.PlaylistAddCheck,
-                        contentDescription = null,
-                        modifier = Modifier.size(ButtonDefaults.IconSize)
-                    )
-                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                    Text("Manage Whitelisted Apps")
-                }
-            }
-
-            stickyHeader {
-                Text(
-                    text = "App Breakdown",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surface)
-                        .padding(bottom = Dimens.PaddingSmall, top = Dimens.PaddingSmall)
-                )
-            }
-
-            if (uiState.appDetails.isEmpty() && uiState.stats?.totalUsagePerApp?.isNotEmpty() == true) {
-                item {
-                    val interactionSource = remember { MutableInteractionSource() }
-                    HapticInteractionEffect(interactionSource)
-                    Card(modifier = Modifier.fillMaxWidth(), onClick = onNavigateToWhitelist) {
-                        Text(
-                            "No whitelisted apps with usage in this period. Tap 'Manage Whitelisted Apps' to add some.",
-                            modifier = Modifier.padding(Dimens.PaddingLarge),
-                            textAlign = TextAlign.Center,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-
-            items(uiState.appDetails, key = { it.packageName }) { app ->
-                val interactionSource = remember { MutableInteractionSource() }
-                HapticInteractionEffect(interactionSource)
-                AppListItem(
-                    appDetails = app,
-                    modifier = Modifier.clickable(
-                        interactionSource = interactionSource,
-                        indication = LocalIndication.current,
-                        onClick = { onAppSelected(app) }
-                    )
-                )
-            }
-        }
-
-        Box(
-            Modifier
-                .align(Alignment.TopCenter)
-                .graphicsLayer {
-                    scaleX = scaleFraction()
-                    scaleY = scaleFraction()
-                }
-        ) {
-            PullToRefreshDefaults.LoadingIndicator(state = state, isRefreshing = isRefreshing)
-        }
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
-private fun UsageListContentPreview() {
+private fun UsageStatsScreenPreview() {
     val sampleAppDetails = listOf(
         AppDetails(
             packageName = "com.google.android.youtube",
@@ -455,7 +217,7 @@ private fun UsageListContentPreview() {
 
     HabitsTheme {
         Surface {
-            UsageListContent(
+            UsageStatsScreen(
                 uiState = UsageStatsUiState(
                     isLoading = false,
                     isAppUsageTrackingEnabled = true,
@@ -470,20 +232,17 @@ private fun UsageListContentPreview() {
                 ),
                 onSetTimeRange = {},
                 onRefresh = {},
-                onAppSelected = {},
-                onNavigateToWhitelist = {},
-                onSetUsageLimitNotificationsEnabled = {},
-                onOpenAccessibilitySettings = {},
-                onSetSharedDailyLimit = {},
-                onSetAppBlockingEnabled = {}
+                onNavigate = {},
+                onSetAppColor = { _, _ -> },
+                onSaveLimits = { _, _ -> }
             )
         }
     }
 }
 
-@Preview(showBackground = true, name = "Usage List With Warning")
+@Preview(showBackground = true, name = "Usage Screen With Warning")
 @Composable
-private fun UsageListContentWithWarningPreview() {
+private fun UsageStatsScreenWithWarningPreview() {
     val sampleAppDetails = listOf(
         AppDetails(
             packageName = "com.google.android.youtube",
@@ -502,7 +261,7 @@ private fun UsageListContentWithWarningPreview() {
 
     HabitsTheme {
         Surface {
-            UsageListContent(
+            UsageStatsScreen(
                 uiState = UsageStatsUiState(
                     isLoading = false,
                     isAppUsageTrackingEnabled = true,
@@ -510,7 +269,10 @@ private fun UsageListContentWithWarningPreview() {
                     usageLimitNotificationsEnabled = true,
                     selectedRange = UsageTimeRange.DAY,
                     stats = UsageStatistics(
-                        totalScreenOnTime = TimeUnit.HOURS.toMillis(5), pickupCount = 42, totalUsagePerApp = emptyMap(), timesOpenedPerBin = emptyList(),
+                        totalScreenOnTime = TimeUnit.HOURS.toMillis(5),
+                        pickupCount = 42,
+                        totalUsagePerApp = emptyMap(),
+                        timesOpenedPerBin = emptyList(),
                         timeBins = emptyList()
                     ),
                     whitelistedApps = emptyList(),
@@ -519,12 +281,9 @@ private fun UsageListContentWithWarningPreview() {
                 ),
                 onSetTimeRange = {},
                 onRefresh = {},
-                onAppSelected = {},
-                onNavigateToWhitelist = {},
-                onSetUsageLimitNotificationsEnabled = {},
-                onOpenAccessibilitySettings = {},
-                onSetAppBlockingEnabled = {},
-                onSetSharedDailyLimit = {}
+                onNavigate = {},
+                onSetAppColor = { _, _ -> },
+                onSaveLimits = { _, _ -> }
             )
         }
     }
@@ -544,10 +303,7 @@ private fun UsageStatsScreenDisabledPreview() {
                 onRefresh = {},
                 onNavigate = {},
                 onSetAppColor = { _, _ -> },
-                onSetUsageLimitNotificationsEnabled = {},
-                onSaveLimits = { _, _ -> },
-                onSetAppBlockingEnabled = {},
-                onSetSharedDailyLimit = {}
+                onSaveLimits = { _, _ -> }
             )
         }
     }

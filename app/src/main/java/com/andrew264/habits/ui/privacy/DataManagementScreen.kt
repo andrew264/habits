@@ -14,12 +14,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.andrew264.habits.domain.usecase.DeletableDataType
 import com.andrew264.habits.domain.usecase.TimeRangeOption
+import com.andrew264.habits.ui.common.components.SimpleTopAppBar
 import com.andrew264.habits.ui.privacy.components.DataTypeItem
 import com.andrew264.habits.ui.privacy.components.DeleteConfirmationDialog
 import com.andrew264.habits.ui.privacy.components.TimeRangeRow
@@ -30,7 +32,8 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun DataManagementScreen(
     snackbarHostState: SnackbarHostState,
-    viewModel: DataManagementViewModel = hiltViewModel()
+    viewModel: DataManagementViewModel = hiltViewModel(),
+    onNavigateUp: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -52,24 +55,36 @@ fun DataManagementScreen(
         )
     }
 
-    DataManagementScreenContent(
+    DataManagementScreen(
         uiState = uiState,
         onSelectTimeRange = viewModel::selectTimeRange,
         onToggleDataType = viewModel::toggleDataType,
-        onDeleteClicked = viewModel::onDeleteClicked
+        onDeleteClicked = viewModel::onDeleteClicked,
+        onNavigateUp = onNavigateUp
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DataManagementScreenContent(
+private fun DataManagementScreen(
     uiState: DataManagementUiState,
     onSelectTimeRange: (TimeRangeOption) -> Unit,
     onToggleDataType: (DeletableDataType) -> Unit,
     onDeleteClicked: () -> Unit,
+    onNavigateUp: () -> Unit
 ) {
     val view = LocalView.current
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            SimpleTopAppBar(
+                title = "Delete Data",
+                onNavigateUp = onNavigateUp,
+                scrollBehavior = scrollBehavior
+            )
+        },
         bottomBar = {
             Surface {
                 Row(
@@ -148,9 +163,9 @@ private fun DataManagementScreenContent(
 
 @Preview(showBackground = true)
 @Composable
-private fun DataManagementScreenContentPreview() {
+private fun DataManagementScreenPreview() {
     HabitsTheme {
-        DataManagementScreenContent(
+        DataManagementScreen(
             uiState = DataManagementUiState(
                 selectedTimeRange = TimeRangeOption.LAST_7_DAYS,
                 selectedDataTypes = setOf(
@@ -162,22 +177,24 @@ private fun DataManagementScreenContentPreview() {
             ),
             onSelectTimeRange = {},
             onToggleDataType = {},
-            onDeleteClicked = {}
+            onDeleteClicked = {},
+            onNavigateUp = {}
         )
     }
 }
 
 @Preview(showBackground = true, name = "Deleting State")
 @Composable
-private fun DataManagementScreenContentDeletingPreview() {
+private fun DataManagementScreenDeletingPreview() {
     HabitsTheme {
-        DataManagementScreenContent(
+        DataManagementScreen(
             uiState = DataManagementUiState(
                 isDeleting = true
             ),
             onSelectTimeRange = {},
             onToggleDataType = {},
-            onDeleteClicked = {}
+            onDeleteClicked = {},
+            onNavigateUp = {}
         )
     }
 }

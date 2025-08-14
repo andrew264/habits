@@ -1,6 +1,8 @@
 package com.andrew264.habits.ui.schedule.components
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -22,8 +24,7 @@ internal fun ScheduleList(
     LazyColumn(
         state = listState,
         modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = Dimens.PaddingLarge),
+            .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(Dimens.PaddingMedium),
         contentPadding = PaddingValues(all = Dimens.PaddingMedium),
     ) {

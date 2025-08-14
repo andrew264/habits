@@ -23,7 +23,6 @@ import com.andrew264.habits.ui.water.WaterViewModel
 @Composable
 private fun MainScreenLayout(
     topLevelBackStack: TopLevelBackStack,
-    onWaterReminderClick: () -> Unit,
     waterViewModel: WaterViewModel,
     onRequestActivityPermission: () -> Unit
 ) {
@@ -55,12 +54,6 @@ private fun MainScreenLayout(
         },
     ) {
         Scaffold(
-            topBar = {
-                MainTopAppBar(
-                    topLevelBackStack = topLevelBackStack,
-                    onWaterReminderClick = onWaterReminderClick
-                )
-            },
             snackbarHost = { SnackbarHost(snackbarHostState) }
         ) { innerPadding ->
             AppNavDisplay(
@@ -115,7 +108,6 @@ fun MainScreen(
 
     MainScreenLayout(
         topLevelBackStack = topLevelBackStack,
-        onWaterReminderClick = waterViewModel::onShowReminderDialog,
         waterViewModel = waterViewModel,
         onRequestActivityPermission = onRequestActivityPermission
     )

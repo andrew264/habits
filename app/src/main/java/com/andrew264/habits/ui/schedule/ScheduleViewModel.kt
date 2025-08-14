@@ -2,6 +2,8 @@ package com.andrew264.habits.ui.schedule
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.andrew264.habits.domain.analyzer.ScheduleAnalyzer
+import com.andrew264.habits.domain.analyzer.ScheduleCoverage
 import com.andrew264.habits.domain.editor.ScheduleEditor
 import com.andrew264.habits.domain.repository.ScheduleRepository
 import com.andrew264.habits.domain.usecase.SaveScheduleUseCase
@@ -28,7 +30,8 @@ data class ScheduleEditorUiState(
     val schedule: Schedule? = null,
     val viewMode: ScheduleViewMode = ScheduleViewMode.GROUPED,
     val isNewSchedule: Boolean = true,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val scheduleCoverage: ScheduleCoverage? = null
 )
 
 @HiltViewModel
@@ -72,10 +75,12 @@ class ScheduleViewModel @Inject constructor(
             _uiState.value = ScheduleEditorUiState(isLoading = true) // Reset state
             if (scheduleId == null) {
                 // This case is now a fallback, the FAB should always provide an ID.
+                val newSchedule = createNewSchedule()
                 _uiState.value = ScheduleEditorUiState(
-                    schedule = createNewSchedule(),
+                    schedule = newSchedule,
                     isNewSchedule = true,
-                    isLoading = false
+                    isLoading = false,
+                    scheduleCoverage = ScheduleAnalyzer(newSchedule.groups).calculateCoverage()
                 )
             } else {
                 // Fetch the schedule once to determine if it's new or existing.
@@ -85,14 +90,17 @@ class ScheduleViewModel @Inject constructor(
                     _uiState.value = ScheduleEditorUiState(
                         schedule = existingSchedule,
                         isNewSchedule = false,
-                        isLoading = false
+                        isLoading = false,
+                        scheduleCoverage = ScheduleAnalyzer(existingSchedule.groups).calculateCoverage()
                     )
                 } else {
                     // It's a new schedule, create it with the provided ID.
+                    val newSchedule = createNewSchedule(scheduleId)
                     _uiState.value = ScheduleEditorUiState(
-                        schedule = createNewSchedule(scheduleId),
+                        schedule = newSchedule,
                         isNewSchedule = true,
-                        isLoading = false
+                        isLoading = false,
+                        scheduleCoverage = ScheduleAnalyzer(newSchedule.groups).calculateCoverage()
                     )
                 }
             }
@@ -127,7 +135,12 @@ class ScheduleViewModel @Inject constructor(
     private fun updateSchedule(transform: (Schedule) -> Schedule) {
         _uiState.update { state ->
             state.schedule?.let {
-                state.copy(schedule = transform(it))
+                val newSchedule = transform(it)
+                val analyzer = ScheduleAnalyzer(newSchedule.groups)
+                state.copy(
+                    schedule = newSchedule,
+                    scheduleCoverage = analyzer.calculateCoverage()
+                )
             } ?: state
         }
     }
@@ -192,7 +205,13 @@ class ScheduleViewModel @Inject constructor(
     ) {
         _uiState.value.schedule?.let { currentSchedule ->
             val result = scheduleEditor.updateTimeRangeInDay(currentSchedule, day, updatedTimeRange)
-            _uiState.update { it.copy(schedule = result.schedule) }
+            val analyzer = ScheduleAnalyzer(result.schedule.groups)
+            _uiState.update {
+                it.copy(
+                    schedule = result.schedule,
+                    scheduleCoverage = analyzer.calculateCoverage()
+                )
+            }
             result.userMessage?.let { message ->
                 viewModelScope.launch { _uiEvents.emit(ScheduleUiEvent.ShowSnackbar(message)) }
             }
@@ -205,7 +224,13 @@ class ScheduleViewModel @Inject constructor(
     ) {
         _uiState.value.schedule?.let { currentSchedule ->
             val result = scheduleEditor.deleteTimeRangeFromDay(currentSchedule, day, timeRange)
-            _uiState.update { it.copy(schedule = result.schedule) }
+            val analyzer = ScheduleAnalyzer(result.schedule.groups)
+            _uiState.update {
+                it.copy(
+                    schedule = result.schedule,
+                    scheduleCoverage = analyzer.calculateCoverage()
+                )
+            }
             result.userMessage?.let { message ->
                 viewModelScope.launch { _uiEvents.emit(ScheduleUiEvent.ShowSnackbar(message)) }
             }

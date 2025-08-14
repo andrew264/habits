@@ -48,7 +48,7 @@ fun ToggleSettingsListItem(
 ) {
     val view = LocalView.current
     val interactionSource = remember { MutableInteractionSource() }
-    val padValue = Dimens.PaddingLarge
+    val padValue = Dimens.PaddingExtraLarge
 
     val clipShape = when (position) {
         ListItemPosition.SEPARATE -> RoundedCornerShape(padValue)

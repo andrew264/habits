@@ -18,6 +18,7 @@ import com.andrew264.habits.ui.bedtime.BedtimeScreen
 import com.andrew264.habits.ui.privacy.DataManagementScreen
 import com.andrew264.habits.ui.schedule.SchedulesListDetailScreen
 import com.andrew264.habits.ui.settings.SettingsScreen
+import com.andrew264.habits.ui.usage.UsageSettingsScreen
 import com.andrew264.habits.ui.usage.UsageStatsScreen
 import com.andrew264.habits.ui.usage.whitelist.WhitelistScreen
 import com.andrew264.habits.ui.water.WaterScreen
@@ -44,39 +45,41 @@ fun AppNavDisplay(
         entryProvider = entryProvider {
             entry<Home> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        "Hello World from Home Screen!",
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.clickable {}
-                    )
+                    Text("Hello World from Home Screen!", textAlign = TextAlign.Center, modifier = Modifier.clickable {})
                 }
             }
             entry<Water> {
-                WaterScreen(viewModel = waterViewModel)  // TODO: ugh, viewModel here, its disgusting; it is need so the MainScreen can take us here when we interact with water remainder notification
+                WaterScreen(
+                    viewModel = waterViewModel,  // TODO: ugh, viewModel here, its disgusting; it is need so the MainScreen can take us here when we interact with water remainder notification
+                    onNavigateToStats = { onNavigate(WaterStats) }
+                )
             }
             entry<WaterStats> {
-                WaterStatsScreen()
+                WaterStatsScreen(onNavigateUp = onBack)
             }
             entry<Schedules> {
-                SchedulesListDetailScreen(snackbarHostState = snackbarHostState)
+                SchedulesListDetailScreen(snackbarHostState = snackbarHostState, onNavigateUp = onBack)
             }
             entry<Settings> {
-                SettingsScreen(
-                    onRequestActivityPermission = onRequestActivityPermission,
-                    onNavigate = onNavigate
-                )
+                SettingsScreen(onRequestActivityPermission = onRequestActivityPermission, onNavigate = onNavigate)
             }
             entry<Usage> {
                 UsageStatsScreen(onNavigate = onNavigate)
+            }
+            entry<UsageSettings> {
+                UsageSettingsScreen(onNavigateUp = onBack, onNavigate = onNavigate)
             }
             entry<Bedtime> {
                 BedtimeScreen(onNavigate = onNavigate)
             }
             entry<Whitelist> {
-                WhitelistScreen()
+                WhitelistScreen(onNavigateUp = onBack)
             }
             entry<Privacy> {
-                DataManagementScreen(snackbarHostState = snackbarHostState)
+                DataManagementScreen(
+                    snackbarHostState = snackbarHostState,
+                    onNavigateUp = onBack
+                )
             }
         },
         transitionSpec = { sharedAxisX(forward = true) },
