@@ -27,7 +27,6 @@ class AppUsageRepositoryImpl @Inject constructor(
 
     companion object {
         private const val TAG = "AppUsageRepository"
-        private const val FLICKER_THRESHOLD_MS = 60_000
     }
 
     @Transaction
@@ -48,9 +47,8 @@ class AppUsageRepositoryImpl @Inject constructor(
         }
 
         if (lastSession.packageName == packageName) {
-            Log.d(TAG, "New package is same as last. No changes needed.")
-            // This assumes an alarm is already scheduled. If the app was killed and restarted,
-            // this might be a problem. A boot receiver should handle rescheduling.
+            Log.d(TAG, "New package is same as last. Ensuring alarm is set.")
+            scheduleSessionAlarm(packageName)
             return
         }
 
@@ -58,21 +56,6 @@ class AppUsageRepositoryImpl @Inject constructor(
         appUsageEventDao.update(endedLastSession)
         Log.d(TAG, "Ended last session for ${lastSession.packageName}.")
         snoozeManager.clearSnooze(lastSession.packageName)
-
-        if ((endedLastSession.endTimestamp!! - endedLastSession.startTimestamp) < FLICKER_THRESHOLD_MS) {
-            Log.d(TAG, "Last session was a short flicker. Checking for merge possibility.")
-            val sessionBeforeFlicker = appUsageEventDao.getSecondToLastEvent()
-
-            if (sessionBeforeFlicker != null && sessionBeforeFlicker.packageName == packageName) {
-                Log.d(TAG, "Flicker and return detected. Merging session for $packageName.")
-                appUsageEventDao.delete(endedLastSession)
-                appUsageEventDao.update(sessionBeforeFlicker.copy(endTimestamp = null))
-                Log.d(TAG, "Merge complete. Reactivated session for $packageName.")
-                // Reschedule alarm for the restored session.
-                scheduleSessionAlarm(packageName)
-                return
-            }
-        }
 
         startNewSessionInternal(packageName, timestamp)
     }

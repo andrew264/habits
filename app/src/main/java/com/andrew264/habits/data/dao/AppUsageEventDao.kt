@@ -1,6 +1,9 @@
 package com.andrew264.habits.data.dao
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.Query
+import androidx.room.Update
 import com.andrew264.habits.data.entity.AppUsageEventEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -12,14 +15,8 @@ interface AppUsageEventDao {
     @Update
     suspend fun update(event: AppUsageEventEntity)
 
-    @Delete
-    suspend fun delete(event: AppUsageEventEntity)
-
     @Query("SELECT * FROM app_usage_history WHERE end_timestamp IS NULL LIMIT 1")
     suspend fun getOngoingEvent(): AppUsageEventEntity?
-
-    @Query("SELECT * FROM app_usage_history ORDER BY start_timestamp DESC LIMIT 1 OFFSET 1")
-    suspend fun getSecondToLastEvent(): AppUsageEventEntity?
 
     /**
      * Retrieves all events that overlap with the given time range.

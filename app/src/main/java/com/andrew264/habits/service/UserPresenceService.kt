@@ -30,31 +30,33 @@ import com.google.android.gms.location.SleepClassifyEvent
 import com.google.android.gms.location.SleepSegmentEvent
 import com.google.android.gms.location.SleepSegmentRequest
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class UserPresenceService : Service() {
 
     private var deviceStateReceiver: BroadcastReceiver? = null
+    private var foregroundAppReceiver: BroadcastReceiver? = null
 
     companion object {
         private const val TAG = "UserPresenceService"
         private const val NOTIFICATION_CHANNEL_ID = "UserPresenceServiceChannel"
         private const val NOTIFICATION_ID = 1
         private const val SLEEP_API_PENDING_INTENT_REQUEST_CODE = 1001
+        private const val CLEANUP_DELAY_MS = 2000L
 
         const val ACTION_START_SERVICE = "com.andrew264.habits.action.START_PRESENCE_SERVICE"
         const val ACTION_STOP_SERVICE = "com.andrew264.habits.action.STOP_PRESENCE_SERVICE"
         const val ACTION_PROCESS_SLEEP_SEGMENT_EVENTS = "com.andrew264.habits.action.PROCESS_SLEEP_SEGMENT_EVENTS"
         const val ACTION_PROCESS_SLEEP_CLASSIFY_EVENTS = "com.andrew264.habits.action.PROCESS_SLEEP_CLASSIFY_EVENTS"
+        const val ACTION_FOREGROUND_APP_CHANGED = "com.andrew264.habits.action.FOREGROUND_APP_CHANGED"
+        const val ACTION_ACCESSIBILITY_INTERRUPTED = "com.andrew264.habits.action.ACCESSIBILITY_INTERRUPTED"
 
         const val EXTRA_SLEEP_SEGMENTS = "com.andrew264.habits.extra.SLEEP_SEGMENTS"
         const val EXTRA_SLEEP_CLASSIFY_EVENTS = "com.andrew264.habits.extra.SLEEP_CLASSIFY_EVENTS"
+        const val EXTRA_PACKAGE_NAME = "com.andrew264.habits.extra.PACKAGE_NAME"
     }
 
     @Inject
@@ -79,11 +81,22 @@ class UserPresenceService : Service() {
     private var sleepApiPendingIntent: PendingIntent? = null
 
     private var currentPresenceState = UserPresenceState.UNKNOWN
+    private var isScreenOn: Boolean = true
+    private lateinit var ignoredPackages: Set<String>
+    private var cleanupJob: Job? = null
+    private var lastStartedPackageName: String? = null
+
 
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "Service Created")
         createNotificationChannel()
+
+        ignoredPackages = setOf(
+            "com.android.systemui",
+            this.packageName
+            // TODO: do we need to ignore all the launchers
+        )
 
         serviceScope.launch {
             userPresenceHistoryRepository.userPresenceState.collect { state ->
@@ -140,6 +153,7 @@ class UserPresenceService : Service() {
         // Always clean up first to handle re-configuration
         unsubscribeFromSleepUpdates()
         unregisterDeviceStateReceiver()
+        unregisterForegroundAppReceiver()
 
         val settings = settingsRepository.settingsFlow.first()
         if (!settings.isBedtimeTrackingEnabled && !settings.isAppUsageTrackingEnabled) {
@@ -159,12 +173,13 @@ class UserPresenceService : Service() {
 
         // Screen state is needed for both features
         registerDeviceStateReceiver()
+        if (settings.isAppUsageTrackingEnabled) {
+            registerForegroundAppReceiver()
+        }
 
         val serviceType = if (settings.isBedtimeTrackingEnabled && ContextCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED) {
             ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH
         } else {
-            // Fallback to dataSync if only usage tracking is on, or if bedtime tracking is on but permission is missing.
-            // The service still runs for usage tracking in that case.
             ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
         }
 
@@ -180,6 +195,7 @@ class UserPresenceService : Service() {
         Log.i(TAG, "Stopping all monitoring.")
         unsubscribeFromSleepUpdates()
         unregisterDeviceStateReceiver()
+        unregisterForegroundAppReceiver()
         userPresenceHistoryRepository.updateUserPresenceState(UserPresenceState.UNKNOWN)
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -267,6 +283,7 @@ class UserPresenceService : Service() {
 
                         when (intent.action) {
                             Intent.ACTION_SCREEN_ON -> {
+                                isScreenOn = true
                                 if (settings.isBedtimeTrackingEnabled) {
                                     evaluateUserPresenceUseCase.execute(PresenceEvaluationInput.ScreenOn)
                                 }
@@ -276,6 +293,9 @@ class UserPresenceService : Service() {
                             }
 
                             Intent.ACTION_SCREEN_OFF -> {
+                                isScreenOn = false
+                                cleanupJob?.cancel()
+                                lastStartedPackageName = null
                                 if (settings.isAppUsageTrackingEnabled) {
                                     appUsageRepository.endCurrentUsageSession(timestamp)
                                 }
@@ -330,6 +350,89 @@ class UserPresenceService : Service() {
         serviceChannel.description = "Channel for habit tracker monitoring service"
         val manager = getSystemService(NotificationManager::class.java)
         manager?.createNotificationChannel(serviceChannel)
+    }
+
+    private fun registerForegroundAppReceiver() {
+        if (foregroundAppReceiver != null) return
+
+        foregroundAppReceiver = object : BroadcastReceiver() {
+            private val job = SupervisorJob()
+            private val scope = CoroutineScope(Dispatchers.IO + job)
+
+            override fun onReceive(context: Context, intent: Intent) {
+                val pendingResult = goAsync()
+                scope.launch {
+                    try {
+                        when (intent.action) {
+                            ACTION_FOREGROUND_APP_CHANGED -> {
+                                val packageName = intent.getStringExtra(EXTRA_PACKAGE_NAME) ?: return@launch
+                                handleForegroundAppChange(packageName)
+                            }
+
+                            ACTION_ACCESSIBILITY_INTERRUPTED -> {
+                                cleanupJob?.cancel()
+                                appUsageRepository.endCurrentUsageSession(System.currentTimeMillis())
+                                lastStartedPackageName = null
+                            }
+                        }
+                    } finally {
+                        pendingResult.finish()
+                    }
+                }
+            }
+        }
+        val filter = IntentFilter().apply {
+            addAction(ACTION_FOREGROUND_APP_CHANGED)
+            addAction(ACTION_ACCESSIBILITY_INTERRUPTED)
+        }
+        ContextCompat.registerReceiver(this, foregroundAppReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        Log.d(TAG, "Foreground app receiver registered.")
+    }
+
+    private fun unregisterForegroundAppReceiver() {
+        foregroundAppReceiver?.let {
+            try {
+                unregisterReceiver(it)
+                foregroundAppReceiver = null
+                Log.d(TAG, "Foreground app receiver already unregistered.")
+            } catch (_: IllegalArgumentException) {
+                Log.w(TAG, "Foreground app receiver already unregistered.")
+            }
+        }
+    }
+
+    private suspend fun handleForegroundAppChange(packageName: String) {
+        if (!isScreenOn) {
+            Log.d(TAG, "Screen is off, ignoring foreground app change to $packageName")
+            return
+        }
+
+        if (packageName in ignoredPackages) {
+            Log.d(TAG, "Ignoring foreground app change to ignored package: $packageName. Scheduling cleanup.")
+            cleanupJob?.cancel()
+            cleanupJob = serviceScope.launch {
+                delay(CLEANUP_DELAY_MS)
+                Log.d(TAG, "Cleanup job running: Ending current session after lingering on ignored package.")
+                appUsageRepository.endCurrentUsageSession(System.currentTimeMillis())
+                lastStartedPackageName = null
+            }
+            return
+        }
+
+        // If we receive a valid app, any pending cleanup is irrelevant.
+        cleanupJob?.cancel()
+
+        if (packageName == lastStartedPackageName) {
+            Log.d(TAG, "Foreground app is the same as the last started one ($packageName). No action needed.")
+            return
+        }
+
+        Log.d(TAG, "Starting new session for valid app: $packageName")
+        lastStartedPackageName = packageName
+        val settings = settingsRepository.settingsFlow.first()
+        if (settings.isAppUsageTrackingEnabled) {
+            appUsageRepository.startUsageSession(packageName, System.currentTimeMillis())
+        }
     }
 
     override fun onDestroy() {

@@ -69,7 +69,7 @@ private fun BedtimeScreenLayout(
     onNavigate: (AppRoute) -> Unit,
     onShowSettings: () -> Unit,
 ) {
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     when {
         uiState.isLoading && uiState.timelineSegments.isEmpty() -> {
