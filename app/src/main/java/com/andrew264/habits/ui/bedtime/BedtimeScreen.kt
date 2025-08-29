@@ -14,13 +14,12 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import com.andrew264.habits.domain.analyzer.ScheduleCoverage
 import com.andrew264.habits.model.schedule.DefaultSchedules
 import com.andrew264.habits.ui.bedtime.components.BedtimeContent
-import com.andrew264.habits.ui.bedtime.components.BedtimeSettingsDialog
 import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
 import com.andrew264.habits.ui.common.components.FeatureDisabledContent
 import com.andrew264.habits.ui.navigation.AppRoute
+import com.andrew264.habits.ui.navigation.BedtimeSettings
 import com.andrew264.habits.ui.theme.HabitsTheme
 import java.util.concurrent.TimeUnit
-import com.andrew264.habits.ui.navigation.Settings as SettingsRoute
 
 
 @Composable
@@ -31,7 +30,6 @@ fun BedtimeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isInitialComposition = remember { mutableStateOf(true) }
-    var showSettingsDialog by remember { mutableStateOf(false) }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         if (isInitialComposition.value) {
@@ -41,21 +39,13 @@ fun BedtimeScreen(
         }
     }
 
-    if (showSettingsDialog) {
-        BedtimeSettingsDialog(
-            uiState = uiState,
-            onSelectSchedule = { viewModel.selectSchedule(it.id) },
-            onDismissRequest = { showSettingsDialog = false }
-        )
-    }
-
     BedtimeScreenLayout(
         modifier = modifier,
         uiState = uiState,
         onSetTimelineRange = viewModel::setTimelineRange,
         onRefresh = viewModel::refresh,
         onNavigate = onNavigate,
-        onShowSettings = { showSettingsDialog = true }
+        onShowSettings = { onNavigate(BedtimeSettings) }
     )
 }
 
@@ -83,9 +73,9 @@ private fun BedtimeScreenLayout(
                 FeatureDisabledContent(
                     modifier = Modifier.padding(paddingValues),
                     title = "Bedtime Tracking Disabled",
-                    description = "This feature uses sleep schedules and the Sleep API to track your sleep patterns. You can enable it in the Monitoring settings.",
+                    description = "This feature uses sleep schedules and the Sleep API to track your sleep patterns. You can enable it in settings.",
                     buttonText = "Go to Settings",
-                    onEnableClicked = { onNavigate(SettingsRoute) }
+                    onEnableClicked = { onNavigate(BedtimeSettings) }
                 )
             }
         }

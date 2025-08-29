@@ -1,18 +1,24 @@
 package com.andrew264.habits.ui.common.components
 
 import android.view.HapticFeedbackConstants
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.model.schedule.ScheduleGroup
+import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleSelector(
     schedules: List<Schedule>,
@@ -20,49 +26,87 @@ fun ScheduleSelector(
     onScheduleSelected: (Schedule) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    label: String = "Schedule"
+    label: String = "Schedule",
+    position: ListItemPosition = ListItemPosition.SEPARATE
 ) {
-    var expanded by rememberSaveable { mutableStateOf(false) }
-    val view = LocalView.current
+    var showDialog by rememberSaveable { mutableStateOf(false) }
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = {
-            if (enabled) {
-                expanded = !expanded
-                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-            }
-        },
-        modifier = modifier
-    ) {
-        OutlinedTextField(
-            value = selectedSchedule?.name ?: "None",
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(label) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                .fillMaxWidth(),
-            enabled = enabled
+    if (showDialog) {
+        ScheduleSelectionDialog(
+            schedules = schedules,
+            selectedSchedule = selectedSchedule,
+            onScheduleSelected = {
+                onScheduleSelected(it)
+                showDialog = false
+            },
+            onDismissRequest = { showDialog = false },
+            title = label
         )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
+    }
+
+    SelectionSettingsListItem(
+        modifier = modifier,
+        title = label,
+        selectedValue = selectedSchedule?.name ?: "None",
+        onClick = { showDialog = true },
+        enabled = enabled,
+        position = position
+    )
+}
+
+@Composable
+private fun ScheduleSelectionDialog(
+    schedules: List<Schedule>,
+    selectedSchedule: Schedule?,
+    onScheduleSelected: (Schedule) -> Unit,
+    onDismissRequest: () -> Unit,
+    title: String,
+) {
+    val view = LocalView.current
+    Dialog(onDismissRequest = onDismissRequest) {
+        Surface(
+            shape = MaterialTheme.shapes.extraLarge,
+            tonalElevation = 6.dp,
         ) {
-            schedules.forEach { schedule ->
-                DropdownMenuItem(
-                    text = { Text(schedule.name) },
-                    onClick = {
-                        onScheduleSelected(schedule)
-                        expanded = false
-                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                    }
+            Column(
+                modifier = Modifier
+                    .padding(vertical = Dimens.PaddingLarge)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(start = Dimens.PaddingExtraLarge, end = Dimens.PaddingExtraLarge, bottom = Dimens.PaddingSmall)
                 )
+                LazyColumn {
+                    items(schedules) { schedule ->
+                        val isSelected = schedule.id == selectedSchedule?.id
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onScheduleSelected(schedule)
+                                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                                }
+                                .padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingMedium),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = isSelected,
+                                onClick = {
+                                    onScheduleSelected(schedule)
+                                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                                }
+                            )
+                            Spacer(Modifier.width(Dimens.PaddingMedium))
+                            Text(schedule.name, style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                }
             }
         }
     }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview

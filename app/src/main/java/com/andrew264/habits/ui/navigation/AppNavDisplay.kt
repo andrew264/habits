@@ -15,6 +15,7 @@ import androidx.navigation3.runtime.entry
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.andrew264.habits.ui.bedtime.BedtimeScreen
+import com.andrew264.habits.ui.bedtime.BedtimeSettingsScreen
 import com.andrew264.habits.ui.privacy.DataManagementScreen
 import com.andrew264.habits.ui.schedule.SchedulesListDetailScreen
 import com.andrew264.habits.ui.settings.SettingsScreen
@@ -22,6 +23,7 @@ import com.andrew264.habits.ui.usage.UsageSettingsScreen
 import com.andrew264.habits.ui.usage.UsageStatsScreen
 import com.andrew264.habits.ui.usage.whitelist.WhitelistScreen
 import com.andrew264.habits.ui.water.WaterScreen
+import com.andrew264.habits.ui.water.WaterSettingsScreen
 import com.andrew264.habits.ui.water.WaterStatsScreen
 import com.andrew264.habits.ui.water.WaterViewModel
 
@@ -51,11 +53,15 @@ fun AppNavDisplay(
             entry<Water> {
                 WaterScreen(
                     viewModel = waterViewModel,  // TODO: ugh, viewModel here, its disgusting; it is need so the MainScreen can take us here when we interact with water remainder notification
-                    onNavigateToStats = { onNavigate(WaterStats) }
+                    onNavigateToStats = { onNavigate(WaterStats) },
+                    onNavigateToSettings = { onNavigate(WaterSettings) }
                 )
             }
             entry<WaterStats> {
                 WaterStatsScreen(onNavigateUp = onBack)
+            }
+            entry<WaterSettings> {
+                WaterSettingsScreen(onNavigateUp = onBack)
             }
             entry<Schedules> {
                 SchedulesListDetailScreen(snackbarHostState = snackbarHostState, onNavigateUp = onBack)
@@ -71,6 +77,12 @@ fun AppNavDisplay(
             }
             entry<Bedtime> {
                 BedtimeScreen(onNavigate = onNavigate)
+            }
+            entry<BedtimeSettings> {
+                BedtimeSettingsScreen(
+                    onNavigateUp = onBack,
+                    onRequestActivityPermission = onRequestActivityPermission
+                )
             }
             entry<Whitelist> {
                 WhitelistScreen(onNavigateUp = onBack)

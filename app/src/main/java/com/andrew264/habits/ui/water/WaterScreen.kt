@@ -18,7 +18,6 @@ import com.andrew264.habits.ui.water.components.InputSection
 import com.andrew264.habits.ui.water.components.ProgressSection
 import com.andrew264.habits.ui.water.components.WaterFeatureDisabledContent
 import com.andrew264.habits.ui.water.components.WaterTopAppBar
-import com.andrew264.habits.ui.water.components.dialogs.ReminderSettingsDialog
 import com.andrew264.habits.ui.water.components.dialogs.TargetSettingsDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,10 +25,10 @@ import com.andrew264.habits.ui.water.components.dialogs.TargetSettingsDialog
 fun WaterScreen(
     viewModel: WaterViewModel,
     onNavigateToStats: () -> Unit,
+    onNavigateToSettings: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val showTargetDialog by viewModel.showTargetDialog.collectAsState()
-    val showReminderDialog by viewModel.showReminderDialog.collectAsState()
     val isInitialComposition = remember { mutableStateOf(true) }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
@@ -48,15 +47,6 @@ fun WaterScreen(
         )
     }
 
-    if (showReminderDialog) {
-        ReminderSettingsDialog(
-            settings = uiState.settings,
-            allSchedules = uiState.allSchedules,
-            onDismiss = viewModel::onDismissReminderDialog,
-            onSave = viewModel::saveReminderSettings
-        )
-    }
-
     if (!uiState.settings.isWaterTrackingEnabled) {
         Scaffold(
             topBar = {
@@ -72,9 +62,8 @@ fun WaterScreen(
         WaterScreen(
             uiState = uiState,
             onLogWater = viewModel::logWater,
-            onEditTarget = viewModel::onShowTargetDialog,
             onNavigateToStats = onNavigateToStats,
-            onWaterReminderClick = viewModel::onShowReminderDialog
+            onNavigateToSettings = onNavigateToSettings
         )
     }
 }
@@ -84,16 +73,15 @@ private fun WaterScreen(
     modifier: Modifier = Modifier,
     uiState: WaterUiState,
     onLogWater: (Int) -> Unit,
-    onEditTarget: () -> Unit,
     onNavigateToStats: () -> Unit,
-    onWaterReminderClick: () -> Unit
+    onNavigateToSettings: () -> Unit
 ) {
     Scaffold(
         modifier = modifier,
         topBar = {
             WaterTopAppBar(
                 onNavigateToStats = onNavigateToStats,
-                onWaterReminderClick = onWaterReminderClick
+                onWaterReminderClick = onNavigateToSettings
             )
         }
     ) { paddingValues ->
@@ -114,7 +102,7 @@ private fun WaterScreen(
                 ) {
                     ProgressSection(
                         uiState = uiState,
-                        onEditTarget = onEditTarget,
+                        onEditTarget = onNavigateToSettings,
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
@@ -133,7 +121,7 @@ private fun WaterScreen(
                 ) {
                     ProgressSection(
                         uiState = uiState,
-                        onEditTarget = onEditTarget,
+                        onEditTarget = onNavigateToSettings,
                         modifier = Modifier.weight(1f)
                     )
                     InputSection(
@@ -158,9 +146,8 @@ private fun WaterScreenHalfwayPreview() {
                 progress = 0.5f
             ),
             onLogWater = {},
-            onEditTarget = {},
             onNavigateToStats = {},
-            onWaterReminderClick = {}
+            onNavigateToSettings = {}
         )
     }
 }
@@ -177,9 +164,8 @@ private fun WaterScreenCompletePreview() {
                 progress = 1.0f // Progress caps at 1.0
             ),
             onLogWater = {},
-            onEditTarget = {},
             onNavigateToStats = {},
-            onWaterReminderClick = {}
+            onNavigateToSettings = {}
         )
     }
 }
@@ -196,9 +182,8 @@ private fun WaterScreenLandscapePreview() {
                 progress = 0.5f
             ),
             onLogWater = {},
-            onEditTarget = {},
             onNavigateToStats = {},
-            onWaterReminderClick = {}
+            onNavigateToSettings = {}
         )
     }
 }

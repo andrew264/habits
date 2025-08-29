@@ -24,7 +24,8 @@ import com.andrew264.habits.ui.theme.createPreviewPersistentSettings
 fun TargetSettingsDialog(
     settings: PersistentSettings,
     onDismiss: () -> Unit,
-    onSave: (isEnabled: Boolean, targetMl: String) -> Unit
+    onSave: (isEnabled: Boolean, targetMl: String) -> Unit,
+    showEnableSwitch: Boolean = true
 ) {
     var isEnabled by rememberSaveable { mutableStateOf(settings.isWaterTrackingEnabled) }
     var targetMl by rememberSaveable { mutableStateOf(settings.waterDailyTargetMl.toString()) }
@@ -36,21 +37,26 @@ fun TargetSettingsDialog(
                 modifier = Modifier.padding(Dimens.PaddingExtraLarge),
                 verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
             ) {
-                Text("Tracking Settings", style = MaterialTheme.typography.headlineSmall)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("Enable Tracking", style = MaterialTheme.typography.bodyLarge)
-                    Switch(
-                        checked = isEnabled,
-                        onCheckedChange = {
-                            isEnabled = it
-                            val feedback = if (it) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
-                            view.performHapticFeedback(feedback)
-                        }
-                    )
+                Text(
+                    if (showEnableSwitch) "Tracking Settings" else "Set Daily Target",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+                if (showEnableSwitch) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Enable Tracking", style = MaterialTheme.typography.bodyLarge)
+                        Switch(
+                            checked = isEnabled,
+                            onCheckedChange = {
+                                isEnabled = it
+                                val feedback = if (it) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
+                                view.performHapticFeedback(feedback)
+                            }
+                        )
+                    }
                 }
                 OutlinedTextField(
                     value = targetMl,
@@ -58,7 +64,7 @@ fun TargetSettingsDialog(
                     label = { Text("Daily Target (ml)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = isEnabled
+                    enabled = if (showEnableSwitch) isEnabled else true
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),

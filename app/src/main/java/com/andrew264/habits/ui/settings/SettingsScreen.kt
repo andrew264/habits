@@ -12,17 +12,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.andrew264.habits.ui.common.components.ListItemPosition
 import com.andrew264.habits.ui.common.components.NavigationSettingsListItem
+import com.andrew264.habits.ui.common.components.SectionHeader
 import com.andrew264.habits.ui.common.components.ToggleSettingsListItem
-import com.andrew264.habits.ui.navigation.AppRoute
-import com.andrew264.habits.ui.navigation.Privacy
-import com.andrew264.habits.ui.navigation.Schedules
+import com.andrew264.habits.ui.navigation.*
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.ui.theme.createPreviewPersistentSettings
@@ -130,6 +128,7 @@ private fun SettingsScreen(
                     summary = "Monitor your sleep and bedtime habits",
                     checked = uiState.settings.isBedtimeTrackingEnabled,
                     onCheckedChange = onBedtimeToggled,
+                    onClick = { onNavigate(BedtimeSettings) },
                     position = ListItemPosition.TOP
                 )
             }
@@ -141,6 +140,7 @@ private fun SettingsScreen(
                     summary = "Track screen time and set limits for apps.",
                     checked = uiState.settings.isAppUsageTrackingEnabled,
                     onCheckedChange = onUsageToggled,
+                    onClick = { onNavigate(UsageSettings) },
                     position = ListItemPosition.MIDDLE,
                     isWarningVisible = uiState.settings.isAppUsageTrackingEnabled && !uiState.isAccessibilityServiceEnabled,
                     warningText = "Service is not running. Tap to fix in accessibility settings.",
@@ -155,6 +155,7 @@ private fun SettingsScreen(
                     summary = "Track daily water intake and set reminders.",
                     checked = uiState.settings.isWaterTrackingEnabled,
                     onCheckedChange = onWaterToggled,
+                    onClick = { onNavigate(WaterSettings) },
                     position = ListItemPosition.BOTTOM
                 )
             }
@@ -203,19 +204,6 @@ private fun SettingsScreen(
             }
         }
     }
-}
-
-@Composable
-private fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
-        fontWeight = FontWeight.SemiBold,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Dimens.PaddingSmall, vertical = Dimens.PaddingMedium)
-    )
 }
 
 @Preview(name = "Settings - All Enabled", showBackground = true)

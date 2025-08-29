@@ -33,9 +33,6 @@ class WaterViewModel @Inject constructor(
     private val _showTargetDialog = MutableStateFlow(false)
     val showTargetDialog = _showTargetDialog.asStateFlow()
 
-    private val _showReminderDialog = MutableStateFlow(false)
-    val showReminderDialog = _showReminderDialog.asStateFlow()
-
     private val refreshTrigger = MutableStateFlow(0)
 
     val uiState: StateFlow<WaterUiState> = refreshTrigger.flatMapLatest {
@@ -64,14 +61,6 @@ class WaterViewModel @Inject constructor(
         _showTargetDialog.value = false
     }
 
-    fun onShowReminderDialog() {
-        _showReminderDialog.value = true
-    }
-
-    fun onDismissReminderDialog() {
-        _showReminderDialog.value = false
-    }
-
     fun saveTargetSettings(
         isEnabled: Boolean,
         targetMl: String
@@ -80,28 +69,6 @@ class WaterViewModel @Inject constructor(
             val target = targetMl.toIntOrNull() ?: uiState.value.settings.waterDailyTargetMl
             updateWaterSettingsUseCase.execute(WaterSettingsUpdate(isWaterTrackingEnabled = isEnabled, dailyTargetMl = target))
             onDismissTargetDialog()
-        }
-    }
-
-    fun saveReminderSettings(
-        isEnabled: Boolean,
-        intervalMinutes: String,
-        snoozeMinutes: String,
-        schedule: Schedule?
-    ) {
-        viewModelScope.launch {
-            val interval = intervalMinutes.toIntOrNull() ?: uiState.value.settings.waterReminderIntervalMinutes
-            val snooze = snoozeMinutes.toIntOrNull() ?: uiState.value.settings.waterReminderSnoozeMinutes
-
-            updateWaterSettingsUseCase.execute(
-                WaterSettingsUpdate(
-                    isReminderEnabled = isEnabled,
-                    reminderIntervalMinutes = interval,
-                    snoozeMinutes = snooze,
-                    reminderScheduleId = schedule?.id
-                )
-            )
-            onDismissReminderDialog()
         }
     }
 }

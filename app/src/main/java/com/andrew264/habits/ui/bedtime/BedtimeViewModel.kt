@@ -6,13 +6,11 @@ import com.andrew264.habits.domain.analyzer.ScheduleCoverage
 import com.andrew264.habits.domain.model.TimelineSegment
 import com.andrew264.habits.domain.repository.SettingsRepository
 import com.andrew264.habits.domain.usecase.GetBedtimeScreenDataUseCase
-import com.andrew264.habits.domain.usecase.SetSleepScheduleUseCase
 import com.andrew264.habits.model.schedule.DefaultSchedules
 import com.andrew264.habits.model.schedule.Schedule
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -48,7 +46,6 @@ data class BedtimeUiState(
 @HiltViewModel
 class BedtimeViewModel @Inject constructor(
     private val getBedtimeScreenDataUseCase: GetBedtimeScreenDataUseCase,
-    private val setSleepScheduleUseCase: SetSleepScheduleUseCase,
     settingsRepository: SettingsRepository
 ) : ViewModel() {
 
@@ -94,12 +91,6 @@ class BedtimeViewModel @Inject constructor(
 
     fun setTimelineRange(range: BedtimeChartRange) {
         _selectedTimelineRange.value = range
-    }
-
-    fun selectSchedule(scheduleId: String) {
-        viewModelScope.launch {
-            setSleepScheduleUseCase.execute(scheduleId)
-        }
     }
 
     fun refresh() {

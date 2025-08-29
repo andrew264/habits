@@ -40,6 +40,7 @@ fun ToggleSettingsListItem(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
     enabled: Boolean = true,
     position: ListItemPosition = ListItemPosition.MIDDLE,
     isWarningVisible: Boolean = false,
@@ -47,7 +48,6 @@ fun ToggleSettingsListItem(
     onWarningClick: (() -> Unit)? = null
 ) {
     val view = LocalView.current
-    val interactionSource = remember { MutableInteractionSource() }
     val padValue = Dimens.PaddingExtraLarge
 
     val clipShape = when (position) {
@@ -63,48 +63,119 @@ fun ToggleSettingsListItem(
             color = MaterialTheme.colorScheme.surfaceContainerHighest
         ) {
             Column {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(
-                            interactionSource = interactionSource,
-                            indication = LocalIndication.current,
-                            enabled = enabled,
-                            onClick = {
-                                val newChecked = !checked
-                                onCheckedChange(newChecked)
-                                val feedback = if (newChecked) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
-                                view.performHapticFeedback(feedback)
+                if (onClick != null) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Min),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable(
+                                    enabled = enabled,
+                                    onClick = onClick
+                                )
+                                .padding(Dimens.PaddingLarge),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingExtraLarge)
+                        ) {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = null,
+                                tint = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = title,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                                )
+                                Spacer(modifier = Modifier.height(Dimens.PaddingExtraSmall))
+                                Text(
+                                    text = summary,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                                )
                             }
-                        )
-                        .padding(Dimens.PaddingLarge),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingExtraLarge)
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                    )
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.bodyLargeEmphasized,
-                            color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                        )
-                        Spacer(modifier = Modifier.height(Dimens.PaddingExtraSmall))
-                        Text(
-                            text = summary,
-                            style = MaterialTheme.typography.bodyMediumEmphasized,
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                contentDescription = "More options",
+                                tint = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                            )
+                        }
+
+                        VerticalDivider(
+                            modifier = Modifier
+                                .fillMaxHeight(0.60f)
+                                .padding(vertical = Dimens.PaddingSmall),
                             color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
                         )
+                        Box(
+                            modifier = Modifier
+                                .padding(horizontal = Dimens.PaddingMedium)
+                                .wrapContentSize(Alignment.Center),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            val switchInteractionSource = remember { MutableInteractionSource() }
+                            Switch(
+                                checked = checked,
+                                onCheckedChange = { newChecked ->
+                                    onCheckedChange(newChecked)
+                                    val feedback = if (newChecked) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
+                                    view.performHapticFeedback(feedback)
+                                },
+                                enabled = enabled,
+                                interactionSource = switchInteractionSource
+                            )
+                        }
                     }
-                    Switch(
-                        checked = checked,
-                        onCheckedChange = null, // Handled by clickable modifier on parent
-                        enabled = enabled,
-                        interactionSource = interactionSource
-                    )
+                } else {
+                    val interactionSource = remember { MutableInteractionSource() }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(
+                                interactionSource = interactionSource,
+                                indication = LocalIndication.current,
+                                enabled = enabled,
+                                onClick = {
+                                    val newChecked = !checked
+                                    onCheckedChange(newChecked)
+                                    val feedback = if (newChecked) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
+                                    view.performHapticFeedback(feedback)
+                                }
+                            )
+                            .padding(Dimens.PaddingLarge),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingExtraLarge)
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            )
+                            Spacer(modifier = Modifier.height(Dimens.PaddingExtraSmall))
+                            Text(
+                                text = summary,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                            )
+                        }
+                        Switch(
+                            checked = checked,
+                            onCheckedChange = null,
+                            enabled = enabled,
+                            interactionSource = interactionSource
+                        )
+                    }
                 }
 
                 AnimatedVisibility(visible = isWarningVisible && warningText != null) {
@@ -123,7 +194,7 @@ fun ToggleSettingsListItem(
                         )
                         Text(
                             text = warningText!!,
-                            style = MaterialTheme.typography.bodyMediumEmphasized,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error
                         )
                     }
@@ -159,6 +230,7 @@ fun ToggleSettingsListItemPreview() {
             summary = "This item has a warning associated with it.",
             checked = checkedState.value,
             onCheckedChange = { checkedState.value = it },
+            onClick = {},
             isWarningVisible = true,
             warningText = "This is a warning message!",
             onWarningClick = {},
@@ -217,7 +289,7 @@ fun NavigationSettingsListItem(
                 Text(
                     text = title,
                     modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.bodyLargeEmphasized,
+                    style = MaterialTheme.typography.titleMedium,
                     color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 )
                 Row(

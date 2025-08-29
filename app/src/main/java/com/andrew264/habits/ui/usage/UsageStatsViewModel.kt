@@ -21,6 +21,10 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+sealed interface UsageSettingsEvent {
+    object ShowAccessibilityDialog : UsageSettingsEvent
+}
+
 data class AppDetails(
     val packageName: String,
     val friendlyName: String,
@@ -67,6 +71,9 @@ class UsageStatsViewModel @Inject constructor(
     private val _selectedRange = MutableStateFlow(UsageTimeRange.DAY)
     private val refreshTrigger = MutableStateFlow(0)
     private val _isAccessibilityEnabled = MutableStateFlow(false)
+
+    private val _events = MutableSharedFlow<UsageSettingsEvent>()
+    val events = _events.asSharedFlow()
 
     val uiState: StateFlow<UsageStatsUiState> = combine(
         settingsRepository.settingsFlow,
@@ -201,6 +208,20 @@ class UsageStatsViewModel @Inject constructor(
 
     init {
         updateAccessibilityStatus()
+    }
+
+    fun onAppUsageTrackingToggled(enable: Boolean) {
+        viewModelScope.launch {
+            if (enable) {
+                if (AccessibilityUtils.isAccessibilityServiceEnabled(context)) {
+                    settingsRepository.updateAppUsageTrackingEnabled(true)
+                } else {
+                    _events.emit(UsageSettingsEvent.ShowAccessibilityDialog)
+                }
+            } else {
+                settingsRepository.updateAppUsageTrackingEnabled(false)
+            }
+        }
     }
 
     fun setTimeRange(range: UsageTimeRange) {
