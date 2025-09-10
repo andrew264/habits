@@ -5,6 +5,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.andrew264.habits.R
@@ -130,7 +131,34 @@ class CheckUsageLimitsUseCase @Inject constructor(
         }
     }
 
-    private fun launchBlocker(packageName: String, limitType: String, timeUsedMs: Long, limitMinutes: Int) {
+    private suspend fun launchBlocker(packageName: String, limitType: String, timeUsedMs: Long, limitMinutes: Int) {
+        val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+        if (!powerManager.isInteractive) {
+            Log.w(TAG, "Blocker launch aborted for $packageName: Screen is off.")
+            return
+        }
+
+        val ongoingEvent = appUsageEventDao.getOngoingEvent()
+        if (ongoingEvent == null) {
+            Log.w(TAG, "Blocker launch aborted for $packageName: No ongoing session found.")
+            return
+        }
+
+        // For a session limit, the ongoing app MUST be the one we're blocking.
+        if (limitType == "session" && ongoingEvent.packageName != packageName) {
+            Log.w(TAG, "Blocker launch aborted for session limit on $packageName: A different app (${ongoingEvent.packageName}) is now in foreground.")
+            return
+        }
+
+        // For a daily limit, we just need to make sure a whitelisted app is active.
+        if (limitType == "daily_shared") {
+            val whitelistedPackages = whitelistRepository.getWhitelistedApps().first().map { it.packageName }.toSet()
+            if (ongoingEvent.packageName !in whitelistedPackages) {
+                Log.w(TAG, "Blocker launch aborted for daily limit: A non-whitelisted app (${ongoingEvent.packageName}) is now in foreground.")
+                return
+            }
+        }
+
         val intent = Intent(context, BlockerActivity::class.java).apply {
             putExtra(EXTRA_PACKAGE_NAME, packageName)
             putExtra(EXTRA_LIMIT_TYPE, limitType)

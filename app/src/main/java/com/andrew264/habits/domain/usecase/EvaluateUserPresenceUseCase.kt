@@ -42,11 +42,21 @@ class EvaluateUserPresenceUseCase @Inject constructor(
 
         // Fetch the current schedule for analysis
         val settings = settingsRepository.settingsFlow.first()
+        val isBedtimeTrackingEnabled = settings.isBedtimeTrackingEnabled
+
+        // If bedtime tracking is disabled, force the state to AWAKE and exit early.
+        // This ensures other features like water reminders continue to work as expected.
+        if (!isBedtimeTrackingEnabled) {
+            if (oldState != UserPresenceState.AWAKE) {
+                updateUserPresenceStateInternal(UserPresenceState.AWAKE, "Bedtime tracking is disabled")
+            }
+            return
+        }
+
         val scheduleId = settings.selectedScheduleId ?: DefaultSchedules.DEFAULT_SLEEP_SCHEDULE_ID
         val schedule = scheduleRepository.getSchedule(scheduleId).first() ?: DefaultSchedules.defaultSleepSchedule
         val scheduleAnalyzer = ScheduleAnalyzer(schedule.groups)
         val isScheduledTime = scheduleAnalyzer.isCurrentTimeInSchedule()
-        val isBedtimeTrackingEnabled = settings.isBedtimeTrackingEnabled
 
         Log.d("EvaluateUserPresenceUseCase", "Evaluating state. Input: ${input::class.simpleName}, Old State: $oldState, Is Scheduled Sleep: $isScheduledTime")
 
@@ -72,20 +82,19 @@ class EvaluateUserPresenceUseCase @Inject constructor(
             }
 
             is PresenceEvaluationInput.ScreenOn, is PresenceEvaluationInput.UserPresent -> {
-                if (!isBedtimeTrackingEnabled || !isScheduledTime) {
-                    newState = UserPresenceState.AWAKE
-                    reason = "Device interaction outside of scheduled sleep time"
-                }
+                newState = UserPresenceState.AWAKE
+                reason = "Device interaction detected"
             }
 
             is PresenceEvaluationInput.ScreenOff, is PresenceEvaluationInput.InitialEvaluation -> {
-                if (!isBedtimeTrackingEnabled || input is PresenceEvaluationInput.InitialEvaluation) {
+                // This logic only runs if bedtime tracking is ENABLED.
+                if (input is PresenceEvaluationInput.InitialEvaluation) {
                     if (isScheduledTime) {
                         newState = UserPresenceState.SLEEPING
-                        reason = "Heuristic: Scheduled time and screen off/initial evaluation"
+                        reason = "Heuristic: Initial evaluation during scheduled sleep time"
                     } else {
                         newState = UserPresenceState.AWAKE
-                        reason = "Heuristic: Outside scheduled time"
+                        reason = "Heuristic: Initial evaluation outside scheduled sleep time"
                     }
                 }
             }

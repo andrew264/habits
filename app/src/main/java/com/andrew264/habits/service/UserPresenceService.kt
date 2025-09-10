@@ -45,7 +45,6 @@ class UserPresenceService : Service() {
         private const val NOTIFICATION_CHANNEL_ID = "UserPresenceServiceChannel"
         private const val NOTIFICATION_ID = 1
         private const val SLEEP_API_PENDING_INTENT_REQUEST_CODE = 1001
-        private const val CLEANUP_DELAY_MS = 2000L
 
         const val ACTION_START_SERVICE = "com.andrew264.habits.action.START_PRESENCE_SERVICE"
         const val ACTION_STOP_SERVICE = "com.andrew264.habits.action.STOP_PRESENCE_SERVICE"
@@ -83,7 +82,6 @@ class UserPresenceService : Service() {
     private var currentPresenceState = UserPresenceState.UNKNOWN
     private var isScreenOn: Boolean = true
     private lateinit var ignoredPackages: Set<String>
-    private var cleanupJob: Job? = null
     private var lastStartedPackageName: String? = null
 
 
@@ -294,7 +292,6 @@ class UserPresenceService : Service() {
 
                             Intent.ACTION_SCREEN_OFF -> {
                                 isScreenOn = false
-                                cleanupJob?.cancel()
                                 lastStartedPackageName = null
                                 if (settings.isAppUsageTrackingEnabled) {
                                     appUsageRepository.endCurrentUsageSession(timestamp)
@@ -370,7 +367,6 @@ class UserPresenceService : Service() {
                             }
 
                             ACTION_ACCESSIBILITY_INTERRUPTED -> {
-                                cleanupJob?.cancel()
                                 appUsageRepository.endCurrentUsageSession(System.currentTimeMillis())
                                 lastStartedPackageName = null
                             }
@@ -408,19 +404,9 @@ class UserPresenceService : Service() {
         }
 
         if (packageName in ignoredPackages) {
-            Log.d(TAG, "Ignoring foreground app change to ignored package: $packageName. Scheduling cleanup.")
-            cleanupJob?.cancel()
-            cleanupJob = serviceScope.launch {
-                delay(CLEANUP_DELAY_MS)
-                Log.d(TAG, "Cleanup job running: Ending current session after lingering on ignored package.")
-                appUsageRepository.endCurrentUsageSession(System.currentTimeMillis())
-                lastStartedPackageName = null
-            }
+            Log.d(TAG, "Ignoring foreground app change to ignored package: $packageName. Session continues.")
             return
         }
-
-        // If we receive a valid app, any pending cleanup is irrelevant.
-        cleanupJob?.cancel()
 
         if (packageName == lastStartedPackageName) {
             Log.d(TAG, "Foreground app is the same as the last started one ($packageName). No action needed.")
