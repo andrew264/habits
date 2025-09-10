@@ -39,7 +39,7 @@ fun BedtimeScreen(
         }
     }
 
-    BedtimeScreenLayout(
+    BedtimeScreen(
         modifier = modifier,
         uiState = uiState,
         onSetTimelineRange = viewModel::setTimelineRange,
@@ -51,7 +51,7 @@ fun BedtimeScreen(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
-private fun BedtimeScreenLayout(
+private fun BedtimeScreen(
     modifier: Modifier = Modifier,
     uiState: BedtimeUiState,
     onSetTimelineRange: (BedtimeChartRange) -> Unit,
@@ -63,13 +63,27 @@ private fun BedtimeScreenLayout(
 
     when {
         uiState.isLoading && uiState.timelineSegments.isEmpty() -> {
-            Scaffold(topBar = { TopAppBar(title = { Text("Bedtime") }) }) { paddingValues ->
+            Scaffold(
+                topBar = { TopAppBar(title = { Text("Bedtime") }) },
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
+            ) { paddingValues ->
                 ContainedLoadingIndicator(Modifier.padding(paddingValues))
             }
         }
 
         !uiState.isBedtimeTrackingEnabled -> {
-            Scaffold(topBar = { TopAppBar(title = { Text("Bedtime") }) }) { paddingValues ->
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = { Text("Bedtime") },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                        )
+                    )
+                },
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
+            ) { paddingValues ->
                 FeatureDisabledContent(
                     modifier = Modifier.padding(paddingValues),
                     title = "Bedtime Tracking Disabled",
@@ -96,10 +110,12 @@ private fun BedtimeScreenLayout(
                         },
                         scrollBehavior = scrollBehavior,
                         colors = TopAppBarDefaults.topAppBarColors(
-                            scrolledContainerColor = MaterialTheme.colorScheme.surface
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
                         )
                     )
-                }
+                },
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
             ) { paddingValues ->
                 BedtimeContent(
                     uiState = uiState,
@@ -115,7 +131,7 @@ private fun BedtimeScreenLayout(
 // Previews
 @Preview(name = "Bedtime Screen", showBackground = true)
 @Composable
-private fun BedtimeScreenLayoutPreview() {
+private fun BedtimeScreenPreview() {
     val now = System.currentTimeMillis()
     val range = BedtimeChartRange.DAY
     val startTime = now - range.durationMillis
@@ -136,7 +152,7 @@ private fun BedtimeScreenLayoutPreview() {
         )
     }
     HabitsTheme {
-        BedtimeScreenLayout(
+        BedtimeScreen(
             uiState = BedtimeUiState(
                 isLoading = false,
                 isBedtimeTrackingEnabled = true,
@@ -163,7 +179,7 @@ private fun BedtimeScreenLayoutPreview() {
 @Composable
 private fun BedtimeScreenFeatureDisabledPreview() {
     HabitsTheme {
-        BedtimeScreenLayout(
+        BedtimeScreen(
             uiState = BedtimeUiState(isBedtimeTrackingEnabled = false, isLoading = false),
             onSetTimelineRange = {},
             onRefresh = {},

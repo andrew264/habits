@@ -1,10 +1,7 @@
 package com.andrew264.habits.ui.water
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,8 +47,15 @@ fun WaterScreen(
     if (!uiState.settings.isWaterTrackingEnabled) {
         Scaffold(
             topBar = {
-                TopAppBar(title = { Text("Water") })
-            }
+                TopAppBar(
+                    title = { Text("Water") },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                    )
+                )
+            },
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ) { paddingValues ->
             WaterFeatureDisabledContent(
                 modifier = Modifier.padding(paddingValues),
@@ -83,7 +87,8 @@ private fun WaterScreen(
                 onNavigateToStats = onNavigateToStats,
                 onWaterReminderClick = onNavigateToSettings
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
         BoxWithConstraints(
             modifier = Modifier

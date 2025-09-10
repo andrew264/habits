@@ -36,7 +36,11 @@ fun WaterTopAppBar(
             ) {
                 Icon(Icons.Filled.Alarm, contentDescription = "Reminder Settings")
             }
-        }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
     )
 }
 

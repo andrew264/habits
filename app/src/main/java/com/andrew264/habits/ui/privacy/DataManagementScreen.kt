@@ -86,7 +86,7 @@ private fun DataManagementScreen(
             )
         },
         bottomBar = {
-            Surface {
+            Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -113,7 +113,8 @@ private fun DataManagementScreen(
                     }
                 }
             }
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier

@@ -106,16 +106,18 @@ private fun SettingsScreen(
                 title = { Text(text = "Settings") },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 )
             )
-        }
-    ) { paddingValues ->
+        },
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+    ) { innerPadding ->
         LazyColumn(
+            contentPadding = innerPadding,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(all = Dimens.PaddingSmall)
+                .padding(PaddingValues(Dimens.PaddingLarge))
         ) {
             item {
                 SectionHeader("Features")

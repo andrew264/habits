@@ -66,7 +66,8 @@ private fun BedtimeSettingsScreen(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             SimpleTopAppBar(title = "Bedtime Settings", onNavigateUp = onNavigateUp, scrollBehavior = scrollBehavior)
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
         Column(
             modifier = Modifier

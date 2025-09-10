@@ -60,7 +60,7 @@ fun ToggleSettingsListItem(
     Column(modifier = modifier) {
         Surface(
             shape = clipShape,
-            color = MaterialTheme.colorScheme.surfaceContainerHighest
+            color = MaterialTheme.colorScheme.surface
         ) {
             Column {
                 if (onClick != null) {
@@ -110,7 +110,7 @@ fun ToggleSettingsListItem(
                             modifier = Modifier
                                 .fillMaxHeight(0.60f)
                                 .padding(vertical = Dimens.PaddingSmall),
-                            color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                            color = if (enabled) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.secondary.copy(alpha = 0.38f)
                         )
                         Box(
                             modifier = Modifier
@@ -203,7 +203,7 @@ fun ToggleSettingsListItem(
         }
 
         if (position == ListItemPosition.TOP || position == ListItemPosition.MIDDLE) {
-            HorizontalDivider(color = MaterialTheme.colorScheme.surface, thickness = 2.dp)
+            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHighest, thickness = 2.dp)
         }
     }
 }
@@ -263,7 +263,7 @@ fun NavigationSettingsListItem(
     Column(modifier = modifier) {
         Surface(
             shape = clipShape,
-            color = MaterialTheme.colorScheme.surfaceContainerHighest
+            color = MaterialTheme.colorScheme.surface
         ) {
             Row(
                 modifier = Modifier
@@ -308,7 +308,7 @@ fun NavigationSettingsListItem(
             }
         }
         if (position == ListItemPosition.TOP || position == ListItemPosition.MIDDLE) {
-            HorizontalDivider(color = MaterialTheme.colorScheme.surface, thickness = 2.dp)
+            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHighest, thickness = 2.dp)
         }
     }
 }

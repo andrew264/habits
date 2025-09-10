@@ -106,7 +106,8 @@ private fun UsageSettingsScreen(
     Scaffold(
         topBar = {
             SimpleTopAppBar(title = "Usage Settings", onNavigateUp = onNavigateUp, scrollBehavior = scrollBehavior)
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier

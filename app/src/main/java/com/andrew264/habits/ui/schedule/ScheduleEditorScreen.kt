@@ -135,7 +135,11 @@ private fun ScheduleEditorScreen(
                     ) {
                         Icon(Icons.Default.Done, "Save Schedule")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                )
             )
         },
         floatingActionButton = {
@@ -151,7 +155,8 @@ private fun ScheduleEditorScreen(
                     interactionSource = fabInteractionSource
                 )
             }
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
         if (uiState.isLoading) {
             ContainedLoadingIndicator(Modifier.padding(paddingValues))
@@ -203,6 +208,7 @@ private fun ScheduleEditorScreen(
                                             options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
                                             else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
                                         },
+                                        colors = ToggleButtonDefaults.toggleButtonColors(containerColor = MaterialTheme.colorScheme.surface)
                                     ) {
                                         Text(
                                             text = when (mode) {

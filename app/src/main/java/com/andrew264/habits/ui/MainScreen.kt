@@ -54,7 +54,8 @@ private fun MainScreenLayout(
         },
     ) {
         Scaffold(
-            snackbarHost = { SnackbarHost(snackbarHostState) }
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ) { innerPadding ->
             AppNavDisplay(
                 modifier = Modifier.padding(innerPadding),

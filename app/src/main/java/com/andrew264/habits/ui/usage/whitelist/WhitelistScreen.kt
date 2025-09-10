@@ -36,7 +36,8 @@ fun WhitelistScreen(
     Scaffold(
         topBar = {
             SimpleTopAppBar(title = "Manage Whitelist", onNavigateUp = onNavigateUp, scrollBehavior = scrollBehavior)
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
         WhitelistScreen(
             modifier = Modifier
@@ -104,7 +105,7 @@ private fun WhitelistScreen(
                 contentPadding = PaddingValues(all = Dimens.PaddingMedium),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                items(uiState.apps, key = { it.packageName }) { app ->
+                items(uiState.apps, key = { it.packageName }) { app -> // TODO: add container colors, horizontal dividers and rounded corners like in SettingsItems, like make a composable that takes List<InstalledAppInfo> and renders it
                     val isWhitelisted = app.packageName in uiState.whitelistedPackageNames
                     ListItem(
                         headlineContent = { Text(app.friendlyName) },

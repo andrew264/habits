@@ -52,7 +52,8 @@ fun UsageDetailScreen(
                 onNavigateUp = onNavigateUp,
                 scrollBehavior = scrollBehavior
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
         Column(
             modifier = Modifier

@@ -78,7 +78,8 @@ fun UsageListContent(
                     },
                     scrollBehavior = scrollBehavior,
                     colors = TopAppBarDefaults.topAppBarColors(
-                        scrolledContainerColor = MaterialTheme.colorScheme.surface
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
                     )
                 )
             }
@@ -95,7 +96,8 @@ fun UsageListContent(
                     interactionSource = fabInteractionSource
                 )
             }
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
         val isRefreshing = uiState.isLoading && uiState.stats != null
         val state = rememberPullToRefreshState()
@@ -196,7 +198,7 @@ fun UsageListContent(
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.surface)
+                            .background(MaterialTheme.colorScheme.surfaceContainer)
                             .padding(bottom = Dimens.PaddingSmall, top = Dimens.PaddingSmall)
                     )
                 }
@@ -218,7 +220,7 @@ fun UsageListContent(
                 items(uiState.appDetails, key = { it.packageName }) { app ->
                     val interactionSource = remember { MutableInteractionSource() }
                     HapticInteractionEffect(interactionSource)
-                    AppListItem(
+                    AppListItem(  // TODO: add container colors, horizontal dividers and rounded corners like in settings items, like make a composable that takes List<AppDetails> and renders it
                         appDetails = app,
                         modifier = Modifier.clickable(
                             interactionSource = interactionSource,

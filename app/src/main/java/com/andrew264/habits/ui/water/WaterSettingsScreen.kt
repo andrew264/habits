@@ -103,7 +103,8 @@ private fun WaterSettingsScreen(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             SimpleTopAppBar(title = "Water Tracking", onNavigateUp = onNavigateUp, scrollBehavior = scrollBehavior)
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
         Column(
             modifier = Modifier
