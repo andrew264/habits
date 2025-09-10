@@ -48,7 +48,7 @@ fun SelectionSettingsListItem(
                     enabled = enabled,
                     onClick = onClick
                 ),
-            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+            color = MaterialTheme.colorScheme.surface,
         ) {
             Column(
                 modifier = Modifier.padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingLarge)
@@ -67,7 +67,7 @@ fun SelectionSettingsListItem(
             }
         }
         if (position == ListItemPosition.TOP || position == ListItemPosition.MIDDLE) {
-            HorizontalDivider(color = MaterialTheme.colorScheme.surface, thickness = 2.dp)
+            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainer, thickness = 2.dp)
         }
     }
 }
@@ -100,7 +100,7 @@ fun InfoListItem(
 
     Surface(
         shape = clipShape,
-        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        color = MaterialTheme.colorScheme.surface,
         modifier = modifier.fillMaxWidth()
     ) {
         Row(

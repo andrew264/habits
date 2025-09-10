@@ -1,5 +1,6 @@
 package com.andrew264.habits.ui.bedtime
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
@@ -16,6 +17,7 @@ import com.andrew264.habits.model.schedule.DefaultSchedules
 import com.andrew264.habits.ui.bedtime.components.BedtimeContent
 import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
 import com.andrew264.habits.ui.common.components.FeatureDisabledContent
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.navigation.AppRoute
 import com.andrew264.habits.ui.navigation.BedtimeSettings
 import com.andrew264.habits.ui.theme.HabitsTheme
@@ -101,7 +103,12 @@ private fun BedtimeScreen(
                     LargeFlexibleTopAppBar(
                         title = { Text("Bedtime") },
                         actions = {
-                            IconButton(onClick = onShowSettings) {
+                            val interactionSource = remember { MutableInteractionSource() }
+                            HapticInteractionEffect(interactionSource)
+                            IconButton(
+                                onClick = onShowSettings,
+                                interactionSource = interactionSource
+                            ) {
                                 Icon(
                                     imageVector = Icons.Filled.Settings,
                                     contentDescription = "Configure Sleep Schedule"

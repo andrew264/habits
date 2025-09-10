@@ -17,12 +17,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.ui.theme.Dimens
+
 
 enum class ListItemPosition {
     TOP,
@@ -31,7 +31,6 @@ enum class ListItemPosition {
     SEPARATE
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ToggleSettingsListItem(
     icon: ImageVector,
@@ -48,13 +47,20 @@ fun ToggleSettingsListItem(
     onWarningClick: (() -> Unit)? = null
 ) {
     val view = LocalView.current
-    val padValue = Dimens.PaddingExtraLarge
+
+    val groupCornerRadius = 20.dp
+    val innerCornerRadius = 4.dp
 
     val clipShape = when (position) {
-        ListItemPosition.SEPARATE -> RoundedCornerShape(padValue)
-        ListItemPosition.TOP -> RoundedCornerShape(topStart = padValue, topEnd = padValue)
-        ListItemPosition.BOTTOM -> RoundedCornerShape(bottomStart = padValue, bottomEnd = padValue)
-        else -> RectangleShape
+        ListItemPosition.SEPARATE -> RoundedCornerShape(groupCornerRadius)
+        ListItemPosition.TOP -> RoundedCornerShape(topStart = groupCornerRadius, topEnd = groupCornerRadius, bottomStart = innerCornerRadius, bottomEnd = innerCornerRadius)
+        ListItemPosition.MIDDLE -> RoundedCornerShape(innerCornerRadius)
+        ListItemPosition.BOTTOM -> RoundedCornerShape(topStart = innerCornerRadius, topEnd = innerCornerRadius, bottomStart = groupCornerRadius, bottomEnd = groupCornerRadius)
+    }
+
+    val performHapticToggle: (Boolean) -> Unit = { isChecked ->
+        val feedback = if (isChecked) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
+        view.performHapticFeedback(feedback)
     }
 
     Column(modifier = modifier) {
@@ -63,88 +69,21 @@ fun ToggleSettingsListItem(
             color = MaterialTheme.colorScheme.surface
         ) {
             Column {
-                if (onClick != null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Row(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(IntrinsicSize.Min),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable(
-                                    enabled = enabled,
-                                    onClick = onClick
-                                )
-                                .padding(Dimens.PaddingLarge),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingExtraLarge)
-                        ) {
-                            Icon(
-                                imageVector = icon,
-                                contentDescription = null,
-                                tint = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                            )
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = title,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                                )
-                                Spacer(modifier = Modifier.height(Dimens.PaddingExtraSmall))
-                                Text(
-                                    text = summary,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                                )
-                            }
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                contentDescription = "More options",
-                                tint = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                            )
-                        }
-
-                        VerticalDivider(
-                            modifier = Modifier
-                                .fillMaxHeight(0.60f)
-                                .padding(vertical = Dimens.PaddingSmall),
-                            color = if (enabled) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.secondary.copy(alpha = 0.38f)
-                        )
-                        Box(
-                            modifier = Modifier
-                                .padding(horizontal = Dimens.PaddingMedium)
-                                .wrapContentSize(Alignment.Center),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            val switchInteractionSource = remember { MutableInteractionSource() }
-                            Switch(
-                                checked = checked,
-                                onCheckedChange = { newChecked ->
-                                    onCheckedChange(newChecked)
-                                    val feedback = if (newChecked) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
-                                    view.performHapticFeedback(feedback)
-                                },
-                                enabled = enabled,
-                                interactionSource = switchInteractionSource
-                            )
-                        }
-                    }
-                } else {
-                    val interactionSource = remember { MutableInteractionSource() }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
+                            .weight(1f)
                             .clickable(
-                                interactionSource = interactionSource,
-                                indication = LocalIndication.current,
                                 enabled = enabled,
-                                onClick = {
+                                onClick = onClick ?: {
                                     val newChecked = !checked
                                     onCheckedChange(newChecked)
-                                    val feedback = if (newChecked) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
-                                    view.performHapticFeedback(feedback)
+                                    performHapticToggle(newChecked)
                                 }
                             )
                             .padding(Dimens.PaddingLarge),
@@ -169,11 +108,40 @@ fun ToggleSettingsListItem(
                                 color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
                             )
                         }
+                        if (onClick != null) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                contentDescription = "More options",
+                                tint = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                            )
+                        }
+                    }
+
+                    if (onClick != null) {
+                        VerticalDivider(
+                            modifier = Modifier
+                                .fillMaxHeight(0.60f)
+                                .padding(vertical = Dimens.PaddingSmall),
+                            color = if (enabled) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.secondary.copy(alpha = 0.38f)
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = Dimens.PaddingMedium)
+                            .wrapContentSize(Alignment.Center),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Switch(
                             checked = checked,
-                            onCheckedChange = null,
+                            onCheckedChange = if (onClick != null) { newChecked ->
+                                onCheckedChange(newChecked)
+                                performHapticToggle(newChecked)
+                            } else {
+                                null
+                            },
                             enabled = enabled,
-                            interactionSource = interactionSource
+                            interactionSource = remember { MutableInteractionSource() }
                         )
                     }
                 }
@@ -182,7 +150,7 @@ fun ToggleSettingsListItem(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable(onClick = onWarningClick ?: {})
+                            .clickable(enabled = onWarningClick != null, onClick = onWarningClick ?: {})
                             .padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingMedium),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
@@ -239,7 +207,6 @@ fun ToggleSettingsListItemPreview() {
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun NavigationSettingsListItem(
     icon: ImageVector,
@@ -250,14 +217,16 @@ fun NavigationSettingsListItem(
     position: ListItemPosition = ListItemPosition.SEPARATE,
     valueContent: @Composable (RowScope.() -> Unit)? = null
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
     val view = LocalView.current
-    val padValue = Dimens.PaddingLarge
+
+    val groupCornerRadius = 20.dp
+    val innerCornerRadius = 4.dp
+
     val clipShape = when (position) {
-        ListItemPosition.TOP -> RoundedCornerShape(topStart = padValue, topEnd = padValue)
-        ListItemPosition.MIDDLE -> RectangleShape
-        ListItemPosition.BOTTOM -> RoundedCornerShape(bottomStart = padValue, bottomEnd = padValue)
-        ListItemPosition.SEPARATE -> RoundedCornerShape(padValue)
+        ListItemPosition.SEPARATE -> RoundedCornerShape(groupCornerRadius)
+        ListItemPosition.TOP -> RoundedCornerShape(topStart = groupCornerRadius, topEnd = groupCornerRadius, bottomStart = innerCornerRadius, bottomEnd = innerCornerRadius)
+        ListItemPosition.MIDDLE -> RoundedCornerShape(innerCornerRadius)
+        ListItemPosition.BOTTOM -> RoundedCornerShape(topStart = innerCornerRadius, topEnd = innerCornerRadius, bottomStart = groupCornerRadius, bottomEnd = groupCornerRadius)
     }
 
     Column(modifier = modifier) {
@@ -269,7 +238,7 @@ fun NavigationSettingsListItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(
-                        interactionSource = interactionSource,
+                        interactionSource = remember { MutableInteractionSource() },
                         indication = LocalIndication.current,
                         enabled = enabled,
                         onClick = {
@@ -277,7 +246,7 @@ fun NavigationSettingsListItem(
                             view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                         }
                     )
-                    .padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingExtraLarge),
+                    .padding(horizontal = Dimens.PaddingLarge, vertical = 18.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
@@ -297,7 +266,13 @@ fun NavigationSettingsListItem(
                     horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
                 ) {
                     if (valueContent != null) {
-                        valueContent()
+                        ProvideTextStyle(
+                            value = MaterialTheme.typography.bodyMedium.copy(
+                                color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                            )
+                        ) {
+                            valueContent()
+                        }
                     }
                     Icon(
                         Icons.AutoMirrored.Filled.KeyboardArrowRight,
