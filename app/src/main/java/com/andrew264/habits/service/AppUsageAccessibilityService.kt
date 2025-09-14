@@ -1,11 +1,13 @@
 package com.andrew264.habits.service
 
 import android.accessibilityservice.AccessibilityService
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import dagger.hilt.android.AndroidEntryPoint
 
+@SuppressLint("AccessibilityPolicy")
 @AndroidEntryPoint
 class AppUsageAccessibilityService : AccessibilityService() {
 

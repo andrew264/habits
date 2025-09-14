@@ -45,13 +45,15 @@ class TopLevelBackStack(startKey: TopLevelRoute) {
         updateBackStack()
     }
 
-    fun removeLast() {
-        val currentStack = topLevelStacks[currentTopLevelRoute]
-        if (currentStack != null && currentStack.size > 1) {
-            currentStack.removeAt(currentStack.lastIndex) // TODO: if we do minSdk 35, we can change this to currentStack.removeLast()
-        } else if (topLevelStacks.size > 1) {
-            topLevelStacks.remove(currentTopLevelRoute)
-            currentTopLevelRoute = topLevelStacks.keys.last()
+    fun removeLast(count: Int = 1) {
+        repeat(count) {
+            val currentStack = topLevelStacks[currentTopLevelRoute]
+            if (currentStack != null && currentStack.size > 1) {
+                currentStack.removeAt(currentStack.lastIndex) // TODO: if we do minSdk 35, we can change this to currentStack.removeLast()
+            } else if (topLevelStacks.size > 1) {
+                topLevelStacks.remove(currentTopLevelRoute)
+                currentTopLevelRoute = topLevelStacks.keys.last()
+            }
         }
         updateBackStack()
     }

@@ -26,7 +26,7 @@ sealed interface BedtimeSettingsEvent {
 @HiltViewModel
 class BedtimeSettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
-    private val scheduleRepository: ScheduleRepository,
+    scheduleRepository: ScheduleRepository,
     private val setSleepScheduleUseCase: SetSleepScheduleUseCase
 ) : ViewModel() {
 

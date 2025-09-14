@@ -8,7 +8,7 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.rememberSavedStateNavEntryDecorator
 import androidx.navigation3.ui.rememberSceneSetupNavEntryDecorator
@@ -19,7 +19,6 @@ import com.andrew264.habits.ui.navigation.TopLevelBackStack
 import com.andrew264.habits.ui.navigation.railItems
 import com.andrew264.habits.ui.water.WaterViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MainScreenLayout(
     topLevelBackStack: TopLevelBackStack,
@@ -60,7 +59,7 @@ private fun MainScreenLayout(
             AppNavDisplay(
                 modifier = Modifier.padding(innerPadding),
                 backStack = topLevelBackStack.backStack,
-                onBack = { topLevelBackStack.removeLast() },
+                onBack = { count -> topLevelBackStack.removeLast(count) },
                 entryDecorators = listOf(
                     rememberSceneSetupNavEntryDecorator(),
                     rememberSavedStateNavEntryDecorator(),

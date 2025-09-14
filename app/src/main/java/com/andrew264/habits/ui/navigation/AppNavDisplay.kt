@@ -3,7 +3,6 @@ package com.andrew264.habits.ui.navigation
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,12 +26,11 @@ import com.andrew264.habits.ui.water.WaterSettingsScreen
 import com.andrew264.habits.ui.water.WaterStatsScreen
 import com.andrew264.habits.ui.water.WaterViewModel
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AppNavDisplay(
     modifier: Modifier = Modifier,
     backStack: List<AppRoute>,
-    onBack: () -> Unit,
+    onBack: (Int) -> Unit,
     entryDecorators: List<NavEntryDecorator<*>>,
     snackbarHostState: SnackbarHostState,
     onNavigate: (AppRoute) -> Unit,
@@ -42,7 +40,7 @@ fun AppNavDisplay(
     NavDisplay(
         backStack = backStack,
         modifier = modifier,
-        onBack = { onBack() },
+        onBack = onBack,
         entryDecorators = entryDecorators,
         entryProvider = entryProvider {
             entry<Home> {
@@ -58,13 +56,13 @@ fun AppNavDisplay(
                 )
             }
             entry<WaterStats> {
-                WaterStatsScreen(onNavigateUp = onBack)
+                WaterStatsScreen(onNavigateUp = { onBack(1) })
             }
             entry<WaterSettings> {
-                WaterSettingsScreen(onNavigateUp = onBack)
+                WaterSettingsScreen(onNavigateUp = { onBack(1) })
             }
             entry<Schedules> {
-                SchedulesListDetailScreen(snackbarHostState = snackbarHostState, onNavigateUp = onBack)
+                SchedulesListDetailScreen(snackbarHostState = snackbarHostState, onNavigateUp = { onBack(1) })
             }
             entry<Settings> {
                 SettingsScreen(onRequestActivityPermission = onRequestActivityPermission, onNavigate = onNavigate)
@@ -73,29 +71,29 @@ fun AppNavDisplay(
                 UsageStatsScreen(onNavigate = onNavigate)
             }
             entry<UsageSettings> {
-                UsageSettingsScreen(onNavigateUp = onBack, onNavigate = onNavigate)
+                UsageSettingsScreen(onNavigateUp = { onBack(1) }, onNavigate = onNavigate)
             }
             entry<Bedtime> {
                 BedtimeScreen(onNavigate = onNavigate)
             }
             entry<BedtimeSettings> {
                 BedtimeSettingsScreen(
-                    onNavigateUp = onBack,
+                    onNavigateUp = { onBack(1) },
                     onRequestActivityPermission = onRequestActivityPermission
                 )
             }
             entry<Whitelist> {
-                WhitelistScreen(onNavigateUp = onBack)
+                WhitelistScreen(onNavigateUp = { onBack(1) })
             }
             entry<Privacy> {
                 DataManagementScreen(
                     snackbarHostState = snackbarHostState,
-                    onNavigateUp = onBack
+                    onNavigateUp = { onBack(1) }
                 )
             }
         },
         transitionSpec = { sharedAxisX(forward = true) },
         popTransitionSpec = { sharedAxisX(forward = false) },
-        predictivePopTransitionSpec = { sharedAxisX(forward = false) }
+        predictivePopTransitionSpec = { _ -> sharedAxisX(forward = false) }
     )
 }
