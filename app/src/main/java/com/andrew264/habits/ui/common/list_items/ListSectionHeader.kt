@@ -1,4 +1,4 @@
-package com.andrew264.habits.ui.common.components
+package com.andrew264.habits.ui.common.list_items
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -13,7 +13,7 @@ import com.andrew264.habits.ui.theme.Dimens
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun SectionHeader(title: String) {
+fun ListSectionHeader(title: String) {
     Text(
         text = title,
         style = MaterialTheme.typography.bodyMediumEmphasized,
@@ -32,6 +32,5 @@ fun SectionHeader(title: String) {
 @Preview
 @Composable
 fun SectionHeaderPreview() {
-    SectionHeader(title = "Section Title")
+    ListSectionHeader(title = "Section Title")
 }
-

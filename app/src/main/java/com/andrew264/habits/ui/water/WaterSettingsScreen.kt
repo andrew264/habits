@@ -20,8 +20,14 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andrew264.habits.model.schedule.Schedule
-import com.andrew264.habits.ui.common.components.*
+import com.andrew264.habits.ui.common.components.FeatureToggleListItem
+import com.andrew264.habits.ui.common.components.ScheduleSelector
+import com.andrew264.habits.ui.common.components.SimpleTopAppBar
 import com.andrew264.habits.ui.common.duration_picker.DurationPickerDialog
+import com.andrew264.habits.ui.common.list_items.ListItemPosition
+import com.andrew264.habits.ui.common.list_items.ListSectionHeader
+import com.andrew264.habits.ui.common.list_items.NavigationListItem
+import com.andrew264.habits.ui.common.list_items.ToggleListItem
 import com.andrew264.habits.ui.common.utils.FormatUtils
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
@@ -124,8 +130,8 @@ private fun WaterSettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
             ) {
                 Column {
-                    SectionHeader("Daily Target")
-                    NavigationSettingsListItem(
+                    ListSectionHeader("Daily Target")
+                    NavigationListItem(
                         icon = Icons.Outlined.TrackChanges,
                         title = "Daily Target",
                         onClick = onEditTargetClicked,
@@ -142,9 +148,9 @@ private fun WaterSettingsScreen(
                 }
 
                 Column {
-                    SectionHeader("Reminders")
+                    ListSectionHeader("Reminders")
                     Column(modifier = Modifier.clip(MaterialTheme.shapes.large)) {
-                        ToggleSettingsListItem(
+                        ToggleListItem(
                             icon = Icons.Outlined.Notifications,
                             title = "Enable reminders",
                             summary = "Get notifications to drink water.",
@@ -153,7 +159,7 @@ private fun WaterSettingsScreen(
                             enabled = uiState.settings.isWaterTrackingEnabled,
                             position = ListItemPosition.TOP
                         )
-                        NavigationSettingsListItem(
+                        NavigationListItem(
                             icon = Icons.Outlined.Timer,
                             title = "Interval",
                             onClick = { showIntervalDialog = true },
@@ -167,7 +173,7 @@ private fun WaterSettingsScreen(
                                 )
                             }
                         )
-                        NavigationSettingsListItem(
+                        NavigationListItem(
                             icon = Icons.Outlined.Snooze,
                             title = "Snooze",
                             onClick = { showSnoozeDialog = true },

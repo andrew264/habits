@@ -3,17 +3,14 @@ package com.andrew264.habits.ui.usage.components
 import android.content.Intent
 import android.provider.Settings
 import android.view.HapticFeedbackConstants
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.LocalIndication
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
 import androidx.compose.material.icons.filled.Settings
@@ -28,12 +25,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.ui.common.charts.StackedBarChart
 import com.andrew264.habits.ui.common.components.FilterButtonGroup
 import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
+import com.andrew264.habits.ui.common.list_items.ListSectionHeader
+import com.andrew264.habits.ui.common.list_items.containedItems
 import com.andrew264.habits.ui.navigation.AppRoute
 import com.andrew264.habits.ui.navigation.UsageSettings
 import com.andrew264.habits.ui.navigation.Whitelist
@@ -139,13 +137,13 @@ fun UsageListContent(
                 contentPadding = PaddingValues(
                     start = Dimens.PaddingMedium,
                     end = Dimens.PaddingMedium,
-                    bottom = Dimens.PaddingMedium
                 ),
-                verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
             ) {
                 item {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = Dimens.PaddingMedium),
                         horizontalArrangement = Arrangement.Center
                     ) {
                         FilterButtonGroup(
@@ -162,18 +160,21 @@ fun UsageListContent(
                         StatisticsSummaryCard(
                             totalScreenOnTime = stats.totalScreenOnTime,
                             pickupCount = stats.pickupCount,
-                            averageSessionMillis = uiState.averageSessionMillis
+                            averageSessionMillis = uiState.averageSessionMillis,
+                            modifier = Modifier.padding(vertical = Dimens.PaddingMedium)
                         )
                     }
                 }
 
                 if (!uiState.isAccessibilityServiceEnabled) {
                     item {
-                        AnimatedVisibility(visible = uiState.isAppUsageTrackingEnabled && !uiState.isAccessibilityServiceEnabled) {
-                            AccessibilityWarningCard(onOpenAccessibilitySettings = {
-                                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-                                context.startActivity(intent)
-                            })
+                        Row(modifier = Modifier.padding(vertical = Dimens.PaddingMedium)) {
+                            AccessibilityWarningCard(
+                                onOpenAccessibilitySettings = {
+                                    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                                    context.startActivity(intent)
+                                },
+                            )
                         }
                     }
                 }
@@ -187,25 +188,24 @@ fun UsageListContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(200.dp)
+                                .padding(vertical = Dimens.PaddingMedium)
                         )
                     }
                 }
 
                 stickyHeader {
-                    Text(
-                        text = "App Breakdown",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.surfaceContainer)
-                            .padding(bottom = Dimens.PaddingSmall, top = Dimens.PaddingSmall)
-                    )
+                    Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
+                        ListSectionHeader("App Breakdown")
+                    }
                 }
 
                 if (uiState.appDetails.isEmpty() && uiState.stats?.totalUsagePerApp?.isNotEmpty() == true) {
                     item {
-                        Card(modifier = Modifier.fillMaxWidth()) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = Dimens.PaddingMedium)
+                        ) {
                             Text(
                                 "No whitelisted apps with usage in this period. Tap 'Manage Apps' to add some.",
                                 modifier = Modifier.padding(Dimens.PaddingLarge),
@@ -217,10 +217,13 @@ fun UsageListContent(
                     }
                 }
 
-                items(uiState.appDetails, key = { it.packageName }) { app ->
+                containedItems(
+                    items = uiState.appDetails,
+                    key = { it.packageName }
+                ) { app ->
                     val interactionSource = remember { MutableInteractionSource() }
                     HapticInteractionEffect(interactionSource)
-                    AppListItem(  // TODO: add container colors, horizontal dividers and rounded corners like in settings items, like make a composable that takes List<AppDetails> and renders it
+                    AppListItem(
                         appDetails = app,
                         modifier = Modifier.clickable(
                             interactionSource = interactionSource,
@@ -228,6 +231,10 @@ fun UsageListContent(
                             onClick = { onAppSelected(app) }
                         )
                     )
+                }
+
+                item {
+                    Spacer(Modifier.height(80.dp))
                 }
             }
 

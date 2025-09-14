@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.model.schedule.ScheduleGroup
+import com.andrew264.habits.ui.common.list_items.ListItemPosition
+import com.andrew264.habits.ui.common.list_items.SelectionListItem
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 
@@ -44,7 +46,7 @@ fun ScheduleSelector(
         )
     }
 
-    SelectionSettingsListItem(
+    SelectionListItem(
         modifier = modifier,
         title = label,
         selectedValue = selectedSchedule?.name ?: "None",

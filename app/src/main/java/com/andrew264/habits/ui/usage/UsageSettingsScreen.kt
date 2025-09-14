@@ -18,8 +18,13 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.andrew264.habits.ui.common.components.*
+import com.andrew264.habits.ui.common.components.FeatureToggleListItem
+import com.andrew264.habits.ui.common.components.SimpleTopAppBar
 import com.andrew264.habits.ui.common.duration_picker.DurationPickerDialog
+import com.andrew264.habits.ui.common.list_items.ListItemPosition
+import com.andrew264.habits.ui.common.list_items.ListSectionHeader
+import com.andrew264.habits.ui.common.list_items.NavigationListItem
+import com.andrew264.habits.ui.common.list_items.ToggleListItem
 import com.andrew264.habits.ui.common.utils.FormatUtils
 import com.andrew264.habits.ui.navigation.AppRoute
 import com.andrew264.habits.ui.navigation.Whitelist
@@ -126,9 +131,9 @@ private fun UsageSettingsScreen(
             }
             item {
                 Column {
-                    SectionHeader("Limits")
+                    ListSectionHeader("Limits")
                     Column(modifier = Modifier.clip(MaterialTheme.shapes.large)) {
-                        NavigationSettingsListItem(
+                        NavigationListItem(
                             icon = Icons.Outlined.Timer,
                             title = "Shared Daily Limit",
                             onClick = { showSharedLimitDialog = true },
@@ -142,7 +147,7 @@ private fun UsageSettingsScreen(
                                 )
                             }
                         )
-                        ToggleSettingsListItem(
+                        ToggleListItem(
                             icon = Icons.Outlined.Notifications,
                             title = "Enable Limit Notifications",
                             summary = "Get notified when you exceed a usage limit.",
@@ -151,7 +156,7 @@ private fun UsageSettingsScreen(
                             enabled = uiState.isAppUsageTrackingEnabled,
                             position = ListItemPosition.MIDDLE
                         )
-                        ToggleSettingsListItem(
+                        ToggleListItem(
                             icon = Icons.Outlined.Block,
                             title = "Enable App Blocker",
                             summary = "Show an overlay when a usage limit is reached.",
@@ -165,8 +170,8 @@ private fun UsageSettingsScreen(
             }
             item {
                 Column {
-                    SectionHeader("Apps")
-                    NavigationSettingsListItem(
+                    ListSectionHeader("Apps")
+                    NavigationListItem(
                         icon = Icons.AutoMirrored.Filled.PlaylistAddCheck,
                         title = "Manage Whitelisted Apps",
                         onClick = { onNavigate(Whitelist) },

@@ -20,7 +20,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andrew264.habits.model.schedule.DefaultSchedules
 import com.andrew264.habits.model.schedule.Schedule
-import com.andrew264.habits.ui.common.components.*
+import com.andrew264.habits.ui.common.components.FeatureToggleListItem
+import com.andrew264.habits.ui.common.components.ScheduleSelector
+import com.andrew264.habits.ui.common.components.SimpleTopAppBar
+import com.andrew264.habits.ui.common.list_items.InfoListItem
+import com.andrew264.habits.ui.common.list_items.ListItemPosition
+import com.andrew264.habits.ui.common.list_items.ListSectionHeader
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.ui.theme.createPreviewPersistentSettings
@@ -85,7 +90,7 @@ private fun BedtimeSettingsScreen(
 
             if (uiState.settings.isBedtimeTrackingEnabled) {
                 Column {
-                    SectionHeader("Schedule")
+                    ListSectionHeader("Schedule")
                     Column(
                         modifier = Modifier.clip(MaterialTheme.shapes.large)
                     ) {

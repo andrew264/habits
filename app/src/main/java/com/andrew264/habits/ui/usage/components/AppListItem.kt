@@ -29,7 +29,7 @@ fun AppListItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = Dimens.PaddingMedium),
+            .padding(Dimens.PaddingMedium),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
     ) {

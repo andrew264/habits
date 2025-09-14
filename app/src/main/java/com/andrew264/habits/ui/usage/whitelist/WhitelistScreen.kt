@@ -2,8 +2,6 @@ package com.andrew264.habits.ui.usage.whitelist
 
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -20,6 +18,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
 import com.andrew264.habits.ui.common.components.DrawableImage
 import com.andrew264.habits.ui.common.components.SimpleTopAppBar
+import com.andrew264.habits.ui.common.list_items.ContainedLazyColumn
 import com.andrew264.habits.ui.common.utils.rememberAppIcon
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
@@ -100,36 +99,34 @@ private fun WhitelistScreen(
         if (uiState.isLoading) {
             ContainedLoadingIndicator()
         } else {
-            LazyColumn(
+            ContainedLazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(all = Dimens.PaddingMedium),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                items(uiState.apps, key = { it.packageName }) { app -> // TODO: add container colors, horizontal dividers and rounded corners like in SettingsItems, like make a composable that takes List<InstalledAppInfo> and renders it
-                    val isWhitelisted = app.packageName in uiState.whitelistedPackageNames
-                    ListItem(
-                        headlineContent = { Text(app.friendlyName) },
-                        supportingContent = { Text(app.packageName, style = MaterialTheme.typography.bodySmall) },
-                        leadingContent = {
-                            val icon = rememberAppIcon(packageName = app.packageName)
-                            DrawableImage(
-                                drawable = icon,
-                                contentDescription = "${app.friendlyName} icon",
-                                modifier = Modifier.size(40.dp)
-                            )
-                        },
-                        trailingContent = {
-                            Switch(
-                                checked = isWhitelisted,
-                                onCheckedChange = { _ ->
-                                    onToggleWhitelist(app, isWhitelisted)
-                                    val feedback = if (!isWhitelisted) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
-                                    view.performHapticFeedback(feedback)
-                                }
-                            )
-                        }
-                    )
-                }
+                items = uiState.apps,
+                key = { it.packageName }
+            ) { app ->
+                val isWhitelisted = app.packageName in uiState.whitelistedPackageNames
+                ListItem(
+                    headlineContent = { Text(app.friendlyName) },
+                    supportingContent = { Text(app.packageName, style = MaterialTheme.typography.bodySmall) },
+                    leadingContent = {
+                        val icon = rememberAppIcon(packageName = app.packageName)
+                        DrawableImage(
+                            drawable = icon,
+                            contentDescription = "${app.friendlyName} icon",
+                            modifier = Modifier.size(40.dp)
+                        )
+                    },
+                    trailingContent = {
+                        Switch(
+                            checked = isWhitelisted,
+                            onCheckedChange = { _ ->
+                                onToggleWhitelist(app, isWhitelisted)
+                                val feedback = if (!isWhitelisted) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
+                                view.performHapticFeedback(feedback)
+                            }
+                        )
+                    }
+                )
             }
         }
     }

@@ -16,10 +16,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import com.andrew264.habits.ui.common.components.ListItemPosition
-import com.andrew264.habits.ui.common.components.NavigationSettingsListItem
-import com.andrew264.habits.ui.common.components.SectionHeader
-import com.andrew264.habits.ui.common.components.ToggleSettingsListItem
+import com.andrew264.habits.ui.common.list_items.ListItemPosition
+import com.andrew264.habits.ui.common.list_items.ListSectionHeader
+import com.andrew264.habits.ui.common.list_items.NavigationListItem
+import com.andrew264.habits.ui.common.list_items.ToggleListItem
 import com.andrew264.habits.ui.navigation.*
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
@@ -120,11 +120,11 @@ private fun SettingsScreen(
                 .padding(PaddingValues(Dimens.PaddingLarge))
         ) {
             item {
-                SectionHeader("Features")
+                ListSectionHeader("Features")
             }
 
             item {
-                ToggleSettingsListItem(
+                ToggleListItem(
                     icon = Icons.Outlined.Alarm,
                     title = "Bedtime Tracking",
                     summary = "Monitor your sleep and bedtime habits",
@@ -136,7 +136,7 @@ private fun SettingsScreen(
             }
 
             item {
-                ToggleSettingsListItem(
+                ToggleListItem(
                     icon = Icons.Outlined.Timeline,
                     title = "App Usage Tracking",
                     summary = "Track screen time and set limits for apps.",
@@ -151,7 +151,7 @@ private fun SettingsScreen(
             }
 
             item {
-                ToggleSettingsListItem(
+                ToggleListItem(
                     icon = Icons.Outlined.WaterDrop,
                     title = "Water Tracking",
                     summary = "Track daily water intake and set reminders.",
@@ -167,11 +167,11 @@ private fun SettingsScreen(
             }
 
             item {
-                SectionHeader("Management")
+                ListSectionHeader("Management")
             }
 
             item {
-                NavigationSettingsListItem(
+                NavigationListItem(
                     icon = Icons.Outlined.Schedule,
                     title = "Create and manage schedules",
                     onClick = { onNavigate(Schedules) },
@@ -184,11 +184,11 @@ private fun SettingsScreen(
             }
 
             item {
-                SectionHeader("Data & Privacy")
+                ListSectionHeader("Data & Privacy")
             }
 
             item {
-                NavigationSettingsListItem(
+                NavigationListItem(
                     icon = Icons.Outlined.DeleteForever,
                     title = "Delete Data",
                     onClick = { onNavigate(Privacy) },
@@ -197,7 +197,7 @@ private fun SettingsScreen(
             }
 
             item {
-                NavigationSettingsListItem(
+                NavigationListItem(
                     icon = Icons.Outlined.Info,
                     title = "App Permissions & Info",
                     onClick = onOpenAppSettings,

@@ -23,8 +23,12 @@ import com.andrew264.habits.ui.common.charts.BarChart
 import com.andrew264.habits.ui.common.color_picker.ColorPickerDialog
 import com.andrew264.habits.ui.common.color_picker.utils.toColorOrNull
 import com.andrew264.habits.ui.common.color_picker.utils.toHexCode
-import com.andrew264.habits.ui.common.components.*
+import com.andrew264.habits.ui.common.components.DrawableImage
+import com.andrew264.habits.ui.common.components.FilterButtonGroup
+import com.andrew264.habits.ui.common.components.SimpleTopAppBar
 import com.andrew264.habits.ui.common.duration_picker.DurationPickerDialog
+import com.andrew264.habits.ui.common.list_items.ListItemPosition
+import com.andrew264.habits.ui.common.list_items.NavigationListItem
 import com.andrew264.habits.ui.common.utils.FormatUtils
 import com.andrew264.habits.ui.common.utils.rememberAppIcon
 import com.andrew264.habits.ui.theme.Dimens
@@ -173,7 +177,7 @@ fun UsageDetailScreen(
                     )
                 }
 
-                NavigationSettingsListItem(
+                NavigationListItem(
                     icon = Icons.Outlined.Timer,
                     title = "Session Limit",
                     onClick = { showSessionLimitDialog = true },
@@ -201,7 +205,7 @@ fun UsageDetailScreen(
                     )
                 }
 
-                NavigationSettingsListItem(
+                NavigationListItem(
                     icon = Icons.Outlined.Palette,
                     title = "Display Color",
                     onClick = { showColorDialog = true },
