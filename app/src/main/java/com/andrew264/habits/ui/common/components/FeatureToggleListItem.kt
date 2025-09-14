@@ -8,9 +8,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
@@ -58,7 +60,7 @@ fun FeatureToggleListItem(
                 style = MaterialTheme.typography.titleLargeEmphasized,
                 color = if (enabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             )
-            Switch(
+            IconSwitch(
                 checked = checked,
                 onCheckedChange = null, // Handled by parent clickable
                 enabled = enabled,
@@ -72,10 +74,11 @@ fun FeatureToggleListItem(
 @Composable
 private fun FeatureToggleListItemPreview() {
     HabitsTheme {
+        var checkedOn by remember { mutableStateOf(true) }
         FeatureToggleListItem(
             title = "Enable Feature 1",
-            checked = true,
-            onCheckedChange = {}
+            checked = checkedOn,
+            onCheckedChange = { checkedOn = it }
         )
     }
 }

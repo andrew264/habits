@@ -9,7 +9,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.outlined.Warning
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -18,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
+import com.andrew264.habits.ui.common.components.IconSwitch
 import com.andrew264.habits.ui.theme.Dimens
 
 @Composable
@@ -110,13 +114,11 @@ fun ToggleListItem(
                         .wrapContentSize(Alignment.Center),
                     contentAlignment = Alignment.Center
                 ) {
-                    Switch(
+                    IconSwitch(
                         checked = checked,
-                        onCheckedChange = if (onClick != null) { newChecked ->
+                        onCheckedChange = { newChecked ->
                             onCheckedChange(newChecked)
                             performHapticToggle(newChecked)
-                        } else {
-                            null
                         },
                         enabled = enabled,
                         interactionSource = remember { MutableInteractionSource() }

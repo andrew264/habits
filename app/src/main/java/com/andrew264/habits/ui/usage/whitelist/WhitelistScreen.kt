@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
 import com.andrew264.habits.ui.common.components.DrawableImage
+import com.andrew264.habits.ui.common.components.IconSwitch
 import com.andrew264.habits.ui.common.list_items.ContainedLazyColumn
 import com.andrew264.habits.ui.common.utils.rememberAppIcon
 import com.andrew264.habits.ui.theme.Dimens
@@ -92,7 +93,7 @@ private fun WhitelistScreen(
                             )
                         },
                         trailingContent = {
-                            Switch(
+                            IconSwitch(
                                 checked = isWhitelisted,
                                 onCheckedChange = { _ ->
                                     onToggleWhitelist(app, isWhitelisted)

@@ -17,6 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.andrew264.habits.domain.model.PersistentSettings
+import com.andrew264.habits.ui.common.components.IconSwitch
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.createPreviewPersistentSettings
 
@@ -48,7 +49,7 @@ fun TargetSettingsDialog(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text("Enable Tracking", style = MaterialTheme.typography.bodyLarge)
-                        Switch(
+                        IconSwitch(
                             checked = isEnabled,
                             onCheckedChange = {
                                 isEnabled = it
