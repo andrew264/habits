@@ -99,8 +99,8 @@ class WhitelistViewModel @Inject constructor(
         _searchText.value = text
     }
 
-    fun onToggleShowSystemApps(show: Boolean) {
-        _showSystemApps.value = show
+    fun onToggleShowSystemApps() {
+        _showSystemApps.update { !it }
     }
 
     fun onToggleWhitelist(

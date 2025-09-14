@@ -16,6 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import com.andrew264.habits.ui.common.components.SimpleTopAppBar
 import com.andrew264.habits.ui.common.list_items.ListItemPosition
 import com.andrew264.habits.ui.common.list_items.ListSectionHeader
 import com.andrew264.habits.ui.common.list_items.NavigationListItem
@@ -102,14 +103,7 @@ private fun SettingsScreen(
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            LargeFlexibleTopAppBar(
-                title = { Text(text = "Settings") },
-                scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                )
-            )
+            SimpleTopAppBar("Settings", scrollBehavior = scrollBehavior)
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
     ) { innerPadding ->
@@ -117,7 +111,7 @@ private fun SettingsScreen(
             contentPadding = innerPadding,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(PaddingValues(Dimens.PaddingLarge))
+                .padding(PaddingValues(horizontal = Dimens.PaddingLarge))
         ) {
             item {
                 ListSectionHeader("Features")

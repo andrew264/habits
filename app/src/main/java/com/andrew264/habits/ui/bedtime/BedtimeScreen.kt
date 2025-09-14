@@ -107,7 +107,8 @@ private fun BedtimeScreen(
                             HapticInteractionEffect(interactionSource)
                             IconButton(
                                 onClick = onShowSettings,
-                                interactionSource = interactionSource
+                                interactionSource = interactionSource,
+                                colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.primary)
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.Settings,

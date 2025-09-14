@@ -23,7 +23,8 @@ fun WaterTopAppBar(
             HapticInteractionEffect(statsInteractionSource)
             IconButton(
                 onClick = onNavigateToStats,
-                interactionSource = statsInteractionSource
+                interactionSource = statsInteractionSource,
+                colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.primary)
             ) {
                 Icon(Icons.Filled.BarChart, contentDescription = "Hydration Statistics")
             }
@@ -32,7 +33,8 @@ fun WaterTopAppBar(
             HapticInteractionEffect(reminderInteractionSource)
             IconButton(
                 onClick = onWaterReminderClick,
-                interactionSource = reminderInteractionSource
+                interactionSource = reminderInteractionSource,
+                colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.primary)
             ) {
                 Icon(Icons.Filled.Alarm, contentDescription = "Reminder Settings")
             }

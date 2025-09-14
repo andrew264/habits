@@ -69,7 +69,8 @@ fun UsageListContent(
                         HapticInteractionEffect(interactionSource)
                         IconButton(
                             onClick = { onNavigate(UsageSettings) },
-                            interactionSource = interactionSource
+                            interactionSource = interactionSource,
+                            colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.primary)
                         ) {
                             Icon(Icons.Default.Settings, contentDescription = "Usage Settings")
                         }
