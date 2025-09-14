@@ -80,10 +80,13 @@ fun WhitelistTopAppBar(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        isSearchActive = false
-                        onSearchTextChanged("")
-                    }) {
+                    IconButton(
+                        onClick = {
+                            isSearchActive = false
+                            onSearchTextChanged("")
+                        },
+                        colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Exit search")
                     }
                 },
@@ -99,7 +102,10 @@ fun WhitelistTopAppBar(
             LargeTopAppBar(
                 title = { Text("Manage Whitelist") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateUp) {
+                    IconButton(
+                        onClick = onNavigateUp,
+                        colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },

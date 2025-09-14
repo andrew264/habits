@@ -22,7 +22,10 @@ fun SimpleTopAppBar(
             if (onNavigateUp != null) {
                 val interactionSource = remember { MutableInteractionSource() }
                 HapticInteractionEffect(interactionSource)
-                IconButton(onClick = onNavigateUp, interactionSource = interactionSource) {
+                IconButton(
+                    onClick = onNavigateUp, interactionSource = interactionSource,
+                    colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
             }

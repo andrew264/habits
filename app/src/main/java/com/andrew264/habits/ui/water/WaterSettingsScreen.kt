@@ -117,7 +117,7 @@ private fun WaterSettingsScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
-                .padding(all = Dimens.PaddingSmall),
+                .padding(all = Dimens.PaddingLarge),
             verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
         ) {
             FeatureToggleListItem(

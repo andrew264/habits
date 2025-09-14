@@ -26,7 +26,7 @@ internal fun ScheduleList(
         modifier = modifier
             .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(Dimens.PaddingMedium),
-        contentPadding = PaddingValues(all = Dimens.PaddingMedium),
+        contentPadding = PaddingValues(all = Dimens.PaddingLarge),
     ) {
         items(schedules, key = { it.id }) { schedule ->
             ScheduleListItem(

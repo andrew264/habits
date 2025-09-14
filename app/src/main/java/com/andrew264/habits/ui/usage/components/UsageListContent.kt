@@ -136,8 +136,8 @@ fun UsageListContent(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
-                    start = Dimens.PaddingMedium,
-                    end = Dimens.PaddingMedium,
+                    start = Dimens.PaddingLarge,
+                    end = Dimens.PaddingLarge,
                 ),
             ) {
                 item {

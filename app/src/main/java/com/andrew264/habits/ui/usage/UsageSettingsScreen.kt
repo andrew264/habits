@@ -119,7 +119,7 @@ private fun UsageSettingsScreen(
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .fillMaxSize()
                 .padding(paddingValues),
-            contentPadding = PaddingValues(all = Dimens.PaddingSmall),
+            contentPadding = PaddingValues(all = Dimens.PaddingLarge),
             verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
         ) {
             item {

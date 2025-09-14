@@ -119,8 +119,8 @@ private fun DataManagementScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(vertical = Dimens.PaddingLarge)
+                .padding(paddingValues)
+                .padding(horizontal = Dimens.PaddingLarge),
         ) {
             item {
                 TimeRangeRow(

@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 
@@ -34,7 +35,7 @@ fun FeatureToggleListItem(
 
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(Dimens.PaddingExtraExtraLarge),
+        shape = RoundedCornerShape(64.dp),
         color = MaterialTheme.colorScheme.primaryContainer
     ) {
         Row(
@@ -57,7 +58,7 @@ fun FeatureToggleListItem(
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleLargeEmphasized,
+                style = MaterialTheme.typography.bodyLargeEmphasized,
                 color = if (enabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             )
             IconSwitch(
