@@ -14,7 +14,9 @@ import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaf
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.ui.navigation.sharedAxisXEnter
@@ -23,6 +25,7 @@ import com.andrew264.habits.ui.schedule.components.SchedulesListPane
 import com.andrew264.habits.ui.theme.Dimens
 import kotlinx.coroutines.launch
 import java.util.UUID
+import kotlin.math.roundToInt
 
 @Composable
 fun SchedulesListDetailScreen(
@@ -79,13 +82,18 @@ private fun SchedulesListDetailScreen(
     )
     val scope = rememberCoroutineScope()
     val selection = scaffoldNavigator.currentDestination?.contentKey
+    val density = LocalDensity.current
+    val slideDistance = remember(density) {
+        with(density) { 30.dp.toPx() }.roundToInt()
+    }
+
 
     NavigableListDetailPaneScaffold(
         navigator = scaffoldNavigator,
         listPane = {
             AnimatedPane(
-                enterTransition = sharedAxisXEnter(forward = false),
-                exitTransition = sharedAxisXExit(forward = true)
+                enterTransition = sharedAxisXEnter(forward = false, slideDistance = slideDistance),
+                exitTransition = sharedAxisXExit(forward = true, slideDistance = slideDistance)
             ) {
                 SchedulesListPane(
                     uiState = uiState,
@@ -114,8 +122,8 @@ private fun SchedulesListDetailScreen(
         },
         detailPane = {
             AnimatedPane(
-                enterTransition = sharedAxisXEnter(forward = true),
-                exitTransition = sharedAxisXExit(forward = false)
+                enterTransition = sharedAxisXEnter(forward = true, slideDistance = slideDistance),
+                exitTransition = sharedAxisXExit(forward = false, slideDistance = slideDistance)
             ) {
                 if (selection != null) {
                     ScheduleEditorScreen(

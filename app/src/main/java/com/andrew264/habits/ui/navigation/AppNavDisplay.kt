@@ -1,16 +1,19 @@
 package com.andrew264.habits.ui.navigation
 
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavEntryDecorator
-import androidx.navigation3.runtime.entry
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.andrew264.habits.ui.bedtime.BedtimeScreen
@@ -25,18 +28,24 @@ import com.andrew264.habits.ui.water.WaterScreen
 import com.andrew264.habits.ui.water.WaterSettingsScreen
 import com.andrew264.habits.ui.water.WaterStatsScreen
 import com.andrew264.habits.ui.water.WaterViewModel
+import kotlin.math.roundToInt
 
 @Composable
 fun AppNavDisplay(
     modifier: Modifier = Modifier,
     backStack: List<AppRoute>,
     onBack: (Int) -> Unit,
-    entryDecorators: List<NavEntryDecorator<*>>,
+    entryDecorators: List<NavEntryDecorator<AppRoute>>,
     snackbarHostState: SnackbarHostState,
     onNavigate: (AppRoute) -> Unit,
     waterViewModel: WaterViewModel,
     onRequestActivityPermission: () -> Unit
 ) {
+    val density = LocalDensity.current
+    val slideDistance = remember(density) {
+        with(density) { 30.dp.toPx() }.roundToInt()
+    }
+
     NavDisplay(
         backStack = backStack,
         modifier = modifier,
@@ -92,8 +101,8 @@ fun AppNavDisplay(
                 )
             }
         },
-        transitionSpec = { sharedAxisX(forward = true) },
-        popTransitionSpec = { sharedAxisX(forward = false) },
-        predictivePopTransitionSpec = { _ -> sharedAxisX(forward = false) }
+        transitionSpec = { sharedAxisXEnter(forward = true, slideDistance = slideDistance) togetherWith sharedAxisXExit(forward = true, slideDistance = slideDistance) },
+        popTransitionSpec = { sharedAxisXEnter(forward = false, slideDistance = slideDistance) togetherWith sharedAxisXExit(forward = false, slideDistance = slideDistance) },
+        predictivePopTransitionSpec = { _ -> sharedAxisXEnter(forward = false, slideDistance = slideDistance) togetherWith sharedAxisXExit(forward = false, slideDistance = slideDistance) }
     )
 }

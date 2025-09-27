@@ -13,7 +13,9 @@ import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.navigation.NavigableListDetailPaneScaffold
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -30,6 +32,7 @@ import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.ui.usage.components.UsageListContent
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
+import kotlin.math.roundToInt
 
 @Composable
 fun UsageStatsScreen(
@@ -76,6 +79,11 @@ private fun UsageStatsScreen(
             )
     )
     val listState = rememberLazyListState()
+    val density = LocalDensity.current
+    val slideDistance = remember(density) {
+        with(density) { 30.dp.toPx() }.roundToInt()
+    }
+
 
     when {
         uiState.isLoading && uiState.stats == null -> {
@@ -96,8 +104,8 @@ private fun UsageStatsScreen(
                 navigator = scaffoldNavigator,
                 listPane = {
                     AnimatedPane(
-                        enterTransition = sharedAxisXEnter(forward = false),
-                        exitTransition = sharedAxisXExit(forward = true)
+                        enterTransition = sharedAxisXEnter(forward = false, slideDistance = slideDistance),
+                        exitTransition = sharedAxisXExit(forward = true, slideDistance = slideDistance)
                     ) {
                         UsageListContent(
                             uiState = uiState,
@@ -119,8 +127,8 @@ private fun UsageStatsScreen(
                 },
                 detailPane = {
                     AnimatedPane(
-                        enterTransition = sharedAxisXEnter(forward = true),
-                        exitTransition = sharedAxisXExit(forward = false)
+                        enterTransition = sharedAxisXEnter(forward = true, slideDistance = slideDistance),
+                        exitTransition = sharedAxisXExit(forward = false, slideDistance = slideDistance)
                     ) {
                         val selection = scaffoldNavigator.currentDestination?.contentKey
                         if (selection?.packageName != null) {
