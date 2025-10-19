@@ -7,11 +7,11 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
-import androidx.navigation3.runtime.rememberSavedStateNavEntryDecorator
-import androidx.navigation3.scene.rememberSceneSetupNavEntryDecorator
+import androidx.navigation3.runtime.SaveableStateHolderNavEntryDecorator
 import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.navigation.AppNavDisplay
 import com.andrew264.habits.ui.navigation.Home
@@ -26,6 +26,7 @@ private fun MainScreenLayout(
     onRequestActivityPermission: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    val saveableStateHolder = rememberSaveableStateHolder()
 
     NavigationSuiteScaffold(
         navigationItems = {
@@ -59,10 +60,9 @@ private fun MainScreenLayout(
             AppNavDisplay(
                 modifier = Modifier.padding(innerPadding),
                 backStack = topLevelBackStack.backStack,
-                onBack = { count -> topLevelBackStack.removeLast(count) },
+                onBack = { topLevelBackStack.removeLast() },
                 entryDecorators = listOf(
-                    rememberSceneSetupNavEntryDecorator(),
-                    rememberSavedStateNavEntryDecorator(),
+                    SaveableStateHolderNavEntryDecorator(saveableStateHolder),
                     rememberViewModelStoreNavEntryDecorator()
                 ),
                 snackbarHostState = snackbarHostState,

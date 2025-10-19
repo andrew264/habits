@@ -34,7 +34,7 @@ import kotlin.math.roundToInt
 fun AppNavDisplay(
     modifier: Modifier = Modifier,
     backStack: List<AppRoute>,
-    onBack: (Int) -> Unit,
+    onBack: () -> Unit,
     entryDecorators: List<NavEntryDecorator<AppRoute>>,
     snackbarHostState: SnackbarHostState,
     onNavigate: (AppRoute) -> Unit,
@@ -65,13 +65,13 @@ fun AppNavDisplay(
                 )
             }
             entry<WaterStats> {
-                WaterStatsScreen(onNavigateUp = { onBack(1) })
+                WaterStatsScreen(onNavigateUp = { onBack() })
             }
             entry<WaterSettings> {
-                WaterSettingsScreen(onNavigateUp = { onBack(1) })
+                WaterSettingsScreen(onNavigateUp = { onBack() })
             }
             entry<Schedules> {
-                SchedulesListDetailScreen(snackbarHostState = snackbarHostState, onNavigateUp = { onBack(1) })
+                SchedulesListDetailScreen(snackbarHostState = snackbarHostState, onNavigateUp = { onBack() })
             }
             entry<Settings> {
                 SettingsScreen(onRequestActivityPermission = onRequestActivityPermission, onNavigate = onNavigate)
@@ -80,24 +80,24 @@ fun AppNavDisplay(
                 UsageStatsScreen(onNavigate = onNavigate)
             }
             entry<UsageSettings> {
-                UsageSettingsScreen(onNavigateUp = { onBack(1) }, onNavigate = onNavigate)
+                UsageSettingsScreen(onNavigateUp = { onBack() }, onNavigate = onNavigate)
             }
             entry<Bedtime> {
                 BedtimeScreen(onNavigate = onNavigate)
             }
             entry<BedtimeSettings> {
                 BedtimeSettingsScreen(
-                    onNavigateUp = { onBack(1) },
+                    onNavigateUp = { onBack() },
                     onRequestActivityPermission = onRequestActivityPermission
                 )
             }
             entry<Whitelist> {
-                WhitelistScreen(onNavigateUp = { onBack(1) })
+                WhitelistScreen(onNavigateUp = { onBack() })
             }
             entry<Privacy> {
                 DataManagementScreen(
                     snackbarHostState = snackbarHostState,
-                    onNavigateUp = { onBack(1) }
+                    onNavigateUp = { onBack() }
                 )
             }
         },
