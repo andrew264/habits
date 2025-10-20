@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.andrew264.habits.domain.model.PersistentSettings
 import com.andrew264.habits.domain.repository.SettingsRepository
 import com.andrew264.habits.domain.usecase.HandlePermissionResultUseCase
+import com.andrew264.habits.util.PermissionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,7 +23,8 @@ data class MainUiState(
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val handlePermissionResultUseCase: HandlePermissionResultUseCase,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val permissionManager: PermissionManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MainUiState())
@@ -34,6 +36,19 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             settingsRepository.settingsFlow.collect { settings ->
                 _uiState.update { it.copy(settings = settings) }
+            }
+        }
+
+        viewModelScope.launch {
+            permissionManager.results.collect { permissions ->
+                val notificationsGranted = permissions[Manifest.permission.POST_NOTIFICATIONS] ?: false
+                val activityRecognitionGranted = permissions[Manifest.permission.ACTIVITY_RECOGNITION] ?: false
+
+                handlePermissionResultUseCase.execute(notificationsGranted)
+
+                if (activityRecognitionGranted) {
+                    settingsRepository.updateBedtimeTrackingEnabled(true)
+                }
             }
         }
     }
@@ -52,24 +67,13 @@ class MainViewModel @Inject constructor(
         _uiState.update { it.copy(destinationRoute = null) }
     }
 
-    fun handlePermissionResults(permissions: Map<String, Boolean>) {
+    fun requestInitialPermissions() {
         viewModelScope.launch {
-            val notificationsGranted = permissions[Manifest.permission.POST_NOTIFICATIONS] ?: false
-            val activityRecognitionGranted = permissions[Manifest.permission.ACTIVITY_RECOGNITION] ?: false
-
-            handlePermissionResultUseCase.execute(notificationsGranted)
-
-            if (activityRecognitionGranted) {
-                settingsRepository.updateBedtimeTrackingEnabled(true)
-            }
+            permissionManager.request(Manifest.permission.POST_NOTIFICATIONS)
         }
         initialPermissionCheckDone = true
     }
 
-    /**
-     * Checks if the initial permission request is needed.
-     * This is designed to be called once from a LaunchedEffect.
-     */
     fun needsInitialPermissionCheck(): Boolean {
         return !initialPermissionCheckDone
     }

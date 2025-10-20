@@ -36,8 +36,7 @@ fun AppNavDisplay(
     backStack: List<AppRoute>,
     onBack: () -> Unit,
     entryDecorators: List<NavEntryDecorator<AppRoute>>,
-    onNavigate: (AppRoute) -> Unit,
-    onRequestActivityPermission: () -> Unit
+    onNavigate: (AppRoute) -> Unit
 ) {
     val density = LocalDensity.current
     val slideDistance = remember(density) {
@@ -71,7 +70,7 @@ fun AppNavDisplay(
                 SchedulesListDetailScreen(onNavigateUp = { onBack() })
             }
             entry<Settings> {
-                SettingsScreen(onRequestActivityPermission = onRequestActivityPermission, onNavigate = onNavigate)
+                SettingsScreen(onNavigate = onNavigate)
             }
             entry<Usage> {
                 UsageStatsScreen(onNavigate = onNavigate)
@@ -83,10 +82,7 @@ fun AppNavDisplay(
                 BedtimeScreen(onNavigate = onNavigate)
             }
             entry<BedtimeSettings> {
-                BedtimeSettingsScreen(
-                    onNavigateUp = { onBack() },
-                    onRequestActivityPermission = onRequestActivityPermission
-                )
+                BedtimeSettingsScreen(onNavigateUp = { onBack() })
             }
             entry<Whitelist> {
                 WhitelistScreen(onNavigateUp = { onBack() })

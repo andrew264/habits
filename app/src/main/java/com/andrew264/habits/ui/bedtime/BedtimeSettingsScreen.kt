@@ -12,7 +12,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -31,25 +34,13 @@ import com.andrew264.habits.ui.common.list_items.ListSectionHeader
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.ui.theme.createPreviewPersistentSettings
-import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun BedtimeSettingsScreen(
     onNavigateUp: () -> Unit,
-    onRequestActivityPermission: () -> Unit,
     viewModel: BedtimeSettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    LaunchedEffect(Unit) {
-        viewModel.events.collectLatest { event ->
-            when (event) {
-                BedtimeSettingsEvent.RequestActivityPermission -> {
-                    onRequestActivityPermission()
-                }
-            }
-        }
-    }
 
     BedtimeSettingsScreen(
         uiState = uiState,

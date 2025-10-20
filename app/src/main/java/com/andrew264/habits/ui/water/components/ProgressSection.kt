@@ -25,12 +25,12 @@ import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
-import com.andrew264.habits.ui.water.WaterUiState
+import com.andrew264.habits.ui.water.WaterScreenUiState
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun ProgressSection(
-    uiState: WaterUiState,
+    uiState: WaterScreenUiState,
     onEditTarget: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -102,7 +102,7 @@ internal fun ProgressSection(
 internal fun ProgressSectionPreview() {
     HabitsTheme {
         ProgressSection(
-            uiState = WaterUiState(todaysIntakeMl = 1500, progress = 0.6f),
+            uiState = WaterScreenUiState(todaysIntakeMl = 1500, progress = 0.6f),
             onEditTarget = {}
         )
     }

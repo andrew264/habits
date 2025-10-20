@@ -35,7 +35,6 @@ fun ScheduleEditorScreen(
     viewModel: ScheduleViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val perDayRepresentation by viewModel.perDayRepresentation.collectAsState()
 
     LaunchedEffect(scheduleId) {
         viewModel.initialize(scheduleId)
@@ -54,7 +53,6 @@ fun ScheduleEditorScreen(
 
     ScheduleEditorScreen(
         uiState = uiState,
-        perDayRepresentation = perDayRepresentation,
         onNavigateUp = onNavigateUp,
         onSaveSchedule = viewModel::saveSchedule,
         onSetViewMode = viewModel::setViewMode,
@@ -77,7 +75,6 @@ fun ScheduleEditorScreen(
 @Composable
 private fun ScheduleEditorScreen(
     uiState: ScheduleEditorUiState,
-    perDayRepresentation: Map<DayOfWeek, List<TimeRange>>,
     onNavigateUp: () -> Unit,
     onSaveSchedule: () -> Unit,
     onSetViewMode: (ScheduleViewMode) -> Unit,
@@ -265,7 +262,7 @@ private fun ScheduleEditorScreen(
 
                             ScheduleViewMode.PER_DAY -> {
                                 PerDayView(
-                                    perDayRepresentation = perDayRepresentation,
+                                    perDayRepresentation = uiState.perDayRepresentation,
                                     modifier = Modifier.fillMaxSize(),
                                     onAddTimeRangeToDay = onAddTimeRangeToDay,
                                     onUpdateTimeRangeInDay = onUpdateTimeRangeInDay,

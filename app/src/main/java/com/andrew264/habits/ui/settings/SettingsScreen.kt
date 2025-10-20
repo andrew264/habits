@@ -33,7 +33,6 @@ import kotlinx.coroutines.flow.collectLatest
 fun SettingsScreen(
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
-    onRequestActivityPermission: () -> Unit,
     onNavigate: (AppRoute) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -47,10 +46,6 @@ fun SettingsScreen(
     LaunchedEffect(Unit) {
         viewModel.events.collectLatest { event ->
             when (event) {
-                SettingsEvent.RequestActivityPermission -> {
-                    onRequestActivityPermission()
-                }
-
                 SettingsEvent.ShowAccessibilityDialog -> {
                     showAccessibilityDialog = true
                 }

@@ -18,8 +18,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
 import com.andrew264.habits.R
 import com.andrew264.habits.domain.model.UsageStatistics
 import com.andrew264.habits.domain.model.UsageTimeBin
@@ -42,15 +40,6 @@ fun UsageStatsScreen(
     onNavigate: (AppRoute) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val isInitialComposition = remember { mutableStateOf(true) }
-
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        if (isInitialComposition.value) {
-            isInitialComposition.value = false
-        } else {
-            viewModel.refresh()
-        }
-    }
 
     UsageStatsScreen(
         uiState = uiState,

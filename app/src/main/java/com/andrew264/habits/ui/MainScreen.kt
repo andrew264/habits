@@ -1,5 +1,7 @@
 package com.andrew264.habits.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
@@ -9,7 +11,9 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.SaveableStateHolderNavEntryDecorator
@@ -23,7 +27,6 @@ import com.andrew264.habits.ui.navigation.railItems
 @Composable
 private fun MainScreenLayout(
     topLevelBackStack: TopLevelBackStack,
-    onRequestActivityPermission: () -> Unit,
     snackbarHostState: SnackbarHostState
 ) {
     val saveableStateHolder = rememberSaveableStateHolder()
@@ -65,8 +68,7 @@ private fun MainScreenLayout(
                     SaveableStateHolderNavEntryDecorator(saveableStateHolder),
                     rememberViewModelStoreNavEntryDecorator()
                 ),
-                onNavigate = { topLevelBackStack.add(it) },
-                onRequestActivityPermission = onRequestActivityPermission
+                onNavigate = { topLevelBackStack.add(it) }
             )
         }
     }
@@ -76,8 +78,6 @@ private fun MainScreenLayout(
 @Composable
 fun MainScreen(
     viewModel: MainViewModel,
-    onRequestInitialPermissions: () -> Unit,
-    onRequestActivityPermission: () -> Unit,
 ) {
     val topLevelBackStack = rememberSaveable(saver = TopLevelBackStack.Saver) {
         TopLevelBackStack(Home)
@@ -101,15 +101,16 @@ fun MainScreen(
     }
 
     // Handle initial permission check
+    val context = LocalContext.current
     LaunchedEffect(Unit) {
-        if (viewModel.needsInitialPermissionCheck()) {
-            onRequestInitialPermissions()
+        val permission = Manifest.permission.POST_NOTIFICATIONS
+        if (viewModel.needsInitialPermissionCheck() && ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+            viewModel.requestInitialPermissions()
         }
     }
 
     MainScreenLayout(
         topLevelBackStack = topLevelBackStack,
-        onRequestActivityPermission = onRequestActivityPermission,
         snackbarHostState = snackbarHostState
     )
 }

@@ -4,21 +4,18 @@ import com.andrew264.habits.domain.repository.ScheduleRepository
 import com.andrew264.habits.domain.repository.SettingsRepository
 import com.andrew264.habits.domain.repository.WaterRepository
 import com.andrew264.habits.model.schedule.DefaultSchedules
-import com.andrew264.habits.ui.water.WaterUiState
+import com.andrew264.habits.ui.water.WaterScreenUiState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
-/**
- * Gathers and processes data from multiple sources to build the [WaterUiState].
- */
 class GetWaterUiStateUseCase @Inject constructor(
     private val waterRepository: WaterRepository,
     private val settingsRepository: SettingsRepository,
     private val scheduleRepository: ScheduleRepository
 ) {
-    fun execute(): Flow<WaterUiState> {
+    fun execute(): Flow<WaterScreenUiState> {
         val todaysIntakeFlow = waterRepository.getTodaysIntakeFlow()
         val allSchedulesFlow = scheduleRepository.getAllSchedules()
             .map { dbSchedules ->
@@ -37,7 +34,7 @@ class GetWaterUiStateUseCase @Inject constructor(
                 0f
             }
 
-            WaterUiState(
+            WaterScreenUiState(
                 settings = settings,
                 allSchedules = allSchedules,
                 todaysIntakeMl = todaysIntakeMl,
