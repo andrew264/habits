@@ -12,8 +12,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.andrew264.habits.R
 import com.andrew264.habits.model.schedule.TimeRange
 import com.andrew264.habits.ui.common.dialogs.HabitsTimePickerDialog
 import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
@@ -79,7 +81,7 @@ fun TimeRangeRow(
                     }
 
                     Text(
-                        text = "→",
+                        text = stringResource(R.string.schedule_time_range_row_arrow),
                     )
 
                     val toInteractionSource = remember { MutableInteractionSource() }
@@ -100,7 +102,7 @@ fun TimeRangeRow(
 
                     if (isOvernight) {
                         Text(
-                            text = "+1d",
+                            text = stringResource(R.string.schedule_time_range_row_plus_one_day),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.tertiary,
                             modifier = Modifier.padding(start = 2.dp)
@@ -120,7 +122,7 @@ fun TimeRangeRow(
             ) {
                 Icon(
                     Icons.Default.Delete,
-                    contentDescription = "Delete time range",
+                    contentDescription = stringResource(R.string.schedule_time_range_row_delete_time_range),
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -135,7 +137,7 @@ fun TimeRangeRow(
                 onUpdate(timeRange.copy(fromMinuteOfDay = newMinuteOfDay))
                 showFromPicker = false
             },
-            title = "From Time",
+            title = stringResource(R.string.schedule_time_range_row_from_time),
             initialHour = timeRange.fromMinuteOfDay / 60,
             initialMinute = timeRange.fromMinuteOfDay % 60
         )
@@ -149,7 +151,7 @@ fun TimeRangeRow(
                 onUpdate(timeRange.copy(toMinuteOfDay = newMinuteOfDay))
                 showToPicker = false
             },
-            title = "To Time",
+            title = stringResource(R.string.schedule_time_range_row_to_time),
             initialHour = timeRange.toMinuteOfDay / 60,
             initialMinute = timeRange.toMinuteOfDay % 60
         )

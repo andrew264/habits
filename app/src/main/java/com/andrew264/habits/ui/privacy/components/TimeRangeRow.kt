@@ -10,7 +10,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.andrew264.habits.R
 import com.andrew264.habits.domain.usecase.TimeRangeOption
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
@@ -29,7 +31,7 @@ internal fun TimeRangeRow(
             .padding(horizontal = Dimens.PaddingLarge),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("Time range", style = MaterialTheme.typography.bodyLarge)
+        Text(stringResource(R.string.data_management_time_range), style = MaterialTheme.typography.bodyLarge)
         Spacer(Modifier.weight(1f))
 
         Box {
@@ -50,7 +52,7 @@ internal fun TimeRangeRow(
                 )
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = "Select time range"
+                    contentDescription = stringResource(R.string.data_management_select_time_range)
                 )
             }
 

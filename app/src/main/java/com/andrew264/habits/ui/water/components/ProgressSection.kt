@@ -17,9 +17,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
+import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
@@ -34,7 +36,7 @@ internal fun ProgressSection(
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = uiState.progress,
-        label = "WaterProgressAnimation",
+        label = stringResource(R.string.water_progress_animation),
         animationSpec = WavyProgressIndicatorDefaults.ProgressAnimationSpec
     )
     val interactionSource = remember { MutableInteractionSource() }
@@ -71,7 +73,7 @@ internal fun ProgressSection(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "${uiState.todaysIntakeMl} ml",
+                text = stringResource(id = R.string.water_input_section_ml, uiState.todaysIntakeMl),
                 style = MaterialTheme.typography.displayLargeEmphasized
             )
             Row(
@@ -79,7 +81,7 @@ internal fun ProgressSection(
                 horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingExtraSmall)
             ) {
                 Text(
-                    text = "of ${uiState.settings.waterDailyTargetMl} ml",
+                    text = stringResource(id = R.string.water_progress_of_ml, uiState.settings.waterDailyTargetMl),
                     style = MaterialTheme.typography.titleLargeEmphasized,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

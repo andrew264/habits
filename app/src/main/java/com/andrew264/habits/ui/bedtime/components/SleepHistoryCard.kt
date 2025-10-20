@@ -7,8 +7,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.andrew264.habits.R
 import com.andrew264.habits.model.UserPresenceState
 import com.andrew264.habits.ui.bedtime.BedtimeChartRange
 import com.andrew264.habits.ui.bedtime.BedtimeUiState
@@ -39,7 +41,7 @@ internal fun SleepHistoryCard(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                "Sleep History",
+                stringResource(id = R.string.sleep_history_card_title),
                 style = MaterialTheme.typography.headlineSmall,
                 textAlign = TextAlign.Center
             )
@@ -53,13 +55,15 @@ internal fun SleepHistoryCard(
                     options = BedtimeChartRange.entries,
                     selectedOption = uiState.selectedTimelineRange,
                     onOptionSelected = onSetTimelineRange,
-                    getLabel = { it.label }
+                    label = { range ->
+                        Text(stringResource(id = range.label))
+                    }
                 )
             }
             Spacer(modifier = Modifier.height(Dimens.PaddingLarge))
             if (uiState.timelineSegments.isEmpty()) {
                 Text(
-                    text = "No presence data available for this time range.",
+                    text = stringResource(id = R.string.sleep_history_card_no_data),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center

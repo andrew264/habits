@@ -17,8 +17,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.andrew264.habits.R
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.model.schedule.ScheduleGroup
@@ -47,8 +49,8 @@ fun GroupedView(
         EmptyState(
             modifier = modifier,
             icon = Icons.Default.Add,
-            title = "No Groups Yet",
-            description = "Groups allow you to apply the same time ranges to multiple days. Tap 'New Group' in the editor to add one."
+            title = stringResource(R.string.grouped_view_no_groups_yet),
+            description = stringResource(R.string.grouped_view_no_groups_description)
         )
     } else {
         LazyColumn(
@@ -77,7 +79,7 @@ fun GroupedView(
                             OutlinedTextField(
                                 value = group.name,
                                 onValueChange = { newName -> onUpdateGroupName(group.id, newName) },
-                                label = { Text("Group Name") },
+                                label = { Text(stringResource(R.string.grouped_view_group_name)) },
                                 modifier = Modifier.weight(1f),
                                 singleLine = true
                             )
@@ -93,7 +95,7 @@ fun GroupedView(
                             ) {
                                 Icon(
                                     Icons.Default.Delete,
-                                    contentDescription = "Delete Group",
+                                    contentDescription = stringResource(R.string.grouped_view_delete_group),
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -112,7 +114,7 @@ fun GroupedView(
                                 verticalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
                             ) {
                                 Text(
-                                    text = "Time Ranges",
+                                    text = stringResource(R.string.grouped_view_time_ranges),
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 group.timeRanges.forEach { timeRange ->
@@ -151,7 +153,7 @@ fun GroupedView(
                                 modifier = Modifier.size(Dimens.PaddingLarge)
                             )
                             Spacer(Modifier.width(Dimens.PaddingSmall))
-                            Text("Add Time Range")
+                            Text(stringResource(R.string.per_day_view_add_time_range))
                         }
                     }
                 }

@@ -12,9 +12,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
 import com.andrew264.habits.ui.common.components.DrawableImage
 import com.andrew264.habits.ui.common.components.IconSwitch
@@ -88,7 +90,7 @@ private fun WhitelistScreen(
                             val icon = rememberAppIcon(packageName = app.packageName)
                             DrawableImage(
                                 drawable = icon,
-                                contentDescription = "${app.friendlyName} icon",
+                                contentDescription = stringResource(R.string.whitelist_icon_content_description, app.friendlyName),
                                 modifier = Modifier.size(40.dp)
                             )
                         },

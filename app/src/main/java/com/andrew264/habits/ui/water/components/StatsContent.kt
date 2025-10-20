@@ -7,7 +7,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.andrew264.habits.R
 import com.andrew264.habits.domain.analyzer.WaterStatistics
 import com.andrew264.habits.ui.common.charts.BarChart
 import com.andrew264.habits.ui.common.charts.BarChartEntry
@@ -20,15 +22,15 @@ import java.time.format.DateTimeFormatter
 internal fun StatsContent(stats: WaterStatistics) {
     // Summary Cards
     val summaryStatistics = listOf(
-        Statistic(label = "Daily Avg", value = "${stats.dailyAverage} ml"),
-        Statistic(label = "Goal Met", value = "${stats.daysGoalMet} days")
+        Statistic(label = stringResource(R.string.water_stats_content_daily_avg), value = stringResource(id = R.string.water_input_section_ml, stats.dailyAverage)),
+        Statistic(label = stringResource(R.string.water_stats_content_goal_met), value = stringResource(id = R.string.water_stats_content_days, stats.daysGoalMet))
     )
     StatisticCard(statistics = summaryStatistics)
 
     // Daily Intake Chart
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(Dimens.PaddingLarge)) {
-            Text("Daily Intake", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.water_stats_content_daily_intake), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(Dimens.PaddingLarge))
             val dailyEntries = remember(stats.dailyIntakes) {
                 stats.dailyIntakes.map {
@@ -50,7 +52,7 @@ internal fun StatsContent(stats: WaterStatistics) {
     // Hourly Breakdown Chart
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(Dimens.PaddingLarge)) {
-            Text("Peak Hours", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.water_stats_content_peak_hours), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(Dimens.PaddingLarge))
             val hourlyEntries = remember(stats.hourlyBreakdown) {
                 stats.hourlyBreakdown.filter { it.totalMl > 0 }.map {

@@ -17,10 +17,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.andrew264.habits.R
 import com.andrew264.habits.domain.analyzer.ScheduleAnalyzer
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.Schedule
@@ -30,7 +32,6 @@ import com.andrew264.habits.ui.theme.Dimens
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -105,7 +106,7 @@ internal fun ScheduleListItem(
                         SwipeToDismissBoxValue.Settled -> Color.Transparent
                     },
                     animationSpec = tween(300),
-                    label = "SwipeBackgroundColor"
+                    label = stringResource(R.string.schedule_list_item_swipe_background_color)
                 )
 
                 Box(
@@ -120,9 +121,9 @@ internal fun ScheduleListItem(
                             horizontalArrangement = Arrangement.Start,
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            Icon(Icons.Default.Edit, contentDescription = "Edit")
+                            Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.schedule_list_item_edit))
                             Spacer(Modifier.width(Dimens.PaddingSmall))
-                            Text("Edit", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.schedule_list_item_edit), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                         }
                     } else if (direction == SwipeToDismissBoxValue.EndToStart) {
                         Row(
@@ -130,9 +131,9 @@ internal fun ScheduleListItem(
                             horizontalArrangement = Arrangement.End,
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            Text("Delete", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.schedule_list_item_delete), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                             Spacer(Modifier.width(Dimens.PaddingSmall))
-                            Icon(Icons.Default.Delete, contentDescription = "Delete")
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.schedule_list_item_delete))
                         }
                     }
                 }
@@ -163,10 +164,10 @@ internal fun ScheduleListItem(
                     )
 
                     val summaryText =
-                        if (summary.isNotBlank() && summary != "No schedule set.") {
+                        if (summary.isNotBlank() && summary != stringResource(R.string.schedule_list_item_no_schedule_set)) {
                             summary
                         } else {
-                            "This schedule is empty. Edit to add times."
+                            stringResource(R.string.schedule_list_item_empty_schedule)
                         }
                     Text(
                         text = summaryText,
@@ -179,15 +180,13 @@ internal fun ScheduleListItem(
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Schedule,
-                            contentDescription = "Total hours",
+                            contentDescription = stringResource(R.string.schedule_list_item_total_hours),
                             modifier = Modifier.size(18.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(Modifier.width(6.dp))
                         Text(
-                            text = "${String.format(Locale.getDefault(), "%.1f", coverage.totalHours)} hours/week (${
-                                String.format(Locale.getDefault(), "%.1f", coverage.coveragePercentage)
-                            }%)",
+                            text = stringResource(R.string.schedule_info_card_coverage_text, coverage.totalHours, coverage.coveragePercentage),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

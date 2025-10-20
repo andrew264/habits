@@ -18,8 +18,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
+import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
@@ -56,7 +58,7 @@ fun WhitelistTopAppBar(
                 fadeIn() togetherWith fadeOut()
             }
         },
-        label = "TopAppBarAnimation"
+        label = stringResource(R.string.whitelist_top_app_bar_animation)
     ) { searchActive ->
         if (searchActive) {
             TopAppBar(
@@ -64,7 +66,7 @@ fun WhitelistTopAppBar(
                     TextField(
                         value = searchText,
                         onValueChange = onSearchTextChanged,
-                        placeholder = { Text("Search...") },
+                        placeholder = { Text(stringResource(R.string.whitelist_top_app_bar_search)) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .focusRequester(focusRequester),
@@ -87,7 +89,7 @@ fun WhitelistTopAppBar(
                         },
                         colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Exit search")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.whitelist_top_app_bar_exit_search))
                     }
                 },
                 actions = {
@@ -100,20 +102,20 @@ fun WhitelistTopAppBar(
             )
         } else {
             LargeTopAppBar(
-                title = { Text("Manage Whitelist") },
+                title = { Text(stringResource(R.string.whitelist_top_app_bar_manage_whitelist)) },
                 navigationIcon = {
                     IconButton(
                         onClick = onNavigateUp,
                         colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.top_app_bar_back_button_content_description))
                     }
                 },
                 actions = {
                     val searchInteractionSource = remember { MutableInteractionSource() }
                     HapticInteractionEffect(searchInteractionSource)
                     IconButton(onClick = { isSearchActive = true }, interactionSource = searchInteractionSource, colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.primary)) {
-                        Icon(Icons.Outlined.FindInPage, contentDescription = "Search apps")
+                        Icon(Icons.Outlined.FindInPage, contentDescription = stringResource(R.string.whitelist_top_app_bar_search_apps))
                     }
                     OverflowMenu(
                         showSystemApps = showSystemApps,
@@ -138,7 +140,7 @@ private fun OverflowMenu(
         val interactionSource = remember { MutableInteractionSource() }
         HapticInteractionEffect(interactionSource)
         IconButton(onClick = { showMenu = true }, interactionSource = interactionSource, colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.primary)) {
-            Icon(Icons.Default.MoreVert, contentDescription = "More options")
+            Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.whitelist_top_app_bar_more_options))
         }
         DropdownMenu(
             expanded = showMenu,
@@ -146,7 +148,7 @@ private fun OverflowMenu(
         ) {
             DropdownMenuItem(
                 text = {
-                    Text(if (showSystemApps) "Hide system" else "Show system")
+                    Text(if (showSystemApps) stringResource(R.string.whitelist_top_app_bar_hide_system) else stringResource(R.string.whitelist_top_app_bar_show_system))
                 },
                 onClick = {
                     onToggleShowSystemApps()

@@ -11,9 +11,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.andrew264.habits.R
 import com.andrew264.habits.ui.theme.Dimens
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -74,7 +76,7 @@ fun HabitsTimePickerDialog(
                         onDismissRequest()
                         view.performHapticFeedback(HapticFeedbackConstants.REJECT)
                     }) {
-                        Text("Cancel")
+                        Text(stringResource(id = R.string.habits_time_picker_dialog_cancel))
                     }
                     Spacer(Modifier.width(Dimens.PaddingSmall))
                     TextButton(
@@ -83,7 +85,7 @@ fun HabitsTimePickerDialog(
                             view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
                         }
                     ) {
-                        Text("Confirm")
+                        Text(stringResource(id = R.string.habits_time_picker_dialog_confirm))
                     }
                 }
             }

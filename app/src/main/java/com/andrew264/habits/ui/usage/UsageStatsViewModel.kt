@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.andrew264.habits.R
 import com.andrew264.habits.domain.model.UsageStatistics
 import com.andrew264.habits.domain.model.UsageTimeBin
 import com.andrew264.habits.domain.model.WhitelistedApp
@@ -156,15 +157,15 @@ class UsageStatsViewModel @Inject constructor(
 
                     val peakUsageTimeLabel = peakBin?.let {
                         when (range) {
-                            UsageTimeRange.DAY -> "Most used around ${FormatUtils.formatTimestamp(it.startTime, "ha")}"
-                            UsageTimeRange.WEEK -> "Most used on ${FormatUtils.formatDayFullName(it.startTime)}"
+                            UsageTimeRange.DAY -> R.string.usage_most_used_around.toString().format(FormatUtils.formatTimestamp(it.startTime, "ha"))
+                            UsageTimeRange.WEEK -> R.string.usage_most_used_on.toString().format(FormatUtils.formatDayFullName(it.startTime))
                         }
-                    } ?: "Not used in this period"
+                    } ?: R.string.usage_not_used_in_this_period.toString()
 
                     AppDetails(
                         packageName = pkg,
                         friendlyName = friendlyName,
-                        color = whitelistedApp?.colorHex ?: "#808080",
+                        color = whitelistedApp?.colorHex ?: R.string.usage_default_app_color.toString(),
                         sessionLimitMinutes = whitelistedApp?.sessionLimitMinutes,
                         totalUsageMillis = totalUsage,
                         usagePercentage = usagePercentage,

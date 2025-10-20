@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.SaveableStateHolderNavEntryDecorator
@@ -44,10 +45,10 @@ private fun MainScreenLayout(
                     icon = {
                         Icon(
                             if (selected) screen.selectedIcon else screen.unselectedIcon,
-                            contentDescription = screen.title
+                            contentDescription = stringResource(id = screen.title)
                         )
                     },
-                    label = { Text(screen.title) },
+                    label = { Text(stringResource(id = screen.title)) },
                     interactionSource = interactionSource
                 )
             }

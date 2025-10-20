@@ -134,7 +134,7 @@ fun <T> SleepChart(
 
         // Calculate the interval for drawing labels to avoid overlap
         val sampleLabelWidth = textMeasurer.measure(
-            text = "30", // Use a two-digit number for a representative width
+            text = "30",
             style = axisTextStyle
         ).size.width
         val requiredWidthPerLabel = sampleLabelWidth + Dimens.PaddingSmall.toPx()

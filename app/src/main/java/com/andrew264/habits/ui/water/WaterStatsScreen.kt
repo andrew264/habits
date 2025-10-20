@@ -5,18 +5,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BarChart
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.andrew264.habits.R
 import com.andrew264.habits.domain.analyzer.DailyWaterIntake
 import com.andrew264.habits.domain.analyzer.HourlyWaterIntake
 import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
@@ -39,7 +38,7 @@ fun WaterStatsScreen(
 
     Scaffold(
         topBar = {
-            SimpleTopAppBar(title = "Hydration Statistics", onNavigateUp = onNavigateUp, scrollBehavior = scrollBehavior)
+            SimpleTopAppBar(title = stringResource(R.string.water_stats_hydration_statistics), onNavigateUp = onNavigateUp, scrollBehavior = scrollBehavior)
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
@@ -74,7 +73,7 @@ private fun WaterStatsScreen(
                 options = StatsTimeRange.entries,
                 selectedOption = uiState.selectedRange,
                 onOptionSelected = onSetTimeRange,
-                getLabel = { it.label }
+                label = { Text(it.label) }
             )
         }
 
@@ -87,8 +86,8 @@ private fun WaterStatsScreen(
         } else if (uiState.stats == null || uiState.stats.totalDays == 0) {
             EmptyState(
                 icon = Icons.Outlined.BarChart,
-                title = "Not Enough Data",
-                description = "Log some water intake for a few days to see your statistics here."
+                title = stringResource(R.string.water_stats_not_enough_data),
+                description = stringResource(R.string.water_stats_not_enough_data_description)
             )
         } else {
             StatsContent(stats = uiState.stats)

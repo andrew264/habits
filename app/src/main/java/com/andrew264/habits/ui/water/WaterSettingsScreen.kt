@@ -17,8 +17,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.andrew264.habits.R
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.ui.common.components.FeatureToggleListItem
 import com.andrew264.habits.ui.common.components.ScheduleSelector
@@ -81,8 +83,8 @@ private fun WaterSettingsScreen(
 
     if (showIntervalDialog) {
         DurationPickerDialog(
-            title = "Reminder Interval",
-            description = "How often you want to be reminded to drink water.",
+            title = stringResource(R.string.water_settings_reminder_interval),
+            description = stringResource(R.string.water_settings_reminder_interval_description),
             initialTotalMinutes = uiState.settings.waterReminderIntervalMinutes,
             onDismissRequest = { showIntervalDialog = false },
             onConfirm = { totalMinutes ->
@@ -94,8 +96,8 @@ private fun WaterSettingsScreen(
 
     if (showSnoozeDialog) {
         DurationPickerDialog(
-            title = "Snooze Time",
-            description = "How long to snooze a reminder for when you're busy.",
+            title = stringResource(R.string.water_settings_snooze_time),
+            description = stringResource(R.string.water_settings_snooze_time_description),
             initialTotalMinutes = uiState.settings.waterReminderSnoozeMinutes,
             onDismissRequest = { showSnoozeDialog = false },
             onConfirm = { totalMinutes ->
@@ -108,7 +110,7 @@ private fun WaterSettingsScreen(
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            SimpleTopAppBar(title = "Water Tracking", onNavigateUp = onNavigateUp, scrollBehavior = scrollBehavior)
+            SimpleTopAppBar(title = stringResource(R.string.water_settings_water_tracking), onNavigateUp = onNavigateUp, scrollBehavior = scrollBehavior)
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
@@ -121,7 +123,7 @@ private fun WaterSettingsScreen(
             verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
         ) {
             FeatureToggleListItem(
-                title = "Enable Water tracking",
+                title = stringResource(R.string.water_settings_enable_water_tracking),
                 checked = uiState.settings.isWaterTrackingEnabled,
                 onCheckedChange = onWaterTrackingToggled
             )
@@ -130,16 +132,16 @@ private fun WaterSettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
             ) {
                 Column {
-                    ListSectionHeader("Daily Target")
+                    ListSectionHeader(stringResource(R.string.water_settings_daily_target))
                     NavigationListItem(
                         icon = Icons.Outlined.TrackChanges,
-                        title = "Daily Target",
+                        title = stringResource(R.string.water_settings_daily_target),
                         onClick = onEditTargetClicked,
                         enabled = uiState.settings.isWaterTrackingEnabled,
                         position = ListItemPosition.SEPARATE,
                         valueContent = {
                             Text(
-                                text = "${uiState.settings.waterDailyTargetMl} ml",
+                                text = stringResource(R.string.water_settings_daily_target_ml, uiState.settings.waterDailyTargetMl),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -148,12 +150,12 @@ private fun WaterSettingsScreen(
                 }
 
                 Column {
-                    ListSectionHeader("Reminders")
+                    ListSectionHeader(stringResource(R.string.water_settings_reminders))
                     Column(modifier = Modifier.clip(MaterialTheme.shapes.large)) {
                         ToggleListItem(
                             icon = Icons.Outlined.Notifications,
-                            title = "Enable reminders",
-                            summary = "Get notifications to drink water.",
+                            title = stringResource(R.string.water_settings_enable_reminders),
+                            summary = stringResource(R.string.water_settings_enable_reminders_summary),
                             checked = uiState.settings.isWaterReminderEnabled,
                             onCheckedChange = onRemindersToggled,
                             enabled = uiState.settings.isWaterTrackingEnabled,
@@ -161,7 +163,7 @@ private fun WaterSettingsScreen(
                         )
                         NavigationListItem(
                             icon = Icons.Outlined.Timer,
-                            title = "Interval",
+                            title = stringResource(R.string.water_settings_interval),
                             onClick = { showIntervalDialog = true },
                             enabled = uiState.settings.isWaterTrackingEnabled && uiState.settings.isWaterReminderEnabled,
                             position = ListItemPosition.MIDDLE,
@@ -175,7 +177,7 @@ private fun WaterSettingsScreen(
                         )
                         NavigationListItem(
                             icon = Icons.Outlined.Snooze,
-                            title = "Snooze",
+                            title = stringResource(R.string.water_settings_snooze),
                             onClick = { showSnoozeDialog = true },
                             enabled = uiState.settings.isWaterTrackingEnabled && uiState.settings.isWaterReminderEnabled,
                             position = ListItemPosition.MIDDLE,
@@ -194,7 +196,7 @@ private fun WaterSettingsScreen(
                             schedules = uiState.allSchedules,
                             selectedSchedule = selectedSchedule,
                             onScheduleSelected = onScheduleSelected,
-                            label = "Reminder Schedule",
+                            label = stringResource(R.string.water_settings_reminder_schedule),
                             enabled = uiState.settings.isWaterTrackingEnabled && uiState.settings.isWaterReminderEnabled,
                             position = ListItemPosition.BOTTOM
                         )

@@ -1,7 +1,9 @@
 package com.andrew264.habits.ui.bedtime
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.andrew264.habits.R
 import com.andrew264.habits.domain.analyzer.ScheduleCoverage
 import com.andrew264.habits.domain.model.TimelineSegment
 import com.andrew264.habits.domain.repository.SettingsRepository
@@ -15,14 +17,14 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 enum class BedtimeChartRange(
-    val label: String,
+    @StringRes val label: Int,
     val durationMillis: Long,
     val isLinear: Boolean
 ) {
-    TWELVE_HOURS("12 Hr", TimeUnit.HOURS.toMillis(12), true),
-    DAY("1 Day", TimeUnit.DAYS.toMillis(1), true),
-    WEEK("7 Days", TimeUnit.DAYS.toMillis(7), false),
-    MONTH("30 Days", TimeUnit.DAYS.toMillis(30), false)
+    TWELVE_HOURS(R.string.bedtime_chart_range_12_hr, TimeUnit.HOURS.toMillis(12), true),
+    DAY(R.string.bedtime_chart_range_1_day, TimeUnit.DAYS.toMillis(1), true),
+    WEEK(R.string.bedtime_chart_range_7_days, TimeUnit.DAYS.toMillis(7), false),
+    MONTH(R.string.bedtime_chart_range_30_days, TimeUnit.DAYS.toMillis(30), false)
 }
 
 data class ScheduleInfo(

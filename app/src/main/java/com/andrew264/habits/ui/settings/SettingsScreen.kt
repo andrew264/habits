@@ -12,10 +12,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.components.SimpleTopAppBar
 import com.andrew264.habits.ui.common.list_items.ListItemPosition
 import com.andrew264.habits.ui.common.list_items.ListSectionHeader
@@ -103,7 +105,7 @@ private fun SettingsScreen(
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            SimpleTopAppBar("Settings", scrollBehavior = scrollBehavior)
+            SimpleTopAppBar(stringResource(R.string.app_route_settings), scrollBehavior = scrollBehavior)
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
     ) { innerPadding ->
@@ -114,14 +116,14 @@ private fun SettingsScreen(
                 .padding(PaddingValues(horizontal = Dimens.PaddingLarge))
         ) {
             item {
-                ListSectionHeader("Features")
+                ListSectionHeader(stringResource(R.string.settings_features))
             }
 
             item {
                 ToggleListItem(
                     icon = Icons.Outlined.Alarm,
-                    title = "Bedtime Tracking",
-                    summary = "Monitor your sleep and bedtime habits",
+                    title = stringResource(R.string.settings_bedtime_tracking),
+                    summary = stringResource(R.string.settings_bedtime_tracking_summary),
                     checked = uiState.settings.isBedtimeTrackingEnabled,
                     onCheckedChange = onBedtimeToggled,
                     onClick = { onNavigate(BedtimeSettings) },
@@ -132,14 +134,14 @@ private fun SettingsScreen(
             item {
                 ToggleListItem(
                     icon = Icons.Outlined.Timeline,
-                    title = "App Usage Tracking",
-                    summary = "Track screen time and set limits for apps.",
+                    title = stringResource(R.string.settings_app_usage_tracking),
+                    summary = stringResource(R.string.settings_app_usage_tracking_summary),
                     checked = uiState.settings.isAppUsageTrackingEnabled,
                     onCheckedChange = onUsageToggled,
                     onClick = { onNavigate(UsageSettings) },
                     position = ListItemPosition.MIDDLE,
                     isWarningVisible = uiState.settings.isAppUsageTrackingEnabled && !uiState.isAccessibilityServiceEnabled,
-                    warningText = "Service is not running. Tap to fix in accessibility settings.",
+                    warningText = stringResource(R.string.settings_service_not_running),
                     onWarningClick = onOpenAccessibilitySettings
                 )
             }
@@ -147,8 +149,8 @@ private fun SettingsScreen(
             item {
                 ToggleListItem(
                     icon = Icons.Outlined.WaterDrop,
-                    title = "Water Tracking",
-                    summary = "Track daily water intake and set reminders.",
+                    title = stringResource(R.string.settings_water_tracking),
+                    summary = stringResource(R.string.settings_water_tracking_summary),
                     checked = uiState.settings.isWaterTrackingEnabled,
                     onCheckedChange = onWaterToggled,
                     onClick = { onNavigate(WaterSettings) },
@@ -161,13 +163,13 @@ private fun SettingsScreen(
             }
 
             item {
-                ListSectionHeader("Management")
+                ListSectionHeader(stringResource(R.string.settings_management))
             }
 
             item {
                 NavigationListItem(
                     icon = Icons.Outlined.Schedule,
-                    title = "Create and manage schedules",
+                    title = stringResource(R.string.settings_create_and_manage_schedules),
                     onClick = { onNavigate(Schedules) },
                     position = ListItemPosition.SEPARATE
                 )
@@ -178,13 +180,13 @@ private fun SettingsScreen(
             }
 
             item {
-                ListSectionHeader("Data & Privacy")
+                ListSectionHeader(stringResource(R.string.settings_data_and_privacy))
             }
 
             item {
                 NavigationListItem(
                     icon = Icons.Outlined.DeleteForever,
-                    title = "Delete Data",
+                    title = stringResource(R.string.data_management_delete_data),
                     onClick = { onNavigate(Privacy) },
                     position = ListItemPosition.TOP
                 )
@@ -193,7 +195,7 @@ private fun SettingsScreen(
             item {
                 NavigationListItem(
                     icon = Icons.Outlined.Info,
-                    title = "App Permissions & Info",
+                    title = stringResource(R.string.settings_app_permissions_and_info),
                     onClick = onOpenAppSettings,
                     position = ListItemPosition.BOTTOM
                 )

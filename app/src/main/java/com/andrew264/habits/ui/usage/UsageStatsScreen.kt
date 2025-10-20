@@ -14,11 +14,13 @@ import androidx.compose.material3.adaptive.navigation.NavigableListDetailPaneSca
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import com.andrew264.habits.R
 import com.andrew264.habits.domain.model.UsageStatistics
 import com.andrew264.habits.domain.model.UsageTimeBin
 import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
@@ -92,9 +94,9 @@ private fun UsageStatsScreen(
 
         !uiState.isAppUsageTrackingEnabled -> {
             FeatureDisabledContent(
-                title = "Usage Tracking Disabled",
-                description = "This feature uses the Accessibility Service to show you how you spend time on your phone. You can enable it in the Monitoring settings.",
-                buttonText = "Go to Settings",
+                title = stringResource(R.string.usage_tracking_disabled_title),
+                description = stringResource(R.string.usage_tracking_disabled_description),
+                buttonText = stringResource(R.string.settings_go_to_settings),
                 onEnableClicked = { onNavigate(Settings) }
             )
         }
@@ -154,8 +156,8 @@ private fun UsageStatsScreen(
                         } else {
                             EmptyState(
                                 icon = Icons.AutoMirrored.Filled.PlaylistAddCheck,
-                                title = "Select an App",
-                                description = "Select an app from the list to see its detailed usage statistics."
+                                title = stringResource(R.string.usage_select_an_app),
+                                description = stringResource(R.string.usage_select_an_app_description)
                             )
                         }
                     }

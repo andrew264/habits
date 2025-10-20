@@ -20,10 +20,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.andrew264.habits.R
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.ui.theme.Dimens
 import java.util.Locale
@@ -41,7 +43,7 @@ fun DaySelector(
         verticalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
     ) {
         Text(
-            text = "Days",
+            text = stringResource(R.string.day_selector_days),
             style = MaterialTheme.typography.titleMedium
         )
 
@@ -55,15 +57,15 @@ fun DaySelector(
 
                 val backgroundColor by animateColorAsState(
                     targetValue = if (selected) MaterialTheme.colorScheme.onTertiaryContainer else Color.Transparent,
-                    label = "DaySelectorBackgroundColor"
+                    label = stringResource(R.string.day_selector_background_color)
                 )
                 val contentColor by animateColorAsState(
                     targetValue = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.primary,
-                    label = "DaySelectorContentColor"
+                    label = stringResource(R.string.day_selector_content_color)
                 )
                 val borderColor by animateColorAsState(
                     targetValue = if (selected) Color.Transparent else MaterialTheme.colorScheme.outline,
-                    label = "DaySelectorBorderColor"
+                    label = stringResource(R.string.day_selector_border_color)
                 )
 
                 Box(

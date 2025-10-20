@@ -15,10 +15,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.andrew264.habits.R
 import com.andrew264.habits.domain.usecase.DeletableDataType
 import com.andrew264.habits.domain.usecase.TimeRangeOption
 import com.andrew264.habits.ui.common.components.SimpleTopAppBar
@@ -36,12 +39,14 @@ fun DataManagementScreen(
     onNavigateUp: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     LaunchedEffect(viewModel.events) {
         viewModel.events.collectLatest { event ->
             when (event) {
                 is DataManagementEvent.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(event.message)
+                    val message = context.getString(event.messageResId)
+                    snackbarHostState.showSnackbar(message = message)
                 }
             }
         }
@@ -80,7 +85,7 @@ private fun DataManagementScreen(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             SimpleTopAppBar(
-                title = "Delete Data",
+                title = stringResource(R.string.data_management_delete_data),
                 onNavigateUp = onNavigateUp,
                 scrollBehavior = scrollBehavior
             )
@@ -108,7 +113,7 @@ private fun DataManagementScreen(
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
                         } else {
-                            Text("Delete Data")
+                            Text(stringResource(R.string.data_management_delete_data))
                         }
                     }
                 }
@@ -133,8 +138,8 @@ private fun DataManagementScreen(
             }
             item {
                 DataTypeItem(
-                    title = "Sleep History",
-                    description = "Data from Sleep API and bedtime schedules.",
+                    title = stringResource(R.string.data_management_sleep_history),
+                    description = stringResource(R.string.data_management_sleep_history_description),
                     icon = Icons.Outlined.Bedtime,
                     checked = DeletableDataType.SLEEP in uiState.selectedDataTypes,
                     onToggle = { onToggleDataType(DeletableDataType.SLEEP) }
@@ -142,8 +147,8 @@ private fun DataManagementScreen(
             }
             item {
                 DataTypeItem(
-                    title = "Water Intake History",
-                    description = "All logged water entries.",
+                    title = stringResource(R.string.data_management_water_intake_history),
+                    description = stringResource(R.string.data_management_water_intake_history_description),
                     icon = Icons.Outlined.WaterDrop,
                     checked = DeletableDataType.WATER in uiState.selectedDataTypes,
                     onToggle = { onToggleDataType(DeletableDataType.WATER) }
@@ -151,8 +156,8 @@ private fun DataManagementScreen(
             }
             item {
                 DataTypeItem(
-                    title = "App & Screen Usage History",
-                    description = "Screen on/off times and foreground app data.",
+                    title = stringResource(R.string.data_management_app_usage_history),
+                    description = stringResource(R.string.data_management_app_usage_history_description),
                     icon = Icons.Outlined.Timeline,
                     checked = DeletableDataType.USAGE in uiState.selectedDataTypes,
                     onToggle = { onToggleDataType(DeletableDataType.USAGE) }

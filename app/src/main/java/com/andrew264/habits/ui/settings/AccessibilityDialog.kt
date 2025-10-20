@@ -9,7 +9,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import com.andrew264.habits.R
 
 @Composable
 fun AccessibilityServiceDialog(
@@ -20,8 +22,8 @@ fun AccessibilityServiceDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Outlined.SettingsAccessibility, contentDescription = null) },
-        title = { Text("Enable Service") },
-        text = { Text("To track app usage, you need to enable the Habits accessibility service in your phone's settings. This allows the app to see which application is in the foreground.") },
+        title = { Text(stringResource(R.string.settings_enable_service_title)) },
+        text = { Text(stringResource(R.string.settings_enable_service_description)) },
         confirmButton = {
             TextButton(
                 onClick = {
@@ -29,7 +31,7 @@ fun AccessibilityServiceDialog(
                     onConfirm()
                 }
             ) {
-                Text("Go to Settings", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.settings_go_to_settings), fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
@@ -39,7 +41,7 @@ fun AccessibilityServiceDialog(
                     onDismiss()
                 }
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.data_management_cancel))
             }
         }
     )

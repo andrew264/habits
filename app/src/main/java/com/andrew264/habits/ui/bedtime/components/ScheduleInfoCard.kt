@@ -7,13 +7,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.andrew264.habits.R
 import com.andrew264.habits.domain.analyzer.ScheduleCoverage
 import com.andrew264.habits.ui.bedtime.ScheduleInfo
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
-import java.util.Locale
 
 @Composable
 fun ScheduleInfoCard(
@@ -38,15 +39,17 @@ fun ScheduleInfoCard(
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Schedule,
-                    contentDescription = "Total hours",
+                    contentDescription = stringResource(id = R.string.schedule_info_card_total_hours_content_description),
                     modifier = Modifier.size(18.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(
-                    text = "${String.format(Locale.getDefault(), "%.1f", scheduleInfo.coverage.totalHours)} hours/week (${
-                        String.format(Locale.getDefault(), "%.1f", scheduleInfo.coverage.coveragePercentage)
-                    }%)",
+                    text = stringResource(
+                        id = R.string.schedule_info_card_coverage_text,
+                        scheduleInfo.coverage.totalHours,
+                        scheduleInfo.coverage.coveragePercentage
+                    ),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

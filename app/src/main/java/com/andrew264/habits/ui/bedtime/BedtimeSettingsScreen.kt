@@ -16,8 +16,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.andrew264.habits.R
 import com.andrew264.habits.model.schedule.DefaultSchedules
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.ui.common.components.FeatureToggleListItem
@@ -70,7 +72,11 @@ private fun BedtimeSettingsScreen(
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            SimpleTopAppBar(title = "Bedtime Settings", onNavigateUp = onNavigateUp, scrollBehavior = scrollBehavior)
+            SimpleTopAppBar(
+                title = stringResource(id = R.string.bedtime_settings_title),
+                onNavigateUp = onNavigateUp,
+                scrollBehavior = scrollBehavior
+            )
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
@@ -83,14 +89,14 @@ private fun BedtimeSettingsScreen(
             verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
         ) {
             FeatureToggleListItem(
-                title = "Enable Bedtime Tracking",
+                title = stringResource(id = R.string.bedtime_settings_enable_bedtime_tracking),
                 checked = uiState.settings.isBedtimeTrackingEnabled,
                 onCheckedChange = onBedtimeTrackingToggled
             )
 
             if (uiState.settings.isBedtimeTrackingEnabled) {
                 Column {
-                    ListSectionHeader("Schedule")
+                    ListSectionHeader(stringResource(id = R.string.bedtime_settings_schedule_section_header))
                     Column(
                         modifier = Modifier.clip(MaterialTheme.shapes.large)
                     ) {
@@ -102,12 +108,12 @@ private fun BedtimeSettingsScreen(
                             schedules = uiState.allSchedules,
                             selectedSchedule = selectedSchedule,
                             onScheduleSelected = onScheduleSelected,
-                            label = "Active Schedule",
+                            label = stringResource(id = R.string.bedtime_settings_active_schedule),
                             enabled = uiState.settings.isBedtimeTrackingEnabled,
                             position = ListItemPosition.TOP
                         )
                         InfoListItem(
-                            text = "Your selected bedtime schedule is used to improve sleep detection accuracy.",
+                            text = stringResource(id = R.string.bedtime_settings_schedule_info),
                             icon = Icons.Outlined.Info,
                             position = ListItemPosition.BOTTOM
                         )

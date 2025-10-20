@@ -7,10 +7,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.andrew264.habits.R
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 
@@ -77,7 +79,7 @@ fun DurationPickerDialog(
                             onDismissRequest()
                         }
                     ) {
-                        Text("Cancel")
+                        Text(stringResource(id = R.string.duration_picker_dialog_cancel))
                     }
                     Spacer(Modifier.width(Dimens.PaddingSmall))
 
@@ -88,7 +90,7 @@ fun DurationPickerDialog(
                             onConfirm(totalMinutes)
                         }
                     ) {
-                        Text("OK")
+                        Text(stringResource(id = R.string.duration_picker_dialog_ok))
                     }
                 }
             }
@@ -118,7 +120,7 @@ private fun DurationPicker(
             onValueChange = onHourChange,
             modifier = Modifier.width(80.dp)
         )
-        Text("hr", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(horizontal = 8.dp))
+        Text(stringResource(id = R.string.duration_picker_dialog_hour), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(horizontal = 8.dp))
         NumberPicker(
             items = minutes,
             selectedItem = selectedMinute,
@@ -126,7 +128,7 @@ private fun DurationPicker(
             loop = true,
             modifier = Modifier.width(80.dp)
         )
-        Text("min", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(horizontal = 8.dp))
+        Text(stringResource(id = R.string.duration_picker_dialog_minute), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(horizontal = 8.dp))
     }
 }
 

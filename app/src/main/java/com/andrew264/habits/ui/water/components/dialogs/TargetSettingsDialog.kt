@@ -12,10 +12,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.andrew264.habits.R
 import com.andrew264.habits.domain.model.PersistentSettings
 import com.andrew264.habits.ui.common.components.IconSwitch
 import com.andrew264.habits.ui.theme.Dimens
@@ -39,7 +41,7 @@ fun TargetSettingsDialog(
                 verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
             ) {
                 Text(
-                    if (showEnableSwitch) "Tracking Settings" else "Set Daily Target",
+                    if (showEnableSwitch) stringResource(R.string.water_target_settings_dialog_tracking_settings) else stringResource(R.string.water_target_settings_dialog_set_daily_target),
                     style = MaterialTheme.typography.headlineSmall
                 )
                 if (showEnableSwitch) {
@@ -48,7 +50,7 @@ fun TargetSettingsDialog(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Enable Tracking", style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(R.string.water_target_settings_dialog_enable_tracking), style = MaterialTheme.typography.bodyLarge)
                         IconSwitch(
                             checked = isEnabled,
                             onCheckedChange = {
@@ -62,7 +64,7 @@ fun TargetSettingsDialog(
                 OutlinedTextField(
                     value = targetMl,
                     onValueChange = { targetMl = it },
-                    label = { Text("Daily Target (ml)") },
+                    label = { Text(stringResource(R.string.water_target_settings_dialog_daily_target_ml)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                     enabled = if (showEnableSwitch) isEnabled else true
@@ -74,12 +76,12 @@ fun TargetSettingsDialog(
                     TextButton(onClick = {
                         onDismiss()
                         view.performHapticFeedback(HapticFeedbackConstants.REJECT)
-                    }) { Text("Cancel") }
+                    }) { Text(stringResource(R.string.water_target_settings_dialog_cancel)) }
                     Spacer(Modifier.width(Dimens.PaddingSmall))
                     TextButton(onClick = {
                         onSave(isEnabled, targetMl)
                         view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-                    }) { Text("Save") }
+                    }) { Text(stringResource(R.string.water_target_settings_dialog_save)) }
                 }
             }
         }

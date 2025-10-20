@@ -1,11 +1,13 @@
 package com.andrew264.habits.ui.navigation
 
 import android.os.Parcelable
+import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation3.runtime.NavKey
+import com.andrew264.habits.R
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
@@ -14,7 +16,8 @@ import kotlinx.serialization.Serializable
 sealed interface AppRoute : NavKey, Parcelable
 
 sealed interface TopLevelRoute : AppRoute {
-    val title: String
+    @get:StringRes
+    val title: Int
     val selectedIcon: ImageVector
     val unselectedIcon: ImageVector
 }
@@ -23,7 +26,7 @@ sealed interface TopLevelRoute : AppRoute {
 @Serializable
 data object Home : TopLevelRoute {
     @IgnoredOnParcel
-    override val title = "Home"
+    override val title = R.string.app_route_home
 
     @IgnoredOnParcel
     override val selectedIcon = Icons.Filled.Home
@@ -36,7 +39,7 @@ data object Home : TopLevelRoute {
 @Serializable
 data object Water : TopLevelRoute {
     @IgnoredOnParcel
-    override val title = "Water"
+    override val title = R.string.app_route_water
 
     @IgnoredOnParcel
     override val selectedIcon = Icons.Filled.WaterDrop
@@ -49,7 +52,7 @@ data object Water : TopLevelRoute {
 @Serializable
 data object Usage : TopLevelRoute {
     @IgnoredOnParcel
-    override val title = "Usage"
+    override val title = R.string.app_route_usage
 
     @IgnoredOnParcel
     override val selectedIcon = Icons.Filled.Timeline
@@ -62,7 +65,7 @@ data object Usage : TopLevelRoute {
 @Serializable
 data object Settings : TopLevelRoute {
     @IgnoredOnParcel
-    override val title = "Settings"
+    override val title = R.string.app_route_settings
 
     @IgnoredOnParcel
     override val selectedIcon = Icons.Filled.Settings
@@ -75,7 +78,7 @@ data object Settings : TopLevelRoute {
 @Serializable
 data object Bedtime : TopLevelRoute {
     @IgnoredOnParcel
-    override val title = "Bedtime"
+    override val title = R.string.app_route_bedtime
 
     @IgnoredOnParcel
     override val selectedIcon = Icons.Filled.Alarm

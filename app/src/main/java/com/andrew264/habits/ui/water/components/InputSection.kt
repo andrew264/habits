@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -23,6 +24,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import com.andrew264.habits.R
 import com.andrew264.habits.ui.theme.Dimens
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -82,6 +84,10 @@ internal fun InputSection(
                     color = inactiveTextColor,
                     fontWeight = FontWeight.Bold
                 )
+                val valueText = stringResource(
+                    R.string.water_input_section_ml,
+                    currentSliderState.value.roundToInt()
+                )
 
                 SliderDefaults.Track(
                     sliderState = currentSliderState,
@@ -89,21 +95,14 @@ internal fun InputSection(
                         .fillMaxWidth()
                         .height(128.dp)
                         .drawWithContent {
-                            val sliderValue = currentSliderState.value
-                            val valueText = "${sliderValue.roundToInt()} ml"
-
-                            // Draw the track first
                             drawContent()
 
-                            // Calculate track widths
                             val activeTrackEnd = size.width * currentSliderState.coercedValueAsFraction
                             val activeTrackWidth = activeTrackEnd
                             val inactiveTrackWidth = size.width - activeTrackEnd
 
-                            // Text positioning padding
                             val textPadding = Dimens.PaddingExtraExtraLarge.toPx()
 
-                            // Try to place text on the inactive side first
                             val measuredText = textMeasurer.measure(
                                 text = valueText,
                                 style = inactiveTextStyle
@@ -119,7 +118,6 @@ internal fun InputSection(
                                 val x = activeTrackEnd + halfThumbWidth + textPadding
                                 drawText(measuredText, topLeft = Offset(x, y))
                             } else {
-                                // Otherwise, place it on the active side
                                 val measuredTextOnActive = textMeasurer.measure(
                                     text = valueText,
                                     style = activeTextStyle
@@ -166,11 +164,11 @@ internal fun InputSection(
         ) {
             Icon(
                 Icons.Filled.WaterDrop,
-                contentDescription = "Log Water",
+                contentDescription = stringResource(R.string.water_input_section_log_water),
                 modifier = Modifier.size(24.dp)
             )
             Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-            Text("Drink", style = MaterialTheme.typography.headlineMediumEmphasized)
+            Text(stringResource(R.string.water_input_section_drink), style = MaterialTheme.typography.headlineMediumEmphasized)
         }
     }
 }

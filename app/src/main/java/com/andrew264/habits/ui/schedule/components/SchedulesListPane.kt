@@ -15,6 +15,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.stringResource
+import com.andrew264.habits.R
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
 import com.andrew264.habits.ui.common.components.EmptyState
@@ -42,8 +44,8 @@ fun SchedulesListPane(
         topBar = {
             if (!isDetailPaneVisible) {
                 LargeFlexibleTopAppBar(
-                    title = { Text("Schedules") },
-                    subtitle = { Text("Manage your routines") },
+                    title = { Text(stringResource(R.string.schedule_list_pane_schedules)) },
+                    subtitle = { Text(stringResource(R.string.schedule_list_pane_manage_routines)) },
                     navigationIcon = {
                         val interactionSource = remember { MutableInteractionSource() }
                         HapticInteractionEffect(interactionSource)
@@ -51,7 +53,7 @@ fun SchedulesListPane(
                             onClick = onNavigateUp, interactionSource = interactionSource,
                             colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.top_app_bar_back_button_content_description))
                         }
                     },
                     actions = {
@@ -64,9 +66,9 @@ fun SchedulesListPane(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer, contentColor = MaterialTheme.colorScheme.tertiary),
                             interactionSource = interactionSource,
                         ) {
-                            Icon(Icons.Filled.Add, contentDescription = "New Schedule")
+                            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.schedule_editor_new_schedule))
                             Spacer(Modifier.width(Dimens.PaddingSmall))
-                            Text("Create Schedule")
+                            Text(stringResource(R.string.schedule_list_pane_create_schedule))
                         }
                     },
                     scrollBehavior = scrollBehavior,
@@ -86,8 +88,8 @@ fun SchedulesListPane(
             } else if (uiState.schedules.isEmpty() && uiState.schedulePendingDeletion == null) {
                 EmptyState(
                     icon = Icons.Default.Schedule,
-                    title = "No schedules yet",
-                    description = "Tap the 'New Schedule' button to create one."
+                    title = stringResource(R.string.schedule_list_pane_no_schedules_yet),
+                    description = stringResource(R.string.schedule_list_pane_no_schedules_description)
                 )
             } else {
                 ScheduleList(

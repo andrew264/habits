@@ -14,18 +14,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.color_picker.utils.toColor
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 
 @Composable
 fun ColorPickerDialog(
-    title: String = "Select a color",
+    title: String = stringResource(R.string.color_picker_dialog_title),
     initialColor: Color,
     showAlphaSlider: Boolean = false,
     onDismissRequest: () -> Unit,
@@ -75,11 +77,11 @@ fun ColorPickerDialog(
                     OutlinedTextField(
                         value = state.hexCode,
                         onValueChange = state::updateFromHex,
-                        label = { Text("HEX") },
+                        label = { Text(stringResource(R.string.color_picker_dialog_hex_label)) },
                         isError = !state.isValidHex,
                         supportingText = {
                             if (!state.isValidHex)
-                                Text("Invalid HEX. Use #RRGGBB or #AARRGGBB")
+                                Text(stringResource(R.string.color_picker_dialog_invalid_hex))
                         },
                         keyboardOptions = KeyboardOptions(
                             capitalization = KeyboardCapitalization.Characters,
@@ -103,7 +105,7 @@ fun ColorPickerDialog(
                             view.performHapticFeedback(HapticFeedbackConstants.REJECT)
                             onDismissRequest()
                         }
-                    ) { Text("Cancel") }
+                    ) { Text(stringResource(R.string.color_picker_dialog_cancel)) }
 
                     Spacer(Modifier.width(Dimens.PaddingSmall))
 
@@ -112,7 +114,7 @@ fun ColorPickerDialog(
                             view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
                             onConfirmation(state.hsvColor.toColor())
                         },
-                    ) { Text("OK") }
+                    ) { Text(stringResource(R.string.color_picker_dialog_ok)) }
                 }
             }
         }

@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.andrew264.habits.R
 import com.andrew264.habits.domain.manager.SnoozeManager
 import com.andrew264.habits.domain.usecase.CheckUsageLimitsUseCase
 import com.andrew264.habits.ui.common.utils.FormatUtils
@@ -81,18 +82,18 @@ class BlockerViewModel @Inject constructor(
             "daily_shared" -> BlockerUiState(
                 appIcon = appIcon,
                 appName = appName,
-                title = "Daily Goal Reached",
-                description = "You've used your tracked apps for over $formattedLimit today.",
+                title = context.getString(R.string.blocker_daily_goal_reached_title),
+                description = context.getString(R.string.blocker_daily_goal_reached_description, formattedLimit),
                 infoItems = listOf(
                     InfoItem(
                         icon = Icons.Outlined.Timer,
-                        title = "Daily Limit: $formattedLimit",
-                        description = "This is the shared goal you set for all tracked apps."
+                        title = context.getString(R.string.blocker_daily_limit_title, formattedLimit),
+                        description = context.getString(R.string.blocker_daily_limit_description)
                     ),
                     InfoItem(
                         icon = Icons.Outlined.BarChart,
-                        title = "Total Time Spent: $formattedUsage",
-                        description = "This screen is a reminder to take a break and stay mindful of your habits."
+                        title = context.getString(R.string.blocker_total_time_spent_title, formattedUsage),
+                        description = context.getString(R.string.blocker_mindful_usage_reminder)
                     )
                 )
             )
@@ -100,18 +101,18 @@ class BlockerViewModel @Inject constructor(
             else -> BlockerUiState( // "session"
                 appIcon = appIcon,
                 appName = appName,
-                title = "Time for a Break",
-                description = "You've used $appName for over $formattedLimit continuously.",
+                title = context.getString(R.string.blocker_session_limit_title),
+                description = context.getString(R.string.blocker_session_limit_description, appName, formattedLimit),
                 infoItems = listOf(
                     InfoItem(
                         icon = Icons.Outlined.Timer,
-                        title = "Session Limit: $formattedLimit",
-                        description = "You set this goal to help manage your time in the app."
+                        title = context.getString(R.string.blocker_session_limit_details_title, formattedLimit),
+                        description = context.getString(R.string.blocker_session_limit_details_description)
                     ),
                     InfoItem(
                         icon = Icons.Outlined.BarChart,
-                        title = "Current Session: $formattedUsage",
-                        description = "This screen is a reminder to take a break and use your time intentionally."
+                        title = context.getString(R.string.blocker_current_session_title, formattedUsage),
+                        description = context.getString(R.string.blocker_intentional_usage_reminder)
                     )
                 )
             )

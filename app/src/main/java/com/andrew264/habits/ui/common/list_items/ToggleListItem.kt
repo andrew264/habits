@@ -20,7 +20,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.components.IconSwitch
 import com.andrew264.habits.ui.theme.Dimens
 
@@ -93,7 +95,7 @@ fun ToggleListItem(
                     if (onClick != null) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = "More options",
+                            contentDescription = stringResource(id = R.string.toggle_list_item_more_options),
                             tint = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
                         )
                     }
@@ -137,7 +139,7 @@ fun ToggleListItem(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Warning,
-                        contentDescription = "Warning",
+                        contentDescription = stringResource(id = R.string.toggle_list_item_warning),
                         tint = MaterialTheme.colorScheme.error
                     )
                     Text(

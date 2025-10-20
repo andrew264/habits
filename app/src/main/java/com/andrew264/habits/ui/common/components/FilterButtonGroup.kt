@@ -9,7 +9,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.theme.HabitsTheme
 
@@ -19,7 +21,7 @@ fun <T> FilterButtonGroup(
     options: List<T>,
     selectedOption: T,
     onOptionSelected: (T) -> Unit,
-    getLabel: (T) -> String,
+    label: @Composable (T) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val view = LocalView.current
@@ -32,7 +34,7 @@ fun <T> FilterButtonGroup(
                 onClick = { menuState.show() },
                 interactionSource = interactionSource
             ) {
-                Icon(Icons.Default.MoreVert, "More options")
+                Icon(Icons.Default.MoreVert, stringResource(id = R.string.filter_button_group_more_options))
             }
         },
         horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
@@ -54,12 +56,12 @@ fun <T> FilterButtonGroup(
                             else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
                         },
                     ) {
-                        Text(getLabel(option))
+                        label(option)
                     }
                 },
                 menuContent = { menuState ->
                     DropdownMenuItem(
-                        text = { Text(getLabel(option)) },
+                        text = { label(option) },
                         onClick = {
                             onOptionSelected(option)
                             menuState.dismiss()
@@ -89,7 +91,7 @@ private fun FilterButtonGroupPreview() {
             options = SampleOptions.entries,
             selectedOption = selected,
             onOptionSelected = { selected = it },
-            getLabel = { it.label }
+            label = { Text(it.label) }
         )
     }
 }

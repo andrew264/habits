@@ -11,9 +11,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.andrew264.habits.R
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.model.schedule.ScheduleGroup
 import com.andrew264.habits.ui.common.list_items.ListItemPosition
@@ -28,7 +30,7 @@ fun ScheduleSelector(
     onScheduleSelected: (Schedule) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    label: String = "Schedule",
+    label: String = stringResource(R.string.schedule_selector_label),
     position: ListItemPosition = ListItemPosition.SEPARATE
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
@@ -49,7 +51,7 @@ fun ScheduleSelector(
     SelectionListItem(
         modifier = modifier,
         title = label,
-        selectedValue = selectedSchedule?.name ?: "None",
+        selectedValue = selectedSchedule?.name ?: stringResource(R.string.schedule_selector_none),
         onClick = { showDialog = true },
         enabled = enabled,
         position = position

@@ -2,10 +2,12 @@ package com.andrew264.habits.ui.schedule
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.andrew264.habits.R
 import com.andrew264.habits.domain.repository.ScheduleRepository
 import com.andrew264.habits.domain.usecase.CheckScheduleInUseUseCase
 import com.andrew264.habits.domain.usecase.DeleteScheduleUseCase
 import com.andrew264.habits.model.schedule.Schedule
+import com.andrew264.habits.ui.common.SnackbarMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
@@ -14,8 +16,8 @@ import javax.inject.Inject
 
 sealed interface SchedulesUiEvent {
     data class ShowSnackbar(
-        val message: String,
-        val actionLabel: String? = null
+        val message: SnackbarMessage,
+        val actionLabel: SnackbarMessage? = null
     ) : SchedulesUiEvent
 }
 
@@ -53,12 +55,20 @@ class SchedulesViewModel @Inject constructor(
     suspend fun onDeleteSchedule(schedule: Schedule): Boolean {
         when (val checkResult = checkScheduleInUseUseCase.execute(schedule.id)) {
             is CheckScheduleInUseUseCase.Result.IsDefault -> {
-                _uiEvents.send(SchedulesUiEvent.ShowSnackbar("The default schedule cannot be deleted."))
+                _uiEvents.send(
+                    SchedulesUiEvent.ShowSnackbar(
+                        message = SnackbarMessage.FromResource(R.string.schedules_view_model_default_schedule_delete_error)
+                    )
+                )
                 return false
             }
 
             is CheckScheduleInUseUseCase.Result.InUse -> {
-                _uiEvents.send(SchedulesUiEvent.ShowSnackbar(checkResult.usageMessage))
+                _uiEvents.send(
+                    SchedulesUiEvent.ShowSnackbar(
+                        message = SnackbarMessage.FromString(checkResult.usageMessage)
+                    )
+                )
                 return false
             }
 
@@ -66,8 +76,11 @@ class SchedulesViewModel @Inject constructor(
                 _schedulePendingDeletion.value = schedule
                 _uiEvents.send(
                     SchedulesUiEvent.ShowSnackbar(
-                        message = "'${schedule.name}' deleted",
-                        actionLabel = "Undo"
+                        message = SnackbarMessage.FromResource(
+                            R.string.schedules_view_model_schedule_deleted,
+                            formatArgs = listOf(schedule.name)
+                        ),
+                        actionLabel = SnackbarMessage.FromResource(R.string.schedules_view_model_undo)
                     )
                 )
                 return true

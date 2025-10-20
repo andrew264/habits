@@ -1,7 +1,9 @@
 package com.andrew264.habits.ui.privacy
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.andrew264.habits.R
 import com.andrew264.habits.domain.usecase.DeletableDataType
 import com.andrew264.habits.domain.usecase.DeleteDataUseCase
 import com.andrew264.habits.domain.usecase.TimeRangeOption
@@ -22,7 +24,7 @@ data class DataManagementUiState(
 )
 
 sealed interface DataManagementEvent {
-    data class ShowSnackbar(val message: String) : DataManagementEvent
+    data class ShowSnackbar(@param:StringRes val messageResId: Int) : DataManagementEvent
 }
 
 @HiltViewModel
@@ -62,9 +64,9 @@ class DataManagementViewModel @Inject constructor(
                     dataTypes = uiState.value.selectedDataTypes,
                     timeRange = uiState.value.selectedTimeRange
                 )
-                _events.emit(DataManagementEvent.ShowSnackbar("Data deleted successfully."))
+                _events.emit(DataManagementEvent.ShowSnackbar(R.string.data_management_data_deleted_successfully))
             } catch (_: Exception) {
-                _events.emit(DataManagementEvent.ShowSnackbar("Error deleting data."))
+                _events.emit(DataManagementEvent.ShowSnackbar(R.string.data_management_error_deleting_data))
             } finally {
                 _uiState.update { it.copy(isDeleting = false) }
             }

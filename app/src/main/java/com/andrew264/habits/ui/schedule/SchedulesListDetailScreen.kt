@@ -14,10 +14,13 @@ import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaf
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.andrew264.habits.R
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.ui.navigation.sharedAxisXEnter
 import com.andrew264.habits.ui.navigation.sharedAxisXExit
@@ -34,16 +37,20 @@ fun SchedulesListDetailScreen(
     viewModel: SchedulesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
 
     LaunchedEffect(key1 = true) {
         viewModel.uiEvents.collect { event ->
             when (event) {
                 is SchedulesUiEvent.ShowSnackbar -> {
-                    scope.launch {
+                    val messageText = event.message.resolve(context)
+                    val actionLabelText = event.actionLabel?.resolve(context)
+
+                    launch {
                         val result = snackbarHostState.showSnackbar(
-                            message = event.message,
-                            actionLabel = event.actionLabel,
+                            message = messageText,
+                            actionLabel = actionLabelText,
                             duration = SnackbarDuration.Short
                         )
                         if (result == SnackbarResult.ActionPerformed) {
@@ -148,7 +155,7 @@ private fun DetailPanePlaceholder() {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            "Select a schedule to edit, or create a new one.",
+            stringResource(R.string.schedules_list_detail_placeholder),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center

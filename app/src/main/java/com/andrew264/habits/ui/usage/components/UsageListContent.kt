@@ -25,8 +25,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.charts.StackedBarChart
 import com.andrew264.habits.ui.common.components.FilterButtonGroup
 import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
@@ -63,7 +65,7 @@ fun UsageListContent(
         topBar = {
             if (!isDetailPaneVisible) {
                 LargeFlexibleTopAppBar(
-                    title = { Text("Usage") },
+                    title = { Text(stringResource(R.string.usage_list_content_title)) },
                     actions = {
                         val interactionSource = remember { MutableInteractionSource() }
                         HapticInteractionEffect(interactionSource)
@@ -72,7 +74,7 @@ fun UsageListContent(
                             interactionSource = interactionSource,
                             colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.primary)
                         ) {
-                            Icon(Icons.Default.Settings, contentDescription = "Usage Settings")
+                            Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.usage_list_content_settings))
                         }
                     },
                     scrollBehavior = scrollBehavior,
@@ -88,8 +90,8 @@ fun UsageListContent(
                 val fabInteractionSource = remember { MutableInteractionSource() }
                 HapticInteractionEffect(fabInteractionSource)
                 SmallExtendedFloatingActionButton(
-                    text = { Text(text = "Manage Apps") },
-                    icon = { Icon(Icons.AutoMirrored.Filled.PlaylistAddCheck, "Manage Whitelisted Apps") },
+                    text = { Text(text = stringResource(R.string.usage_list_content_manage_apps)) },
+                    icon = { Icon(Icons.AutoMirrored.Filled.PlaylistAddCheck, stringResource(R.string.usage_list_content_manage_whitelisted_apps)) },
                     onClick = { onNavigate(Whitelist) },
                     expanded = expandedFab,
                     interactionSource = fabInteractionSource
@@ -151,7 +153,7 @@ fun UsageListContent(
                             options = UsageTimeRange.entries,
                             selectedOption = uiState.selectedRange,
                             onOptionSelected = onSetTimeRange,
-                            getLabel = { it.label }
+                            label = { Text(it.label) }
                         )
                     }
                 }
@@ -196,7 +198,7 @@ fun UsageListContent(
 
                 stickyHeader {
                     Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
-                        ListSectionHeader("App Breakdown")
+                        ListSectionHeader(stringResource(R.string.usage_list_app_breakdown))
                     }
                 }
 
@@ -208,7 +210,7 @@ fun UsageListContent(
                                 .padding(vertical = Dimens.PaddingMedium)
                         ) {
                             Text(
-                                "No whitelisted apps with usage in this period. Tap 'Manage Apps' to add some.",
+                                stringResource(R.string.usage_list_no_whitelisted_apps),
                                 modifier = Modifier.padding(Dimens.PaddingLarge),
                                 textAlign = TextAlign.Center,
                                 style = MaterialTheme.typography.bodyMedium,

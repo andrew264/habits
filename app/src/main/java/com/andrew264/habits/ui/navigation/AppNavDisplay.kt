@@ -11,11 +11,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
+import com.andrew264.habits.R
 import com.andrew264.habits.ui.bedtime.BedtimeScreen
 import com.andrew264.habits.ui.bedtime.BedtimeSettingsScreen
 import com.andrew264.habits.ui.privacy.DataManagementScreen
@@ -54,7 +56,7 @@ fun AppNavDisplay(
         entryProvider = entryProvider {
             entry<Home> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Hello World from Home Screen!", textAlign = TextAlign.Center, modifier = Modifier.clickable {})
+                    Text(stringResource(id = R.string.app_nav_display_home_screen_text), textAlign = TextAlign.Center, modifier = Modifier.clickable {})
                 }
             }
             entry<Water> {

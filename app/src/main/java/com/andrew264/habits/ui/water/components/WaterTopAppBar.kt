@@ -7,7 +7,9 @@ import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -17,7 +19,7 @@ fun WaterTopAppBar(
     onWaterReminderClick: () -> Unit
 ) {
     TopAppBar(
-        title = { Text("Water") },
+        title = { Text(stringResource(R.string.water_title)) },
         actions = {
             val statsInteractionSource = remember { MutableInteractionSource() }
             HapticInteractionEffect(statsInteractionSource)
@@ -26,7 +28,7 @@ fun WaterTopAppBar(
                 interactionSource = statsInteractionSource,
                 colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.primary)
             ) {
-                Icon(Icons.Filled.BarChart, contentDescription = "Hydration Statistics")
+                Icon(Icons.Filled.BarChart, contentDescription = stringResource(R.string.water_top_app_bar_hydration_statistics))
             }
 
             val reminderInteractionSource = remember { MutableInteractionSource() }
@@ -36,7 +38,7 @@ fun WaterTopAppBar(
                 interactionSource = reminderInteractionSource,
                 colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.primary)
             ) {
-                Icon(Icons.Filled.Alarm, contentDescription = "Reminder Settings")
+                Icon(Icons.Filled.Alarm, contentDescription = stringResource(R.string.water_top_app_bar_reminder_settings))
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(

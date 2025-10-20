@@ -17,8 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.charts.BarChart
 import com.andrew264.habits.ui.common.color_picker.ColorPickerDialog
 import com.andrew264.habits.ui.common.color_picker.utils.toColorOrNull
@@ -52,7 +55,7 @@ fun UsageDetailScreen(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             SimpleTopAppBar(
-                title = "Usage Details",
+                title = stringResource(R.string.usage_detail_title),
                 onNavigateUp = onNavigateUp,
                 scrollBehavior = scrollBehavior
             )
@@ -84,7 +87,7 @@ fun UsageDetailScreen(
                 options = UsageMetric.entries,
                 selectedOption = selectedMetric,
                 onOptionSelected = { selectedMetric = it },
-                getLabel = { it.title }
+                label = { Text(it.title) }
             )
 
             // Main Metric Display & Chart
@@ -94,7 +97,7 @@ fun UsageDetailScreen(
                     fadeIn(animationSpec = tween(220, delayMillis = 90))
                         .togetherWith(fadeOut(animationSpec = tween(90)))
                 },
-                label = "MetricDisplay"
+                label = stringResource(R.string.usage_detail_metric_display_label)
             ) { metric ->
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -104,7 +107,9 @@ fun UsageDetailScreen(
                         UsageMetric.SCREEN_TIME -> FormatUtils.formatDuration(app.totalUsageMillis).split(" ")
                             .let { if (it.size > 1) it[0] to it[1] else it[0] to "" }
 
-                        UsageMetric.TIMES_OPENED -> app.timesOpened.toString() to if (app.timesOpened == 1) "time" else "times"
+                        UsageMetric.TIMES_OPENED -> app.timesOpened.toString() to if (app.timesOpened == 1) stringResource(R.string.usage_detail_times_opened_unit_singular) else stringResource(
+                            R.string.usage_detail_times_opened_unit_plural
+                        )
                     }
 
                     Row(verticalAlignment = Alignment.Bottom) {
@@ -135,11 +140,15 @@ fun UsageDetailScreen(
                         }
                     }
 
+                    val resources = LocalResources.current
                     val yAxisFormatter: (Float) -> String = {
                         when (metric) {
                             UsageMetric.SCREEN_TIME -> {
                                 if (topValue <= TimeUnit.MINUTES.toMillis(5)) {
-                                    "${(it / 1000f).roundToInt()}s"
+                                    resources.getString(
+                                        R.string.usage_detail_seconds_formatter,
+                                        (it / 1000f).roundToInt()
+                                    )
                                 } else {
                                     FormatUtils.formatDuration(it.toLong())
                                 }
@@ -166,8 +175,8 @@ fun UsageDetailScreen(
                 var showSessionLimitDialog by rememberSaveable { mutableStateOf(false) }
                 if (showSessionLimitDialog) {
                     DurationPickerDialog(
-                        title = "Set Session limit",
-                        description = "Get a reminder after using this app for a continuous period. Set to 0 to clear.",
+                        title = stringResource(R.string.usage_detail_set_session_limit_title),
+                        description = stringResource(R.string.usage_detail_set_session_limit_description),
                         initialTotalMinutes = app.sessionLimitMinutes ?: 0,
                         onDismissRequest = { showSessionLimitDialog = false },
                         onConfirm = { totalMinutes ->
@@ -179,12 +188,14 @@ fun UsageDetailScreen(
 
                 NavigationListItem(
                     icon = Icons.Outlined.Timer,
-                    title = "Session Limit",
+                    title = stringResource(R.string.usage_detail_session_limit),
                     onClick = { showSessionLimitDialog = true },
                     position = ListItemPosition.TOP,
                     valueContent = {
                         Text(
-                            text = if (app.sessionLimitMinutes != null) FormatUtils.formatDuration(app.sessionLimitMinutes * 60_000L) else "Not set",
+                            text = if (app.sessionLimitMinutes != null) FormatUtils.formatDuration(app.sessionLimitMinutes * 60_000L) else stringResource(
+                                R.string.usage_detail_not_set
+                            ),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -194,7 +205,7 @@ fun UsageDetailScreen(
                 var showColorDialog by rememberSaveable { mutableStateOf(false) }
                 if (showColorDialog) {
                     ColorPickerDialog(
-                        title = "Choose color for ${app.friendlyName}",
+                        title = stringResource(R.string.usage_detail_choose_color_title, app.friendlyName),
                         initialColor = app.color.toColorOrNull() ?: Color.Gray,
                         showAlphaSlider = false,
                         onDismissRequest = { showColorDialog = false },
@@ -207,7 +218,7 @@ fun UsageDetailScreen(
 
                 NavigationListItem(
                     icon = Icons.Outlined.Palette,
-                    title = "Display Color",
+                    title = stringResource(R.string.usage_detail_display_color),
                     onClick = { showColorDialog = true },
                     position = ListItemPosition.BOTTOM,
                     valueContent = {

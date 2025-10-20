@@ -22,12 +22,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.andrew264.habits.MainActivity
+import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.components.DrawableImage
 import com.andrew264.habits.ui.navigation.Usage
 import com.andrew264.habits.ui.theme.Dimens
@@ -169,15 +171,15 @@ fun BlockerScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         TextButton(onClick = onChangeLimitClicked) {
-                            Text("Change Limit")
+                            Text(stringResource(id = R.string.blocker_change_limit))
                         }
                         Spacer(Modifier.width(Dimens.PaddingSmall))
                         TextButton(onClick = onImDoneClicked) {
-                            Text("I'm Done")
+                            Text(stringResource(id = R.string.blocker_im_done))
                         }
                         Spacer(Modifier.width(Dimens.PaddingSmall))
                         Button(onClick = onSnoozeClicked) {
-                            Text("Snooze 5 min")
+                            Text(stringResource(id = R.string.blocker_snooze_5_min))
                         }
                     }
                 }

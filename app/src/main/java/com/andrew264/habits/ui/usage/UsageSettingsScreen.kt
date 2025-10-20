@@ -16,8 +16,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.components.FeatureToggleListItem
 import com.andrew264.habits.ui.common.components.SimpleTopAppBar
 import com.andrew264.habits.ui.common.duration_picker.DurationPickerDialog
@@ -97,8 +99,8 @@ private fun UsageSettingsScreen(
 
     if (showSharedLimitDialog) {
         DurationPickerDialog(
-            title = "Set Shared Daily Limit",
-            description = "Set a total time limit for all whitelisted apps. This limit will reset at midnight. Set to 0 to clear.",
+            title = stringResource(R.string.usage_set_shared_daily_limit_title),
+            description = stringResource(R.string.usage_set_shared_daily_limit_description),
             initialTotalMinutes = uiState.sharedDailyUsageLimitMinutes ?: 0,
             onDismissRequest = { showSharedLimitDialog = false },
             onConfirm = { totalMinutes ->
@@ -110,7 +112,7 @@ private fun UsageSettingsScreen(
 
     Scaffold(
         topBar = {
-            SimpleTopAppBar(title = "Usage Settings", onNavigateUp = onNavigateUp, scrollBehavior = scrollBehavior)
+            SimpleTopAppBar(title = stringResource(R.string.usage_settings_title), onNavigateUp = onNavigateUp, scrollBehavior = scrollBehavior)
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
@@ -124,24 +126,26 @@ private fun UsageSettingsScreen(
         ) {
             item {
                 FeatureToggleListItem(
-                    title = "Enable Usage Tracking",
+                    title = stringResource(R.string.usage_enable_usage_tracking),
                     checked = uiState.isAppUsageTrackingEnabled,
                     onCheckedChange = onUsageTrackingToggled
                 )
             }
             item {
                 Column {
-                    ListSectionHeader("Limits")
+                    ListSectionHeader(stringResource(R.string.usage_limits))
                     Column(modifier = Modifier.clip(MaterialTheme.shapes.large)) {
                         NavigationListItem(
                             icon = Icons.Outlined.Timer,
-                            title = "Shared Daily Limit",
+                            title = stringResource(R.string.usage_shared_daily_limit),
                             onClick = { showSharedLimitDialog = true },
                             position = ListItemPosition.TOP,
                             enabled = uiState.isAppUsageTrackingEnabled,
                             valueContent = {
                                 Text(
-                                    text = if (uiState.sharedDailyUsageLimitMinutes != null) FormatUtils.formatDuration(uiState.sharedDailyUsageLimitMinutes * 60_000L) else "Not set",
+                                    text = if (uiState.sharedDailyUsageLimitMinutes != null) FormatUtils.formatDuration(uiState.sharedDailyUsageLimitMinutes * 60_000L) else stringResource(
+                                        R.string.usage_detail_not_set
+                                    ),
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -149,8 +153,8 @@ private fun UsageSettingsScreen(
                         )
                         ToggleListItem(
                             icon = Icons.Outlined.Notifications,
-                            title = "Enable Limit Notifications",
-                            summary = "Get notified when you exceed a usage limit.",
+                            title = stringResource(R.string.usage_enable_limit_notifications),
+                            summary = stringResource(R.string.usage_enable_limit_notifications_summary),
                             checked = uiState.usageLimitNotificationsEnabled,
                             onCheckedChange = onSetUsageLimitNotificationsEnabled,
                             enabled = uiState.isAppUsageTrackingEnabled,
@@ -158,8 +162,8 @@ private fun UsageSettingsScreen(
                         )
                         ToggleListItem(
                             icon = Icons.Outlined.Block,
-                            title = "Enable App Blocker",
-                            summary = "Show an overlay when a usage limit is reached.",
+                            title = stringResource(R.string.usage_enable_app_blocker),
+                            summary = stringResource(R.string.usage_enable_app_blocker_summary),
                             checked = uiState.isAppBlockingEnabled,
                             onCheckedChange = onSetAppBlockingEnabled,
                             enabled = uiState.isAppUsageTrackingEnabled,
@@ -170,10 +174,10 @@ private fun UsageSettingsScreen(
             }
             item {
                 Column {
-                    ListSectionHeader("Apps")
+                    ListSectionHeader(stringResource(R.string.usage_apps))
                     NavigationListItem(
                         icon = Icons.AutoMirrored.Filled.PlaylistAddCheck,
-                        title = "Manage Whitelisted Apps",
+                        title = stringResource(R.string.usage_manage_whitelisted_apps),
                         onClick = { onNavigate(Whitelist) },
                         enabled = uiState.isAppUsageTrackingEnabled,
                         position = ListItemPosition.SEPARATE

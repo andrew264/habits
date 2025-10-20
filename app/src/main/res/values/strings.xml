@@ -1,4 +1,289 @@
 <resources>
+    <!-- General & Navigation -->
     <string name="app_name">Habits</string>
+    <string name="app_nav_display_home_screen_text">Hello World from Home Screen!</string>
+    <string name="app_route_home">Home</string>
+    <string name="app_route_water">Water</string>
+    <string name="app_route_usage">Usage</string>
+    <string name="app_route_settings">Settings</string>
+    <string name="app_route_bedtime">Bedtime</string>
+
+    <!-- Common UI Components -->
+    <string name="top_app_bar_back_button_content_description">Back</string>
+    <string name="app_list_item_app_icon_content_description">%1$s icon</string>
+    <string name="icon_switch_checked_content_description">Checked</string>
+    <string name="icon_switch_unchecked_content_description">Unchecked</string>
+    <string name="toggle_list_item_more_options">More options</string>
+    <string name="toggle_list_item_warning">Warning</string>
+    <string name="filter_button_group_more_options">More options</string>
+    <string name="color_picker_dialog_title">Select a color</string>
+    <string name="color_picker_dialog_hex_label">HEX</string>
+    <string name="color_picker_dialog_invalid_hex">Invalid HEX. Use #RRGGBB or #AARRGGBB</string>
+    <string name="color_picker_dialog_cancel">Cancel</string>
+    <string name="color_picker_dialog_ok">OK</string>
+    <string name="habits_time_picker_dialog_cancel">Cancel</string>
+    <string name="habits_time_picker_dialog_confirm">Confirm</string>
+    <string name="duration_picker_dialog_cancel">Cancel</string>
+    <string name="duration_picker_dialog_ok">OK</string>
+    <string name="duration_picker_dialog_hour">hr</string>
+    <string name="duration_picker_dialog_minute">min</string>
+
+    <!-- Accessibility -->
     <string name="accessibility_service_description">This service is used to detect which application is currently in the foreground. This allows Habits to track your application usage time and display it on a timeline. The service does not read or store any content from your screen.</string>
+    <string name="accessibility_warning_card_warning_icon_content_description">Warning</string>
+    <string name="accessibility_warning_card_service_not_running">Usage tracking service is not running. Tap here to fix it.</string>
+
+    <!-- Usage & Blocker -->
+    <string name="usage_detail_title">Usage Details</string>
+    <string name="usage_detail_times_opened_unit_singular">time</string>
+    <string name="usage_detail_times_opened_unit_plural">times</string>
+    <string name="usage_detail_metric_display_label">Metric Display</string>
+    <string name="usage_detail_seconds_formatter">%1$ds</string>
+    <string name="usage_detail_set_session_limit_title">Set Session limit</string>
+    <string name="usage_detail_set_session_limit_description">Get a reminder after using this app for a continuous period. Set to 0 to clear.</string>
+    <string name="usage_detail_session_limit">Session Limit</string>
+    <string name="usage_detail_not_set">Not set</string>
+    <string name="usage_detail_choose_color_title">Choose color for %1$s</string>
+    <string name="usage_detail_display_color">Display Color</string>
+    <string name="blocker_change_limit">Change Limit</string>
+    <string name="blocker_im_done">I\'m Done</string>
+    <string name="blocker_snooze_5_min">Snooze 5 min</string>
+    <string name="blocker_daily_goal_reached_title">Daily Goal Reached</string>
+    <string name="blocker_daily_goal_reached_description">You\'ve used your tracked apps for over %1$s today.</string>
+    <string name="blocker_daily_limit_title">Daily Limit: %1$s</string>
+    <string name="blocker_daily_limit_description">This is the shared goal you set for all tracked apps.</string>
+    <string name="blocker_total_time_spent_title">Total Time Spent: %1$s</string>
+    <string name="blocker_mindful_usage_reminder">This screen is a reminder to take a break and stay mindful of your habits.</string>
+    <string name="blocker_session_limit_title">Time for a Break</string>
+    <string name="blocker_session_limit_description">You\'ve used %1$s for over %2$s continuously.</string>
+    <string name="blocker_session_limit_details_title">Session Limit: %1$s</string>
+    <string name="blocker_session_limit_details_description">You set this goal to help manage your time in the app.</string>
+    <string name="blocker_current_session_title">Current Session: %1$s</string>
+    <string name="blocker_intentional_usage_reminder">This screen is a reminder to take a break and use your time intentionally.</string>
+
+    <!-- Bedtime & Sleep -->
+    <string name="bedtime_settings_title">Bedtime Settings</string>
+    <string name="bedtime_settings_enable_bedtime_tracking">Enable Bedtime Tracking</string>
+    <string name="bedtime_settings_schedule_section_header">Schedule</string>
+    <string name="bedtime_settings_active_schedule">Active Schedule</string>
+    <string name="bedtime_settings_schedule_info">Your selected bedtime schedule is used to improve sleep detection accuracy.</string>
+    <string name="bedtime_screen_title">Bedtime</string>
+    <string name="bedtime_screen_tracking_disabled_title">Bedtime Tracking Disabled</string>
+    <string name="bedtime_screen_tracking_disabled_description">This feature uses sleep schedules and the Sleep API to track your sleep patterns. You can enable it in settings.</string>
+    <string name="bedtime_screen_tracking_disabled_button">Go to Settings</string>
+    <string name="bedtime_screen_configure_schedule_content_description">Configure Sleep Schedule</string>
+    <string name="bedtime_chart_range_12_hr">12 Hr</string>
+    <string name="bedtime_chart_range_1_day">1 Day</string>
+    <string name="bedtime_chart_range_7_days">7 Days</string>
+    <string name="bedtime_chart_range_30_days">30 Days</string>
+    <string name="presence_legend_awake">Awake</string>
+    <string name="presence_legend_sleeping">Sleeping</string>
+    <string name="presence_legend_unknown">Unknown</string>
+    <string name="sleep_history_card_title">Sleep History</string>
+    <string name="sleep_history_card_no_data">No presence data available for this time range.</string>
+
+    <!-- Schedule -->
+    <string name="schedule_selector_label">Schedule</string>
+    <string name="schedule_selector_none">None</string>
+    <string name="schedule_info_card_total_hours_content_description">Total hours</string>
+    <string name="schedule_info_card_coverage_text">%.1f hours/week (%.1f%%)</string>
+
+    <!-- Data Management -->
+    <string name="data_management_delete_data">Delete Data</string>
+    <string name="data_management_sleep_history">Sleep History</string>
+    <string name="data_management_sleep_history_description">Data from Sleep API and bedtime schedules.</string>
+    <string name="data_management_water_intake_history">Water Intake History</string>
+    <string name="data_management_water_intake_history_description">All logged water entries.</string>
+    <string name="data_management_app_usage_history">App &amp; Screen Usage History</string>
+    <string name="data_management_app_usage_history_description">Screen on/off times and foreground app data.</string>
+    <string name="data_management_data_deleted_successfully">Data deleted successfully.</string>
+    <string name="data_management_error_deleting_data">Error deleting data.</string>
+    <string name="data_management_time_range">Time range</string>
+    <string name="data_management_select_time_range">Select time range</string>
+    <string name="data_management_time_range_last_hour">Last hour</string>
+    <string name="data_management_time_range_last_24_hours">Last 24 hours</string>
+    <string name="data_management_time_range_last_7_days">Last 7 days</string>
+    <string name="data_management_time_range_last_4_weeks">Last 4 weeks</string>
+    <string name="data_management_time_range_all_time">All time</string>
+    <string name="data_management_delete_all_data_title">Delete all data?</string>
+    <string name="data_management_delete_all_data_description">This will permanently delete all selected historical data from your device. This action cannot be undone.</string>
+    <string name="data_management_delete_data_title">Delete data?</string>
+    <string name="data_management_delete_data_description">This will permanently delete the selected data from the %1$s.</string>
+    <string name="data_management_delete">Delete</string>
+    <string name="data_management_cancel">Cancel</string>
+
+    <!-- Schedule -->
+    <string name="schedule_editor_new_schedule">New Schedule</string>
+    <string name="schedule_editor_edit_schedule">Edit Schedule</string>
+    <string name="schedule_editor_hours_per_week">%1$.1f hours/week</string>
+    <string name="schedule_editor_save_schedule">Save Schedule</string>
+    <string name="schedule_editor_new_group">New Group</string>
+    <string name="schedule_editor_create_new_group">Create New Group</string>
+    <string name="schedule_editor_schedule_name">Schedule Name</string>
+    <string name="schedule_editor_enter_schedule_name">Enter schedule name</string>
+    <string name="schedule_editor_more_options">More options</string>
+    <string name="schedule_editor_grouped_view_emoji">📋 Grouped</string>
+    <string name="schedule_editor_per_day_view_emoji">📅 Per Day</string>
+    <string name="schedule_editor_grouped_view">Grouped</string>
+    <string name="schedule_editor_per_day_view">Per Day</string>
+    <string name="schedule_editor_view_mode_crossfade">ViewModeCrossfade</string>
+    <string name="schedules_list_detail_placeholder">Select a schedule to edit, or create a new one.</string>
+    <string name="schedule_view_model_schedule_saved">Schedule saved!</string>
+    <string name="schedules_view_model_default_schedule_delete_error">The default schedule cannot be deleted.</string>
+    <string name="schedules_view_model_schedule_deleted">\'%1$s\' deleted</string>
+    <string name="schedules_view_model_undo">Undo</string>
+    <string name="per_day_view_no_time_ranges">No time ranges</string>
+    <string name="per_day_view_one_time_range">1 time range</string>
+    <string name="per_day_view_time_ranges">%1$d time ranges</string>
+    <string name="per_day_view_arrow_rotation">arrow_rotation</string>
+    <string name="per_day_view_collapse">Collapse</string>
+    <string name="per_day_view_expand">Expand</string>
+    <string name="per_day_view_no_time_ranges_set">No time ranges set</string>
+    <string name="per_day_view_add_time_range">Add Time Range</string>
+    <string name="day_selector_days">Days</string>
+    <string name="day_selector_background_color">DaySelectorBackgroundColor</string>
+    <string name="day_selector_content_color">DaySelectorContentColor</string>
+    <string name="day_selector_border_color">DaySelectorBorderColor</string>
+    <string name="grouped_view_no_groups_yet">No Groups Yet</string>
+    <string name="grouped_view_no_groups_description">Groups allow you to apply the same time ranges to multiple days. Tap \'New Group\' in the editor to add one.</string>
+    <string name="grouped_view_group_name">Group Name</string>
+    <string name="grouped_view_delete_group">Delete Group</string>
+    <string name="grouped_view_time_ranges">Time Ranges</string>
+    <string name="schedule_time_range_row_arrow">→</string>
+    <string name="schedule_time_range_row_plus_one_day">+1d</string>
+    <string name="schedule_time_range_row_delete_time_range">Delete time range</string>
+    <string name="schedule_time_range_row_from_time">From Time</string>
+    <string name="schedule_time_range_row_to_time">To Time</string>
+    <string name="schedule_list_item_swipe_background_color">SwipeBackgroundColor</string>
+    <string name="schedule_list_item_edit">Edit</string>
+    <string name="schedule_list_item_delete">Delete</string>
+    <string name="schedule_list_item_no_schedule_set">No schedule set.</string>
+    <string name="schedule_list_item_empty_schedule">This schedule is empty. Edit to add times.</string>
+    <string name="schedule_list_item_total_hours">Total hours</string>
+    <string name="schedule_list_pane_schedules">Schedules</string>
+    <string name="schedule_list_pane_manage_routines">Manage your routines</string>
+    <string name="schedule_list_pane_create_schedule">Create Schedule</string>
+    <string name="schedule_list_pane_no_schedules_yet">No schedules yet</string>
+    <string name="schedule_list_pane_no_schedules_description">Tap the \'New Schedule\' button to create one.</string>
+
+    <!-- Settings -->
+    <string name="settings_features">Features</string>
+    <string name="settings_bedtime_tracking">Bedtime Tracking</string>
+    <string name="settings_bedtime_tracking_summary">Monitor your sleep and bedtime habits</string>
+    <string name="settings_app_usage_tracking">App Usage Tracking</string>
+    <string name="settings_app_usage_tracking_summary">Track screen time and set limits for apps.</string>
+    <string name="settings_service_not_running">Service is not running. Tap to fix in accessibility settings.</string>
+    <string name="settings_water_tracking">Water Tracking</string>
+    <string name="settings_water_tracking_summary">Track daily water intake and set reminders.</string>
+    <string name="settings_management">Management</string>
+    <string name="settings_create_and_manage_schedules">Create and manage schedules</string>
+    <string name="settings_data_and_privacy">Data &amp; Privacy</string>
+    <string name="settings_app_permissions_and_info">App Permissions &amp; Info</string>
+    <string name="settings_enable_service_title">Enable Service</string>
+    <string name="settings_enable_service_description">To track app usage, you need to enable the Habits accessibility service in your phone\'s settings. This allows the app to see which application is in the foreground.</string>
+    <string name="settings_go_to_settings">Go to Settings</string>
+
+    <!-- Usage -->
+    <string name="usage_tracking_disabled_title">Usage Tracking Disabled</string>
+    <string name="usage_tracking_disabled_description">This feature uses the Accessibility Service to show you how you spend time on your phone. You can enable it in the Monitoring settings.</string>
+    <string name="usage_select_an_app">Select an App</string>
+    <string name="usage_select_an_app_description">Select an app from the list to see its detailed usage statistics.</string>
+    <string name="usage_set_shared_daily_limit_title">Set Shared Daily Limit</string>
+    <string name="usage_set_shared_daily_limit_description">Set a total time limit for all whitelisted apps. This limit will reset at midnight. Set to 0 to clear.</string>
+    <string name="usage_settings_title">Usage Settings</string>
+    <string name="usage_enable_usage_tracking">Enable Usage Tracking</string>
+    <string name="usage_limits">Limits</string>
+    <string name="usage_shared_daily_limit">Shared Daily Limit</string>
+    <string name="usage_enable_limit_notifications">Enable Limit Notifications</string>
+    <string name="usage_enable_limit_notifications_summary">Get notified when you exceed a usage limit.</string>
+    <string name="usage_enable_app_blocker">Enable App Blocker</string>
+    <string name="usage_enable_app_blocker_summary">Show an overlay when a usage limit is reached.</string>
+    <string name="usage_apps">Apps</string>
+    <string name="usage_manage_whitelisted_apps">Manage Whitelisted Apps</string>
+    <string name="usage_most_used_around">Most used around %1$s</string>
+    <string name="usage_most_used_on">Most used on %1$s</string>
+    <string name="usage_not_used_in_this_period">Not used in this period</string>
+    <string name="usage_default_app_color">#808080</string>
+    <string name="usage_list_content_title">Usage</string>
+    <string name="usage_list_content_settings">Usage Settings</string>
+    <string name="usage_list_content_manage_apps">Manage Apps</string>
+    <string name="usage_list_content_manage_whitelisted_apps">Manage Whitelisted Apps</string>
+    <string name="usage_list_app_breakdown">App Breakdown</string>
+    <string name="usage_list_no_whitelisted_apps">No whitelisted apps with usage in this period. Tap \'Manage Apps\' to add some.</string>
+    <string name="usage_stats_summary_screen_time">Screen Time</string>
+    <string name="usage_stats_summary_unlocks">Unlocks</string>
+    <string name="usage_stats_summary_avg_session">Avg. Session</string>
+    <string name="whitelist_icon_content_description">%1$s icon</string>
+    <string name="whitelist_top_app_bar_animation">TopAppBarAnimation</string>
+    <string name="whitelist_top_app_bar_search">Search…</string>
+    <string name="whitelist_top_app_bar_exit_search">Exit search</string>
+    <string name="whitelist_top_app_bar_manage_whitelist">Manage Whitelist</string>
+    <string name="whitelist_top_app_bar_search_apps">Search apps</string>
+    <string name="whitelist_top_app_bar_more_options">More options</string>
+    <string name="whitelist_top_app_bar_hide_system">Hide system</string>
+    <string name="whitelist_top_app_bar_show_system">Show system</string>
+    <string name="app_color_palette_1">#F44336</string>
+    <string name="app_color_palette_2">#E91E63</string>
+    <string name="app_color_palette_3">#9C27B0</string>
+    <string name="app_color_palette_4">#673AB7</string>
+    <string name="app_color_palette_5">#3F51B5</string>
+    <string name="app_color_palette_6">#2196F3</string>
+    <string name="app_color_palette_7">#03A9F4</string>
+    <string name="app_color_palette_8">#00BCD4</string>
+    <string name="app_color_palette_9">#009688</string>
+    <string name="app_color_palette_10">#4CAF50</string>
+    <string name="app_color_palette_11">#8BC34A</string>
+    <string name="app_color_palette_12">#FFC107</string>
+    <string name="app_color_palette_13">#FF9800</string>
+    <string name="app_color_palette_14">#FF5722</string>
+    <string name="app_color_palette_15">#795548</string>
+    <string name="app_color_palette_16">#607D8B</string>
+
+    <!-- Water -->
+    <string name="water_title">Water</string>
+    <string name="water_stats_hydration_statistics">Hydration Statistics</string>
+    <string name="water_stats_not_enough_data">Not Enough Data</string>
+    <string name="water_stats_not_enough_data_description">Log some water intake for a few days to see your statistics here.</string>
+    <string name="water_settings_reminder_interval">Reminder Interval</string>
+    <string name="water_settings_reminder_interval_description">How often you want to be reminded to drink water.</string>
+    <string name="water_settings_snooze_time">Snooze Time</string>
+    <string name="water_settings_snooze_time_description">How long to snooze a reminder for when you\'re busy.</string>
+    <string name="water_settings_water_tracking">Water Tracking</string>
+    <string name="water_settings_enable_water_tracking">Enable Water tracking</string>
+    <string name="water_settings_daily_target">Daily Target</string>
+    <string name="water_settings_daily_target_ml">%1$d ml</string>
+    <string name="water_settings_reminders">Reminders</string>
+    <string name="water_settings_enable_reminders">Enable reminders</string>
+    <string name="water_settings_enable_reminders_summary">Get notifications to drink water.</string>
+    <string name="water_settings_interval">Interval</string>
+    <string name="water_settings_snooze">Snooze</string>
+    <string name="water_settings_reminder_schedule">Reminder Schedule</string>
+
+    <!-- Water Components -->
+    <string name="water_input_section_ml">%1$d ml</string>
+    <string name="water_input_section_log_water">Log Water</string>
+    <string name="water_input_section_drink">Drink</string>
+    <string name="water_stats_content_daily_avg">Daily Avg</string>
+    <string name="water_stats_content_goal_met">Goal Met</string>
+    <string name="water_stats_content_days">%1$d days</string>
+    <string name="water_stats_content_daily_intake">Daily Intake</string>
+    <string name="water_stats_content_peak_hours">Peak Hours</string>
+    <string name="water_top_app_bar_hydration_statistics">Hydration Statistics</string>
+    <string name="water_top_app_bar_reminder_settings">Reminder Settings</string>
+    <string name="water_progress_animation">WaterProgressAnimation</string>
+    <string name="water_progress_of_ml">of %1$d ml</string>
+    <string name="water_feature_disabled_title">Water Tracking is Disabled</string>
+    <string name="water_feature_disabled_description">Enable this feature to start tracking your daily water intake.</string>
+    <string name="water_feature_disabled_enable_button">Enable Water Tracking</string>
+    <string name="water_target_settings_dialog_tracking_settings">Tracking Settings</string>
+    <string name="water_target_settings_dialog_set_daily_target">Set Daily Target</string>
+    <string name="water_target_settings_dialog_enable_tracking">Enable Tracking</string>
+    <string name="water_target_settings_dialog_daily_target_ml">Daily Target (ml)</string>
+    <string name="water_target_settings_dialog_cancel">Cancel</string>
+    <string name="water_target_settings_dialog_save">Save</string>
+
+    <!-- Permissions -->
+    <string name="permission_activity_recognition_rationale">Activity recognition is needed for accurate sleep detection.</string>
+    <string name="permission_post_notifications_rationale">Notifications permission is needed for reminders and for the service to run reliably.</string>
+
 </resources>

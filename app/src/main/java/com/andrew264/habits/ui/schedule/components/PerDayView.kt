@@ -18,9 +18,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.andrew264.habits.R
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.TimeRange
 import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
@@ -106,18 +108,18 @@ fun PerDayView(
 
                             Text(
                                 text = when (timeRanges.size) {
-                                    0 -> "No time ranges"
-                                    1 -> "1 time range"
-                                    else -> "${timeRanges.size} time ranges"
+                                    0 -> stringResource(R.string.per_day_view_no_time_ranges)
+                                    1 -> stringResource(R.string.per_day_view_one_time_range)
+                                    else -> stringResource(R.string.per_day_view_time_ranges, timeRanges.size)
                                 },
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }
 
-                        val rotation by animateFloatAsState(if (isExpanded) 180f else 0f, label = "arrow_rotation")
+                        val rotation by animateFloatAsState(if (isExpanded) 180f else 0f, label = stringResource(R.string.per_day_view_arrow_rotation))
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowDown,
-                            contentDescription = if (isExpanded) "Collapse" else "Expand",
+                            contentDescription = if (isExpanded) stringResource(R.string.per_day_view_collapse) else stringResource(R.string.per_day_view_expand),
                             modifier = Modifier.rotate(rotation)
                         )
                     }
@@ -170,7 +172,7 @@ fun PerDayView(
                                             modifier = Modifier.size(32.dp)
                                         )
                                         Text(
-                                            text = "No time ranges set",
+                                            text = stringResource(R.string.per_day_view_no_time_ranges_set),
                                             style = MaterialTheme.typography.titleSmall
                                         )
                                     }
@@ -198,7 +200,7 @@ fun PerDayView(
                                 )
                                 Spacer(Modifier.width(Dimens.PaddingSmall))
                                 Text(
-                                    text = "Add Time Range",
+                                    text = stringResource(R.string.per_day_view_add_time_range),
                                 )
                             }
                         }

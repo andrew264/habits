@@ -6,8 +6,10 @@ import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import com.andrew264.habits.R
 import com.andrew264.habits.domain.usecase.TimeRangeOption
 import com.andrew264.habits.ui.theme.HabitsTheme
 
@@ -22,11 +24,11 @@ internal fun DeleteConfirmationDialog(
     val text: String
 
     if (timeRange == TimeRangeOption.ALL_TIME) {
-        title = "Delete all data?"
-        text = "This will permanently delete all selected historical data from your device. This action cannot be undone."
+        title = stringResource(R.string.data_management_delete_all_data_title)
+        text = stringResource(R.string.data_management_delete_all_data_description)
     } else {
-        title = "Delete data?"
-        text = "This will permanently delete the selected data from the ${timeRange.toDisplayString(lowercase = true)}."
+        title = stringResource(R.string.data_management_delete_data_title)
+        text = stringResource(R.string.data_management_delete_data_description, timeRange.toDisplayString(lowercase = true))
     }
 
     AlertDialog(
@@ -42,7 +44,7 @@ internal fun DeleteConfirmationDialog(
                 },
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
             ) {
-                Text("Delete", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.data_management_delete), fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
@@ -52,19 +54,20 @@ internal fun DeleteConfirmationDialog(
                     onDismiss()
                 }
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.data_management_cancel))
             }
         }
     )
 }
 
+@Composable
 internal fun TimeRangeOption.toDisplayString(lowercase: Boolean = false): String {
     val text = when (this) {
-        TimeRangeOption.LAST_HOUR -> "Last hour"
-        TimeRangeOption.LAST_24_HOURS -> "Last 24 hours"
-        TimeRangeOption.LAST_7_DAYS -> "Last 7 days"
-        TimeRangeOption.LAST_4_WEEKS -> "Last 4 weeks"
-        TimeRangeOption.ALL_TIME -> "All time"
+        TimeRangeOption.LAST_HOUR -> stringResource(R.string.data_management_time_range_last_hour)
+        TimeRangeOption.LAST_24_HOURS -> stringResource(R.string.data_management_time_range_last_24_hours)
+        TimeRangeOption.LAST_7_DAYS -> stringResource(R.string.data_management_time_range_last_7_days)
+        TimeRangeOption.LAST_4_WEEKS -> stringResource(R.string.data_management_time_range_last_4_weeks)
+        TimeRangeOption.ALL_TIME -> stringResource(R.string.data_management_time_range_all_time)
     }
     return if (lowercase) text.lowercase() else text
 }

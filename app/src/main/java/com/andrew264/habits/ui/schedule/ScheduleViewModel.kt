@@ -2,6 +2,7 @@ package com.andrew264.habits.ui.schedule
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.andrew264.habits.R
 import com.andrew264.habits.domain.analyzer.ScheduleAnalyzer
 import com.andrew264.habits.domain.analyzer.ScheduleCoverage
 import com.andrew264.habits.domain.editor.ScheduleEditor
@@ -10,6 +11,7 @@ import com.andrew264.habits.domain.usecase.SaveScheduleUseCase
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.model.schedule.TimeRange
+import com.andrew264.habits.ui.common.SnackbarMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -22,7 +24,7 @@ enum class ScheduleViewMode {
 }
 
 sealed interface ScheduleUiEvent {
-    data class ShowSnackbar(val message: String) : ScheduleUiEvent
+    data class ShowSnackbar(val message: SnackbarMessage) : ScheduleUiEvent
     object NavigateUp : ScheduleUiEvent
 }
 
@@ -121,12 +123,12 @@ class ScheduleViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = saveScheduleUseCase.execute(currentSchedule)) {
                 is SaveScheduleUseCase.Result.Success -> {
-                    _uiEvents.emit(ScheduleUiEvent.ShowSnackbar("Schedule saved!"))
+                    _uiEvents.emit(ScheduleUiEvent.ShowSnackbar(SnackbarMessage.FromResource(R.string.schedule_view_model_schedule_saved)))
                     _uiEvents.emit(ScheduleUiEvent.NavigateUp)
                 }
 
                 is SaveScheduleUseCase.Result.Failure -> {
-                    _uiEvents.emit(ScheduleUiEvent.ShowSnackbar(result.message))
+                    _uiEvents.emit(ScheduleUiEvent.ShowSnackbar(SnackbarMessage.FromString(result.message)))
                 }
             }
         }
@@ -213,7 +215,7 @@ class ScheduleViewModel @Inject constructor(
                 )
             }
             result.userMessage?.let { message ->
-                viewModelScope.launch { _uiEvents.emit(ScheduleUiEvent.ShowSnackbar(message)) }
+                viewModelScope.launch { _uiEvents.emit(ScheduleUiEvent.ShowSnackbar(SnackbarMessage.FromString(message))) }
             }
         }
     }
@@ -232,7 +234,7 @@ class ScheduleViewModel @Inject constructor(
                 )
             }
             result.userMessage?.let { message ->
-                viewModelScope.launch { _uiEvents.emit(ScheduleUiEvent.ShowSnackbar(message)) }
+                viewModelScope.launch { _uiEvents.emit(ScheduleUiEvent.ShowSnackbar(SnackbarMessage.FromString(message))) }
             }
         }
     }

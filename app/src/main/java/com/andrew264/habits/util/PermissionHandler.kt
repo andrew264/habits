@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import com.andrew264.habits.R
 
 class PermissionHandler(
     private val activity: ComponentActivity,
@@ -41,10 +42,10 @@ class PermissionHandler(
     private fun getRationaleForPermission(permission: String): String {
         return when (permission) {
             android.Manifest.permission.ACTIVITY_RECOGNITION ->
-                "Activity recognition is needed for accurate sleep detection."
+                activity.getString(R.string.permission_activity_recognition_rationale)
 
             android.Manifest.permission.POST_NOTIFICATIONS ->
-                "Notifications permission is needed for reminders and for the service to run reliably."
+                activity.getString(R.string.permission_post_notifications_rationale)
 
             else -> ""
         }

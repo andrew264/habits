@@ -15,8 +15,10 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.andrew264.habits.R
 import com.andrew264.habits.ui.theme.HabitsTheme
 
 @Composable
@@ -39,13 +41,13 @@ fun IconSwitch(
             if (checked) {
                 Icon(
                     imageVector = Icons.Filled.Check,
-                    contentDescription = "Checked",
+                    contentDescription = stringResource(id = R.string.icon_switch_checked_content_description),
                     modifier = Modifier.size(SwitchDefaults.IconSize),
                 )
             } else {
                 Icon(
                     imageVector = Icons.Filled.Close,
-                    contentDescription = "Unchecked",
+                    contentDescription = stringResource(id = R.string.icon_switch_unchecked_content_description),
                     modifier = Modifier.size(SwitchDefaults.IconSize),
                 )
             }

@@ -12,9 +12,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
@@ -41,13 +43,13 @@ internal fun WaterFeatureDisabledContent(
         )
         Spacer(Modifier.height(Dimens.PaddingLarge))
         Text(
-            text = "Water Tracking is Disabled",
+            text = stringResource(R.string.water_feature_disabled_title),
             style = MaterialTheme.typography.headlineSmall,
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(Dimens.PaddingSmall))
         Text(
-            text = "Enable this feature to start tracking your daily water intake.",
+            text = stringResource(R.string.water_feature_disabled_description),
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -57,7 +59,7 @@ internal fun WaterFeatureDisabledContent(
             onClick = onEnableClicked,
             interactionSource = interactionSource
         ) {
-            Text("Enable Water Tracking")
+            Text(stringResource(R.string.water_feature_disabled_enable_button))
         }
     }
 }

@@ -10,8 +10,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.theme.Dimens
 
@@ -38,11 +40,11 @@ fun AccessibilityWarningCard(onOpenAccessibilitySettings: () -> Unit) {
         ) {
             Icon(
                 imageVector = Icons.Outlined.Warning,
-                contentDescription = "Warning",
+                contentDescription = stringResource(R.string.accessibility_warning_card_warning_icon_content_description),
                 tint = MaterialTheme.colorScheme.onErrorContainer
             )
             Text(
-                text = "Usage tracking service is not running. Tap here to fix it.",
+                text = stringResource(R.string.accessibility_warning_card_service_not_running),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onErrorContainer

@@ -2,7 +2,9 @@ package com.andrew264.habits.ui.usage.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.components.Statistic
 import com.andrew264.habits.ui.common.components.StatisticCard
 import com.andrew264.habits.ui.common.utils.FormatUtils
@@ -17,9 +19,9 @@ fun StatisticsSummaryCard(
     modifier: Modifier = Modifier
 ) {
     val statistics = listOf(
-        Statistic(label = "Screen Time", value = FormatUtils.formatDuration(totalScreenOnTime)),
-        Statistic(label = "Unlocks", value = pickupCount.toString()),
-        Statistic(label = "Avg. Session", value = FormatUtils.formatDuration(averageSessionMillis))
+        Statistic(label = stringResource(R.string.usage_stats_summary_screen_time), value = FormatUtils.formatDuration(totalScreenOnTime)),
+        Statistic(label = stringResource(R.string.usage_stats_summary_unlocks), value = pickupCount.toString()),
+        Statistic(label = stringResource(R.string.usage_stats_summary_avg_session), value = FormatUtils.formatDuration(averageSessionMillis))
     )
 
     StatisticCard(statistics = statistics, modifier = modifier)

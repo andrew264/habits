@@ -10,8 +10,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.andrew264.habits.R
 import com.andrew264.habits.model.UserPresenceState
 import com.andrew264.habits.ui.theme.Dimens
 
@@ -22,9 +24,9 @@ fun PresenceLegend() {
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        LegendItem(color = UserPresenceState.AWAKE.toColor(), label = "Awake")
-        LegendItem(color = UserPresenceState.SLEEPING.toColor(), label = "Sleeping")
-        LegendItem(color = UserPresenceState.UNKNOWN.toColor(), label = "Unknown")
+        LegendItem(color = UserPresenceState.AWAKE.toColor(), label = stringResource(id = R.string.presence_legend_awake))
+        LegendItem(color = UserPresenceState.SLEEPING.toColor(), label = stringResource(id = R.string.presence_legend_sleeping))
+        LegendItem(color = UserPresenceState.UNKNOWN.toColor(), label = stringResource(id = R.string.presence_legend_unknown))
     }
 }
 

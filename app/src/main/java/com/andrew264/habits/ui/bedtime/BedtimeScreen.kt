@@ -8,10 +8,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import com.andrew264.habits.R
 import com.andrew264.habits.domain.analyzer.ScheduleCoverage
 import com.andrew264.habits.model.schedule.DefaultSchedules
 import com.andrew264.habits.ui.bedtime.components.BedtimeContent
@@ -66,7 +68,7 @@ private fun BedtimeScreen(
     when {
         uiState.isLoading && uiState.timelineSegments.isEmpty() -> {
             Scaffold(
-                topBar = { TopAppBar(title = { Text("Bedtime") }) },
+                topBar = { TopAppBar(title = { Text(stringResource(id = R.string.bedtime_screen_title)) }) },
                 containerColor = MaterialTheme.colorScheme.surfaceContainer
             ) { paddingValues ->
                 ContainedLoadingIndicator(Modifier.padding(paddingValues))
@@ -77,7 +79,7 @@ private fun BedtimeScreen(
             Scaffold(
                 topBar = {
                     TopAppBar(
-                        title = { Text("Bedtime") },
+                        title = { Text(stringResource(id = R.string.bedtime_screen_title)) },
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainer,
                             scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -88,9 +90,9 @@ private fun BedtimeScreen(
             ) { paddingValues ->
                 FeatureDisabledContent(
                     modifier = Modifier.padding(paddingValues),
-                    title = "Bedtime Tracking Disabled",
-                    description = "This feature uses sleep schedules and the Sleep API to track your sleep patterns. You can enable it in settings.",
-                    buttonText = "Go to Settings",
+                    title = stringResource(id = R.string.bedtime_screen_tracking_disabled_title),
+                    description = stringResource(id = R.string.bedtime_screen_tracking_disabled_description),
+                    buttonText = stringResource(id = R.string.bedtime_screen_tracking_disabled_button),
                     onEnableClicked = { onNavigate(BedtimeSettings) }
                 )
             }
@@ -101,7 +103,7 @@ private fun BedtimeScreen(
                 modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
                 topBar = {
                     LargeFlexibleTopAppBar(
-                        title = { Text("Bedtime") },
+                        title = { Text(stringResource(id = R.string.bedtime_screen_title)) },
                         actions = {
                             val interactionSource = remember { MutableInteractionSource() }
                             HapticInteractionEffect(interactionSource)
@@ -112,7 +114,7 @@ private fun BedtimeScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.Settings,
-                                    contentDescription = "Configure Sleep Schedule"
+                                    contentDescription = stringResource(id = R.string.bedtime_screen_configure_schedule_content_description)
                                 )
                             }
                         },

@@ -13,10 +13,13 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.andrew264.habits.R
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.TimeRange
 import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
@@ -25,7 +28,6 @@ import com.andrew264.habits.ui.schedule.components.GroupedView
 import com.andrew264.habits.ui.schedule.components.PerDayView
 import com.andrew264.habits.ui.theme.Dimens
 import kotlinx.coroutines.flow.collectLatest
-import java.util.Locale
 
 @Composable
 fun ScheduleEditorScreen(
@@ -36,6 +38,7 @@ fun ScheduleEditorScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val perDayRepresentation by viewModel.perDayRepresentation.collectAsState()
+    val context = LocalContext.current
 
     LaunchedEffect(scheduleId) {
         viewModel.initialize(scheduleId)
@@ -45,7 +48,11 @@ fun ScheduleEditorScreen(
         viewModel.uiEvents.collectLatest { event ->
             when (event) {
                 is ScheduleUiEvent.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(message = event.message, duration = SnackbarDuration.Short)
+                    val messageText = event.message.resolve(context)
+                    snackbarHostState.showSnackbar(
+                        message = messageText,
+                        duration = SnackbarDuration.Short
+                    )
                 }
 
                 is ScheduleUiEvent.NavigateUp -> {
@@ -54,6 +61,7 @@ fun ScheduleEditorScreen(
             }
         }
     }
+
 
     ScheduleEditorScreen(
         uiState = uiState,
@@ -105,11 +113,11 @@ private fun ScheduleEditorScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (uiState.isNewSchedule) "New Schedule" else "Edit Schedule") },
+                title = { Text(if (uiState.isNewSchedule) stringResource(R.string.schedule_editor_new_schedule) else stringResource(R.string.schedule_editor_edit_schedule)) },
                 subtitle = {
                     uiState.scheduleCoverage?.let {
                         Text(
-                            "${String.format(Locale.getDefault(), "%.1f", it.totalHours)} hours/week",
+                            stringResource(R.string.schedule_editor_hours_per_week, it.totalHours),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -121,7 +129,7 @@ private fun ScheduleEditorScreen(
                         onClick = onNavigateUp, interactionSource = interactionSource,
                         colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.top_app_bar_back_button_content_description))
                     }
                 },
                 actions = {
@@ -136,7 +144,7 @@ private fun ScheduleEditorScreen(
                             .padding(end = Dimens.PaddingSmall),
                         colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
                     ) {
-                        Icon(Icons.Default.Done, "Save Schedule")
+                        Icon(Icons.Default.Done, stringResource(R.string.schedule_editor_save_schedule))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -150,8 +158,8 @@ private fun ScheduleEditorScreen(
                 val fabInteractionSource = remember { MutableInteractionSource() }
                 HapticInteractionEffect(fabInteractionSource)
                 SmallExtendedFloatingActionButton(
-                    text = { Text("New Group") },
-                    icon = { Icon(Icons.Default.Add, "Create New Group") },
+                    text = { Text(stringResource(R.string.schedule_editor_new_group)) },
+                    icon = { Icon(Icons.Default.Add, stringResource(R.string.schedule_editor_create_new_group)) },
                     onClick = onAddGroup,
                     expanded = expandedFab,
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
@@ -178,8 +186,8 @@ private fun ScheduleEditorScreen(
                     OutlinedTextField(
                         value = uiState.schedule?.name.orEmpty(),
                         onValueChange = onUpdateScheduleName,
-                        label = { Text("Schedule Name") },
-                        placeholder = { Text("Enter schedule name") },
+                        label = { Text(stringResource(R.string.schedule_editor_schedule_name)) },
+                        placeholder = { Text(stringResource(R.string.schedule_editor_enter_schedule_name)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
@@ -188,7 +196,7 @@ private fun ScheduleEditorScreen(
                     ButtonGroup(
                         overflowIndicator = { menuState ->
                             IconButton(onClick = { menuState.show() }) {
-                                Icon(Icons.Default.MoreVert, "More options")
+                                Icon(Icons.Default.MoreVert, stringResource(R.string.schedule_editor_more_options))
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -214,8 +222,8 @@ private fun ScheduleEditorScreen(
                                     ) {
                                         Text(
                                             text = when (mode) {
-                                                ScheduleViewMode.GROUPED -> "📋 Grouped"
-                                                ScheduleViewMode.PER_DAY -> "📅 Per Day"
+                                                ScheduleViewMode.GROUPED -> stringResource(R.string.schedule_editor_grouped_view_emoji)
+                                                ScheduleViewMode.PER_DAY -> stringResource(R.string.schedule_editor_per_day_view_emoji)
                                             },
                                             fontWeight = if (mode == uiState.viewMode) FontWeight.Bold else FontWeight.Normal
                                         )
@@ -226,8 +234,8 @@ private fun ScheduleEditorScreen(
                                         text = {
                                             Text(
                                                 when (mode) {
-                                                    ScheduleViewMode.GROUPED -> "Grouped"
-                                                    ScheduleViewMode.PER_DAY -> "Per Day"
+                                                    ScheduleViewMode.GROUPED -> stringResource(R.string.schedule_editor_grouped_view)
+                                                    ScheduleViewMode.PER_DAY -> stringResource(R.string.schedule_editor_per_day_view)
                                                 }
                                             )
                                         },
@@ -247,7 +255,7 @@ private fun ScheduleEditorScreen(
                 ) {
                     Crossfade(
                         targetState = uiState.viewMode,
-                        label = "ViewModeCrossfade"
+                        label = stringResource(R.string.schedule_editor_view_mode_crossfade)
                     ) { mode ->
                         when (mode) {
                             ScheduleViewMode.GROUPED -> {
