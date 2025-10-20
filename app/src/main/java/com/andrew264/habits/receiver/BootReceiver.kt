@@ -42,8 +42,8 @@ class BootReceiver : BroadcastReceiver() {
         context: Context,
         intent: Intent
     ) {
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-            Log.d(TAG, "Boot completed.")
+        if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == Intent.ACTION_BATTERY_OKAY) {
+            Log.d(TAG, "Received ${intent.action}")
 
             val pendingResult = goAsync()
 
@@ -54,7 +54,6 @@ class BootReceiver : BroadcastReceiver() {
                     // End any dangling session from before the reboot
                     appUsageRepository.endCurrentUsageSession(System.currentTimeMillis())
 
-                    // Restart presence service if it was active
                     if (settings.isBedtimeTrackingEnabled || settings.isAppUsageTrackingEnabled) {
                         Log.d(TAG, "Service was persisted as active. Attempting to start UserPresenceService.")
                         startPresenceMonitoringUseCase.execute()
@@ -62,7 +61,6 @@ class BootReceiver : BroadcastReceiver() {
                         Log.d(TAG, "Service was persisted as inactive. Not starting on boot.")
                     }
 
-                    // Reschedule water reminders if they were active
                     if (settings.isWaterTrackingEnabled && settings.isWaterReminderEnabled) {
                         Log.d(TAG, "Water reminders were active. Rescheduling first reminder.")
                         waterAlarmScheduler.scheduleNextReminder(settings.waterReminderIntervalMinutes.toLong())
