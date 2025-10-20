@@ -28,7 +28,6 @@ fun WaterScreen(
     onNavigateToSettings: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val showTargetDialog by viewModel.showTargetDialog.collectAsState()
     val isInitialComposition = remember { mutableStateOf(true) }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
@@ -39,7 +38,7 @@ fun WaterScreen(
         }
     }
 
-    if (showTargetDialog) {
+    if (uiState.showTargetDialog) {
         TargetSettingsDialog(
             settings = uiState.settings,
             onDismiss = viewModel::onDismissTargetDialog,
@@ -78,7 +77,7 @@ fun WaterScreen(
 @Composable
 private fun WaterScreen(
     modifier: Modifier = Modifier,
-    uiState: WaterUiState,
+    uiState: WaterScreenUiState,
     onLogWater: (Int) -> Unit,
     onNavigateToStats: () -> Unit,
     onNavigateToSettings: () -> Unit
@@ -148,7 +147,7 @@ private fun WaterScreenHalfwayPreview() {
     val settings = createPreviewPersistentSettings(waterDailyTargetMl = 2500)
     HabitsTheme {
         WaterScreen(
-            uiState = WaterUiState(
+            uiState = WaterScreenUiState(
                 settings = settings,
                 todaysIntakeMl = 1250,
                 progress = 0.5f
@@ -166,7 +165,7 @@ private fun WaterScreenCompletePreview() {
     val settings = createPreviewPersistentSettings(waterDailyTargetMl = 2000)
     HabitsTheme {
         WaterScreen(
-            uiState = WaterUiState(
+            uiState = WaterScreenUiState(
                 settings = settings,
                 todaysIntakeMl = 2400,
                 progress = 1.0f // Progress caps at 1.0
@@ -184,7 +183,7 @@ private fun WaterScreenLandscapePreview() {
     val settings = createPreviewPersistentSettings(waterDailyTargetMl = 2500)
     HabitsTheme {
         WaterScreen(
-            uiState = WaterUiState(
+            uiState = WaterScreenUiState(
                 settings = settings,
                 todaysIntakeMl = 1250,
                 progress = 0.5f

@@ -20,6 +20,11 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
+enum class ScheduleViewMode {
+    GROUPED,
+    PER_DAY
+}
+
 sealed interface ScheduleUiEvent {
     object NavigateUp : ScheduleUiEvent
 }
@@ -29,7 +34,8 @@ data class ScheduleEditorUiState(
     val viewMode: ScheduleViewMode = ScheduleViewMode.GROUPED,
     val isNewSchedule: Boolean = true,
     val isLoading: Boolean = true,
-    val scheduleCoverage: ScheduleCoverage? = null
+    val scheduleCoverage: ScheduleCoverage? = null,
+    val perDayRepresentation: Map<DayOfWeek, List<TimeRange>> = emptyMap()
 )
 
 @HiltViewModel
@@ -40,42 +46,40 @@ class ScheduleViewModel @Inject constructor(
     private val snackbarManager: SnackbarManager
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ScheduleEditorUiState())
-    val uiState: StateFlow<ScheduleEditorUiState> = _uiState.asStateFlow()
+    private val _internalState = MutableStateFlow(ScheduleEditorUiState())
+
+    val uiState: StateFlow<ScheduleEditorUiState> = _internalState.map { state ->
+        val perDayRep = state.schedule?.let { schedule ->
+            DayOfWeek.entries.associateWith { day ->
+                schedule.groups
+                    .filter { group -> day in group.days }
+                    .flatMap { group -> group.timeRanges }
+                    .sortedBy { it.fromMinuteOfDay }
+            }
+        } ?: emptyMap()
+        state.copy(perDayRepresentation = perDayRep)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = ScheduleEditorUiState()
+    )
 
     private val _uiEvents = MutableSharedFlow<ScheduleUiEvent>()
     val uiEvents = _uiEvents.asSharedFlow()
 
     private var currentScheduleId: String? = null
 
-    val perDayRepresentation: StateFlow<Map<DayOfWeek, List<TimeRange>>> = uiState
-        .map { it.schedule }
-        .filterNotNull()
-        .map { currentSchedule ->
-            DayOfWeek.entries.associateWith { day ->
-                currentSchedule.groups
-                    .filter { group -> day in group.days }
-                    .flatMap { group -> group.timeRanges }
-                    .sortedBy { it.fromMinuteOfDay }
-            }
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyMap()
-        )
-
     fun initialize(scheduleId: String?) {
         // Avoid re-initializing if the ID is the same and we are not in a loading state.
-        if (scheduleId == currentScheduleId && !_uiState.value.isLoading) return
+        if (scheduleId == currentScheduleId && !_internalState.value.isLoading) return
         currentScheduleId = scheduleId
 
         viewModelScope.launch {
-            _uiState.value = ScheduleEditorUiState(isLoading = true) // Reset state
+            _internalState.value = ScheduleEditorUiState(isLoading = true) // Reset state
             if (scheduleId == null) {
                 // This case is now a fallback, the FAB should always provide an ID.
                 val newSchedule = createNewSchedule()
-                _uiState.value = ScheduleEditorUiState(
+                _internalState.value = ScheduleEditorUiState(
                     schedule = newSchedule,
                     isNewSchedule = true,
                     isLoading = false,
@@ -86,7 +90,7 @@ class ScheduleViewModel @Inject constructor(
                 val existingSchedule = scheduleRepository.getSchedule(scheduleId).first()
                 if (existingSchedule != null) {
                     // It's an existing schedule, load it for editing.
-                    _uiState.value = ScheduleEditorUiState(
+                    _internalState.value = ScheduleEditorUiState(
                         schedule = existingSchedule,
                         isNewSchedule = false,
                         isLoading = false,
@@ -95,7 +99,7 @@ class ScheduleViewModel @Inject constructor(
                 } else {
                     // It's a new schedule, create it with the provided ID.
                     val newSchedule = createNewSchedule(scheduleId)
-                    _uiState.value = ScheduleEditorUiState(
+                    _internalState.value = ScheduleEditorUiState(
                         schedule = newSchedule,
                         isNewSchedule = true,
                         isLoading = false,
@@ -112,11 +116,11 @@ class ScheduleViewModel @Inject constructor(
     }
 
     fun setViewMode(mode: ScheduleViewMode) {
-        _uiState.update { it.copy(viewMode = mode) }
+        _internalState.update { it.copy(viewMode = mode) }
     }
 
     fun saveSchedule() {
-        val currentSchedule = _uiState.value.schedule ?: return
+        val currentSchedule = _internalState.value.schedule ?: return
         viewModelScope.launch {
             when (val result = saveScheduleUseCase.execute(currentSchedule)) {
                 is SaveScheduleUseCase.Result.Success -> {
@@ -132,7 +136,7 @@ class ScheduleViewModel @Inject constructor(
     }
 
     private fun updateSchedule(transform: (Schedule) -> Schedule) {
-        _uiState.update { state ->
+        _internalState.update { state ->
             state.schedule?.let {
                 val newSchedule = transform(it)
                 val analyzer = ScheduleAnalyzer(newSchedule.groups)
@@ -202,10 +206,10 @@ class ScheduleViewModel @Inject constructor(
         day: DayOfWeek,
         updatedTimeRange: TimeRange
     ) {
-        _uiState.value.schedule?.let { currentSchedule ->
+        _internalState.value.schedule?.let { currentSchedule ->
             val result = scheduleEditor.updateTimeRangeInDay(currentSchedule, day, updatedTimeRange)
             val analyzer = ScheduleAnalyzer(result.schedule.groups)
-            _uiState.update {
+            _internalState.update {
                 it.copy(
                     schedule = result.schedule,
                     scheduleCoverage = analyzer.calculateCoverage()
@@ -221,10 +225,10 @@ class ScheduleViewModel @Inject constructor(
         day: DayOfWeek,
         timeRange: TimeRange
     ) {
-        _uiState.value.schedule?.let { currentSchedule ->
+        _internalState.value.schedule?.let { currentSchedule ->
             val result = scheduleEditor.deleteTimeRangeFromDay(currentSchedule, day, timeRange)
             val analyzer = ScheduleAnalyzer(result.schedule.groups)
-            _uiState.update {
+            _internalState.update {
                 it.copy(
                     schedule = result.schedule,
                     scheduleCoverage = analyzer.calculateCoverage()
@@ -235,9 +239,4 @@ class ScheduleViewModel @Inject constructor(
             }
         }
     }
-}
-
-enum class ScheduleViewMode {
-    GROUPED,
-    PER_DAY
 }

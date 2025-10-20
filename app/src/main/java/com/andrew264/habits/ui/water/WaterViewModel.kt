@@ -15,11 +15,12 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class WaterUiState(
+data class WaterScreenUiState(
     val settings: PersistentSettings = createPreviewPersistentSettings(),
     val allSchedules: List<Schedule> = emptyList(),
     val todaysIntakeMl: Int = 0,
-    val progress: Float = 0f
+    val progress: Float = 0f,
+    val showTargetDialog: Boolean = false
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -31,16 +32,23 @@ class WaterViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _showTargetDialog = MutableStateFlow(false)
-    val showTargetDialog = _showTargetDialog.asStateFlow()
-
     private val refreshTrigger = MutableStateFlow(0)
 
-    val uiState: StateFlow<WaterUiState> = refreshTrigger.flatMapLatest {
-        getWaterUiStateUseCase.execute()
+    val uiState: StateFlow<WaterScreenUiState> = combine(
+        refreshTrigger.flatMapLatest { getWaterUiStateUseCase.execute() },
+        _showTargetDialog
+    ) { useCaseState, showDialog ->
+        WaterScreenUiState(
+            settings = useCaseState.settings,
+            allSchedules = useCaseState.allSchedules,
+            todaysIntakeMl = useCaseState.todaysIntakeMl,
+            progress = useCaseState.progress,
+            showTargetDialog = showDialog
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = WaterUiState()
+        initialValue = WaterScreenUiState()
     )
 
     fun refresh() {
