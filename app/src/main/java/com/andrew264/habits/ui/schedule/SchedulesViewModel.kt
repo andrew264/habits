@@ -8,18 +8,12 @@ import com.andrew264.habits.domain.usecase.CheckScheduleInUseUseCase
 import com.andrew264.habits.domain.usecase.DeleteScheduleUseCase
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.ui.common.SnackbarMessage
+import com.andrew264.habits.util.SnackbarCommand
+import com.andrew264.habits.util.SnackbarManager
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-sealed interface SchedulesUiEvent {
-    data class ShowSnackbar(
-        val message: SnackbarMessage,
-        val actionLabel: SnackbarMessage? = null
-    ) : SchedulesUiEvent
-}
 
 data class SchedulesUiState(
     val schedules: List<Schedule> = emptyList(),
@@ -31,7 +25,8 @@ data class SchedulesUiState(
 class SchedulesViewModel @Inject constructor(
     scheduleRepository: ScheduleRepository,
     private val deleteScheduleUseCase: DeleteScheduleUseCase,
-    private val checkScheduleInUseUseCase: CheckScheduleInUseUseCase
+    private val checkScheduleInUseUseCase: CheckScheduleInUseUseCase,
+    private val snackbarManager: SnackbarManager
 ) : ViewModel() {
 
     private val _schedulePendingDeletion = MutableStateFlow<Schedule?>(null)
@@ -49,14 +44,11 @@ class SchedulesViewModel @Inject constructor(
             initialValue = SchedulesUiState()
         )
 
-    private val _uiEvents = Channel<SchedulesUiEvent>(Channel.BUFFERED)
-    val uiEvents = _uiEvents.receiveAsFlow()
-
     suspend fun onDeleteSchedule(schedule: Schedule): Boolean {
         when (val checkResult = checkScheduleInUseUseCase.execute(schedule.id)) {
             is CheckScheduleInUseUseCase.Result.IsDefault -> {
-                _uiEvents.send(
-                    SchedulesUiEvent.ShowSnackbar(
+                snackbarManager.showMessage(
+                    SnackbarCommand(
                         message = SnackbarMessage.FromResource(R.string.schedules_view_model_default_schedule_delete_error)
                     )
                 )
@@ -64,8 +56,8 @@ class SchedulesViewModel @Inject constructor(
             }
 
             is CheckScheduleInUseUseCase.Result.InUse -> {
-                _uiEvents.send(
-                    SchedulesUiEvent.ShowSnackbar(
+                snackbarManager.showMessage(
+                    SnackbarCommand(
                         message = SnackbarMessage.FromString(checkResult.usageMessage)
                     )
                 )
@@ -74,13 +66,15 @@ class SchedulesViewModel @Inject constructor(
 
             is CheckScheduleInUseUseCase.Result.NotInUse -> {
                 _schedulePendingDeletion.value = schedule
-                _uiEvents.send(
-                    SchedulesUiEvent.ShowSnackbar(
+                snackbarManager.showMessage(
+                    SnackbarCommand(
                         message = SnackbarMessage.FromResource(
                             R.string.schedules_view_model_schedule_deleted,
                             formatArgs = listOf(schedule.name)
                         ),
-                        actionLabel = SnackbarMessage.FromResource(R.string.schedules_view_model_undo)
+                        actionLabel = SnackbarMessage.FromResource(R.string.schedules_view_model_undo),
+                        onAction = { onUndoDelete() },
+                        onDismiss = { onDeletionConfirmed() }
                     )
                 )
                 return true

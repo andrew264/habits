@@ -4,7 +4,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -29,7 +28,6 @@ import com.andrew264.habits.ui.usage.whitelist.WhitelistScreen
 import com.andrew264.habits.ui.water.WaterScreen
 import com.andrew264.habits.ui.water.WaterSettingsScreen
 import com.andrew264.habits.ui.water.WaterStatsScreen
-import com.andrew264.habits.ui.water.WaterViewModel
 import kotlin.math.roundToInt
 
 @Composable
@@ -38,9 +36,7 @@ fun AppNavDisplay(
     backStack: List<AppRoute>,
     onBack: () -> Unit,
     entryDecorators: List<NavEntryDecorator<AppRoute>>,
-    snackbarHostState: SnackbarHostState,
     onNavigate: (AppRoute) -> Unit,
-    waterViewModel: WaterViewModel,
     onRequestActivityPermission: () -> Unit
 ) {
     val density = LocalDensity.current
@@ -61,7 +57,6 @@ fun AppNavDisplay(
             }
             entry<Water> {
                 WaterScreen(
-                    viewModel = waterViewModel,  // TODO: ugh, viewModel here, its disgusting; it is need so the MainScreen can take us here when we interact with water remainder notification
                     onNavigateToStats = { onNavigate(WaterStats) },
                     onNavigateToSettings = { onNavigate(WaterSettings) }
                 )
@@ -73,7 +68,7 @@ fun AppNavDisplay(
                 WaterSettingsScreen(onNavigateUp = { onBack() })
             }
             entry<Schedules> {
-                SchedulesListDetailScreen(snackbarHostState = snackbarHostState, onNavigateUp = { onBack() })
+                SchedulesListDetailScreen(onNavigateUp = { onBack() })
             }
             entry<Settings> {
                 SettingsScreen(onRequestActivityPermission = onRequestActivityPermission, onNavigate = onNavigate)
@@ -98,7 +93,6 @@ fun AppNavDisplay(
             }
             entry<Privacy> {
                 DataManagementScreen(
-                    snackbarHostState = snackbarHostState,
                     onNavigateUp = { onBack() }
                 )
             }

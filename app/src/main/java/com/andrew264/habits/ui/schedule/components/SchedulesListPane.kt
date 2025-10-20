@@ -33,8 +33,7 @@ fun SchedulesListPane(
     onEdit: (scheduleId: String) -> Unit,
     onNavigateUp: () -> Unit,
     onNewSchedule: () -> Unit,
-    isDetailPaneVisible: Boolean,
-    snackbarHostState: SnackbarHostState
+    isDetailPaneVisible: Boolean
 ) {
     val listState = rememberLazyListState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -66,9 +65,9 @@ fun SchedulesListPane(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer, contentColor = MaterialTheme.colorScheme.tertiary),
                             interactionSource = interactionSource,
                         ) {
-                            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.schedule_editor_new_schedule))
+                            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.schedule_editor_new_schedule), tint = MaterialTheme.colorScheme.onTertiary)
                             Spacer(Modifier.width(Dimens.PaddingSmall))
-                            Text(stringResource(R.string.schedule_list_pane_create_schedule))
+                            Text(stringResource(R.string.schedule_list_pane_create_schedule), color = MaterialTheme.colorScheme.onTertiary)
                         }
                     },
                     scrollBehavior = scrollBehavior,
@@ -79,8 +78,7 @@ fun SchedulesListPane(
                 )
             }
         },
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues)) {
             if (uiState.isLoading) {

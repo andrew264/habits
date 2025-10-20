@@ -13,20 +13,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.SaveableStateHolderNavEntryDecorator
+import com.andrew264.habits.ui.common.SnackbarHandler
 import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.navigation.AppNavDisplay
 import com.andrew264.habits.ui.navigation.Home
 import com.andrew264.habits.ui.navigation.TopLevelBackStack
 import com.andrew264.habits.ui.navigation.railItems
-import com.andrew264.habits.ui.water.WaterViewModel
 
 @Composable
 private fun MainScreenLayout(
     topLevelBackStack: TopLevelBackStack,
-    waterViewModel: WaterViewModel,
-    onRequestActivityPermission: () -> Unit
+    onRequestActivityPermission: () -> Unit,
+    snackbarHostState: SnackbarHostState
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
     val saveableStateHolder = rememberSaveableStateHolder()
 
     NavigationSuiteScaffold(
@@ -66,9 +65,7 @@ private fun MainScreenLayout(
                     SaveableStateHolderNavEntryDecorator(saveableStateHolder),
                     rememberViewModelStoreNavEntryDecorator()
                 ),
-                snackbarHostState = snackbarHostState,
                 onNavigate = { topLevelBackStack.add(it) },
-                waterViewModel = waterViewModel,
                 onRequestActivityPermission = onRequestActivityPermission
             )
         }
@@ -86,7 +83,10 @@ fun MainScreen(
         TopLevelBackStack(Home)
     }
     val uiState by viewModel.uiState.collectAsState()
-    val waterViewModel: WaterViewModel = hiltViewModel()
+
+    val snackbarViewModel: SnackbarViewModel = hiltViewModel()
+    val snackbarHostState = remember { SnackbarHostState() }
+    SnackbarHandler(snackbarManager = snackbarViewModel.snackbarManager, snackbarHostState = snackbarHostState)
 
     // Handle one-time navigation events from the ViewModel
     LaunchedEffect(uiState.destinationRoute) {
@@ -109,7 +109,7 @@ fun MainScreen(
 
     MainScreenLayout(
         topLevelBackStack = topLevelBackStack,
-        waterViewModel = waterViewModel,
-        onRequestActivityPermission = onRequestActivityPermission
+        onRequestActivityPermission = onRequestActivityPermission,
+        snackbarHostState = snackbarHostState
     )
 }

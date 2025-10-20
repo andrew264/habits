@@ -9,13 +9,11 @@ import androidx.compose.material.icons.outlined.Timeline
 import androidx.compose.material.icons.outlined.WaterDrop
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,27 +28,13 @@ import com.andrew264.habits.ui.privacy.components.DeleteConfirmationDialog
 import com.andrew264.habits.ui.privacy.components.TimeRangeRow
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
-import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun DataManagementScreen(
-    snackbarHostState: SnackbarHostState,
     viewModel: DataManagementViewModel = hiltViewModel(),
     onNavigateUp: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
-
-    LaunchedEffect(viewModel.events) {
-        viewModel.events.collectLatest { event ->
-            when (event) {
-                is DataManagementEvent.ShowSnackbar -> {
-                    val message = context.getString(event.messageResId)
-                    snackbarHostState.showSnackbar(message = message)
-                }
-            }
-        }
-    }
 
     if (uiState.showConfirmationDialog) {
         DeleteConfirmationDialog(

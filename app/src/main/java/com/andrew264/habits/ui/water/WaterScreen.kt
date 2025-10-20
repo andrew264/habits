@@ -7,6 +7,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.andrew264.habits.R
@@ -22,7 +23,7 @@ import com.andrew264.habits.ui.water.components.dialogs.TargetSettingsDialog
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WaterScreen(
-    viewModel: WaterViewModel,
+    viewModel: WaterViewModel = hiltViewModel(),
     onNavigateToStats: () -> Unit,
     onNavigateToSettings: () -> Unit,
 ) {

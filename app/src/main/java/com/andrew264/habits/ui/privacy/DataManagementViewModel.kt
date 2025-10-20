@@ -1,12 +1,14 @@
 package com.andrew264.habits.ui.privacy
 
-import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andrew264.habits.R
 import com.andrew264.habits.domain.usecase.DeletableDataType
 import com.andrew264.habits.domain.usecase.DeleteDataUseCase
 import com.andrew264.habits.domain.usecase.TimeRangeOption
+import com.andrew264.habits.ui.common.SnackbarMessage
+import com.andrew264.habits.util.SnackbarCommand
+import com.andrew264.habits.util.SnackbarManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -23,19 +25,13 @@ data class DataManagementUiState(
     val showConfirmationDialog: Boolean = false,
 )
 
-sealed interface DataManagementEvent {
-    data class ShowSnackbar(@param:StringRes val messageResId: Int) : DataManagementEvent
-}
-
 @HiltViewModel
 class DataManagementViewModel @Inject constructor(
-    private val deleteDataUseCase: DeleteDataUseCase
+    private val deleteDataUseCase: DeleteDataUseCase,
+    private val snackbarManager: SnackbarManager
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(DataManagementUiState())
     val uiState = _uiState.asStateFlow()
-
-    private val _events = MutableSharedFlow<DataManagementEvent>()
-    val events = _events.asSharedFlow()
 
     fun selectTimeRange(timeRange: TimeRangeOption) {
         _uiState.update { it.copy(selectedTimeRange = timeRange) }
@@ -64,9 +60,9 @@ class DataManagementViewModel @Inject constructor(
                     dataTypes = uiState.value.selectedDataTypes,
                     timeRange = uiState.value.selectedTimeRange
                 )
-                _events.emit(DataManagementEvent.ShowSnackbar(R.string.data_management_data_deleted_successfully))
+                snackbarManager.showMessage(SnackbarCommand(message = SnackbarMessage.FromResource(R.string.data_management_data_deleted_successfully)))
             } catch (_: Exception) {
-                _events.emit(DataManagementEvent.ShowSnackbar(R.string.data_management_error_deleting_data))
+                snackbarManager.showMessage(SnackbarCommand(message = SnackbarMessage.FromResource(R.string.data_management_error_deleting_data)))
             } finally {
                 _uiState.update { it.copy(isDeleting = false) }
             }

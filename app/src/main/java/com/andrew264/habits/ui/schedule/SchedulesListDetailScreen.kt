@@ -14,7 +14,6 @@ import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaf
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -32,43 +31,15 @@ import kotlin.math.roundToInt
 
 @Composable
 fun SchedulesListDetailScreen(
-    snackbarHostState: SnackbarHostState,
     onNavigateUp: () -> Unit,
     viewModel: SchedulesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
-
-
-    LaunchedEffect(key1 = true) {
-        viewModel.uiEvents.collect { event ->
-            when (event) {
-                is SchedulesUiEvent.ShowSnackbar -> {
-                    val messageText = event.message.resolve(context)
-                    val actionLabelText = event.actionLabel?.resolve(context)
-
-                    launch {
-                        val result = snackbarHostState.showSnackbar(
-                            message = messageText,
-                            actionLabel = actionLabelText,
-                            duration = SnackbarDuration.Short
-                        )
-                        if (result == SnackbarResult.ActionPerformed) {
-                            viewModel.onUndoDelete()
-                        } else if (event.actionLabel != null) {
-                            viewModel.onDeletionConfirmed()
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     SchedulesListDetailScreen(
         uiState = uiState,
         onNavigateUp = onNavigateUp,
-        onDeleteSchedule = viewModel::onDeleteSchedule,
-        snackbarHostState = snackbarHostState
+        onDeleteSchedule = viewModel::onDeleteSchedule
     )
 }
 
@@ -77,8 +48,7 @@ fun SchedulesListDetailScreen(
 private fun SchedulesListDetailScreen(
     uiState: SchedulesUiState,
     onNavigateUp: () -> Unit,
-    onDeleteSchedule: suspend (Schedule) -> Boolean,
-    snackbarHostState: SnackbarHostState
+    onDeleteSchedule: suspend (Schedule) -> Boolean
 ) {
     val scaffoldNavigator = rememberListDetailPaneScaffoldNavigator<ScheduleSelection>(
         adaptStrategies =
@@ -122,8 +92,7 @@ private fun SchedulesListDetailScreen(
                             )
                         }
                     },
-                    isDetailPaneVisible = selection != null,
-                    snackbarHostState = snackbarHostState
+                    isDetailPaneVisible = selection != null
                 )
             }
         },
@@ -135,7 +104,6 @@ private fun SchedulesListDetailScreen(
                 if (selection != null) {
                     ScheduleEditorScreen(
                         scheduleId = selection.scheduleId,
-                        snackbarHostState = snackbarHostState,
                         onNavigateUp = { scope.launch { scaffoldNavigator.navigateBack() } }
                     )
                 } else {

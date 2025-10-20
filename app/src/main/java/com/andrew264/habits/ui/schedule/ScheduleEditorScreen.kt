@@ -13,7 +13,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -32,13 +31,11 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun ScheduleEditorScreen(
     scheduleId: String?,
-    snackbarHostState: SnackbarHostState,
     onNavigateUp: () -> Unit,
     viewModel: ScheduleViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val perDayRepresentation by viewModel.perDayRepresentation.collectAsState()
-    val context = LocalContext.current
 
     LaunchedEffect(scheduleId) {
         viewModel.initialize(scheduleId)
@@ -47,14 +44,6 @@ fun ScheduleEditorScreen(
     LaunchedEffect(viewModel.uiEvents) {
         viewModel.uiEvents.collectLatest { event ->
             when (event) {
-                is ScheduleUiEvent.ShowSnackbar -> {
-                    val messageText = event.message.resolve(context)
-                    snackbarHostState.showSnackbar(
-                        message = messageText,
-                        duration = SnackbarDuration.Short
-                    )
-                }
-
                 is ScheduleUiEvent.NavigateUp -> {
                     onNavigateUp()
                 }

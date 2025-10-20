@@ -12,19 +12,15 @@ import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.model.schedule.TimeRange
 import com.andrew264.habits.ui.common.SnackbarMessage
+import com.andrew264.habits.util.SnackbarCommand
+import com.andrew264.habits.util.SnackbarManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
-enum class ScheduleViewMode {
-    GROUPED,
-    PER_DAY
-}
-
 sealed interface ScheduleUiEvent {
-    data class ShowSnackbar(val message: SnackbarMessage) : ScheduleUiEvent
     object NavigateUp : ScheduleUiEvent
 }
 
@@ -41,6 +37,7 @@ class ScheduleViewModel @Inject constructor(
     private val scheduleRepository: ScheduleRepository,
     private val saveScheduleUseCase: SaveScheduleUseCase,
     private val scheduleEditor: ScheduleEditor,
+    private val snackbarManager: SnackbarManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ScheduleEditorUiState())
@@ -123,12 +120,12 @@ class ScheduleViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = saveScheduleUseCase.execute(currentSchedule)) {
                 is SaveScheduleUseCase.Result.Success -> {
-                    _uiEvents.emit(ScheduleUiEvent.ShowSnackbar(SnackbarMessage.FromResource(R.string.schedule_view_model_schedule_saved)))
+                    snackbarManager.showMessage(SnackbarCommand(message = SnackbarMessage.FromResource(R.string.schedule_view_model_schedule_saved)))
                     _uiEvents.emit(ScheduleUiEvent.NavigateUp)
                 }
 
                 is SaveScheduleUseCase.Result.Failure -> {
-                    _uiEvents.emit(ScheduleUiEvent.ShowSnackbar(SnackbarMessage.FromString(result.message)))
+                    snackbarManager.showMessage(SnackbarCommand(message = SnackbarMessage.FromString(result.message)))
                 }
             }
         }
@@ -215,7 +212,7 @@ class ScheduleViewModel @Inject constructor(
                 )
             }
             result.userMessage?.let { message ->
-                viewModelScope.launch { _uiEvents.emit(ScheduleUiEvent.ShowSnackbar(SnackbarMessage.FromString(message))) }
+                viewModelScope.launch { snackbarManager.showMessage(SnackbarCommand(message = SnackbarMessage.FromString(message))) }
             }
         }
     }
@@ -234,8 +231,13 @@ class ScheduleViewModel @Inject constructor(
                 )
             }
             result.userMessage?.let { message ->
-                viewModelScope.launch { _uiEvents.emit(ScheduleUiEvent.ShowSnackbar(SnackbarMessage.FromString(message))) }
+                viewModelScope.launch { snackbarManager.showMessage(SnackbarCommand(message = SnackbarMessage.FromString(message))) }
             }
         }
     }
+}
+
+enum class ScheduleViewMode {
+    GROUPED,
+    PER_DAY
 }
