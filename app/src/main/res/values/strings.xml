@@ -86,7 +86,7 @@
     <string name="schedule_selector_label">Schedule</string>
     <string name="schedule_selector_none">None</string>
     <string name="schedule_info_card_total_hours_content_description">Total hours</string>
-    <string name="schedule_info_card_coverage_text">%.1f hours/week (%.1f%%)</string>
+    <string name="schedule_info_card_coverage_text">%1$.1f hours/week (%2$.1f%%)</string>
 
     <!-- Data Management -->
     <string name="data_management_delete_data">Delete Data</string>
