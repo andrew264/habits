@@ -165,7 +165,7 @@ class UsageStatsViewModel @Inject constructor(
                     AppDetails(
                         packageName = pkg,
                         friendlyName = friendlyName,
-                        color = whitelistedApp?.colorHex ?: R.string.usage_default_app_color.toString(),
+                        color = whitelistedApp?.colorHex ?: context.getString(R.string.usage_default_app_color),
                         sessionLimitMinutes = whitelistedApp?.sessionLimitMinutes,
                         totalUsageMillis = totalUsage,
                         usagePercentage = usagePercentage,
