@@ -1,5 +1,5 @@
 [versions]
-agp = "8.13.2"
+agp = "9.0.0"
 kotlin = "2.3.0"
 coreKtx = "1.17.0"
 junit = "4.13.2"
@@ -7,14 +7,14 @@ junitVersion = "1.3.0"
 espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.12.2"
-composeBom = "2025.12.01"
+composeBom = "2026.01.00"
 playServicesLocation = "21.3.0"
 materialIconsExtended = "1.7.8"
-material = "1.5.0-alpha11"
-hilt = "2.57.2"
+material = "1.5.0-alpha12"
+hilt = "2.59"
 hiltViewModelCompose = "1.3.0"
-ksp = "2.2.20-2.0.3"
-adaptive = "1.3.0-alpha05"
+ksp = "2.3.4"
+adaptive = "1.3.0-alpha06"
 materialIconsCore = "1.7.8"
 datastore = "1.2.0"
 roomKtx = "2.8.4"
@@ -77,12 +77,11 @@ androidx-room-runtime = { group = "androidx.room", name = "room-runtime", versio
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 
 # plugin stuff
-hilt-andriod = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-andridx-room = { id = "androidx.room", version.ref = "roomKtx" }
+androidx-room = { id = "androidx.room", version.ref = "roomKtx" }
 jetbrains-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlinSerialization" }
 

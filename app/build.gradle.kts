@@ -1,12 +1,11 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("kotlin-parcelize")
 
-    alias(libs.plugins.hilt.andriod)
+    alias(libs.plugins.hilt.android)
     alias(libs.plugins.google.devtools.ksp)
-    alias(libs.plugins.andridx.room)
+    alias(libs.plugins.androidx.room)
     alias(libs.plugins.jetbrains.kotlin.serialization)
 
 }
@@ -35,8 +34,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_25
+        targetCompatibility = JavaVersion.VERSION_25
     }
     buildFeatures {
         compose = true
@@ -49,7 +48,7 @@ android {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25)
     }
 }
 

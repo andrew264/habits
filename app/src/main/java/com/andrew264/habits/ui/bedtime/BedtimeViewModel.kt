@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 enum class BedtimeChartRange(
-    @StringRes val label: Int,
+    @param:StringRes val label: Int,
     val durationMillis: Long,
     val isLinear: Boolean
 ) {
