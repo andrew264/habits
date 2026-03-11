@@ -134,7 +134,7 @@ private fun WaterSettingsScreen(
                 Column {
                     ListSectionHeader(stringResource(R.string.water_settings_daily_target))
                     NavigationListItem(
-                        icon = Icons.Outlined.TrackChanges,
+                        icon = { Icon(Icons.Outlined.TrackChanges, contentDescription = null) },
                         title = stringResource(R.string.water_settings_daily_target),
                         onClick = onEditTargetClicked,
                         enabled = uiState.settings.isWaterTrackingEnabled,
@@ -162,7 +162,7 @@ private fun WaterSettingsScreen(
                             position = ListItemPosition.TOP
                         )
                         NavigationListItem(
-                            icon = Icons.Outlined.Timer,
+                            icon = { Icon(Icons.Outlined.Timer, contentDescription = null) },
                             title = stringResource(R.string.water_settings_interval),
                             onClick = { showIntervalDialog = true },
                             enabled = uiState.settings.isWaterTrackingEnabled && uiState.settings.isWaterReminderEnabled,
@@ -176,7 +176,7 @@ private fun WaterSettingsScreen(
                             }
                         )
                         NavigationListItem(
-                            icon = Icons.Outlined.Snooze,
+                            icon = { Icon(Icons.Outlined.Snooze, contentDescription = null) },
                             title = stringResource(R.string.water_settings_snooze),
                             onClick = { showSnoozeDialog = true },
                             enabled = uiState.settings.isWaterTrackingEnabled && uiState.settings.isWaterReminderEnabled,

@@ -53,7 +53,7 @@ class BlockerActivity : ComponentActivity() {
                 viewModel.events.collect { event ->
                     when (event) {
                         is BlockerEvent.Finish -> finish()
-                        is BlockerEvent.NavigateToHome -> {
+                        is BlockerEvent.NavigateToCounters -> {
                             val intent = Intent(Intent.ACTION_MAIN).apply {
                                 addCategory(Intent.CATEGORY_HOME)
                                 flags = Intent.FLAG_ACTIVITY_NEW_TASK

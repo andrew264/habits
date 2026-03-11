@@ -1,6 +1,7 @@
 package com.andrew264.habits.ui.common.components
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -16,7 +17,8 @@ import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 fun SimpleTopAppBar(
     title: String,
     onNavigateUp: (() -> Unit)? = null,
-    scrollBehavior: TopAppBarScrollBehavior? = null
+    scrollBehavior: TopAppBarScrollBehavior? = null,
+    actions: @Composable RowScope.() -> Unit = {}
 ) {
     LargeFlexibleTopAppBar(
         title = { Text(text = title) },
@@ -32,6 +34,7 @@ fun SimpleTopAppBar(
                 }
             }
         },
+        actions = actions,
         scrollBehavior = scrollBehavior,
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer,

@@ -24,9 +24,9 @@ sealed interface TopLevelRoute : AppRoute {
 
 @Parcelize
 @Serializable
-data object Home : TopLevelRoute {
+data object Counters : TopLevelRoute {
     @IgnoredOnParcel
-    override val title = R.string.app_route_home
+    override val title = R.string.app_route_counters
 
     @IgnoredOnParcel
     override val selectedIcon = Icons.Filled.Home
@@ -119,8 +119,16 @@ data object Whitelist : AppRoute
 @Serializable
 data object UsageSettings : AppRoute
 
+@Parcelize
+@Serializable
+data class CounterEditor(val counterId: String?) : AppRoute
+
+@Parcelize
+@Serializable
+data class CounterDetail(val counterId: String) : AppRoute
+
 val railItems: List<TopLevelRoute> = listOf(
-    Home,
+    Counters,
     Water,
     Usage,
     Bedtime,

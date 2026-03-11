@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -28,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import com.andrew264.habits.R
 import com.andrew264.habits.model.schedule.DayOfWeek
 import com.andrew264.habits.ui.theme.Dimens
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -53,7 +53,7 @@ fun DaySelector(
         ) {
             DayOfWeek.entries.forEach { day ->
                 val selected = day in selectedDays
-                val dayName = day.name.take(1).replaceFirstChar { it.titlecase(Locale.getDefault()) }
+                val dayName = day.name.take(1).replaceFirstChar { it.titlecase(LocalLocale.current.platformLocale) }
 
                 val backgroundColor by animateColorAsState(
                     targetValue = if (selected) MaterialTheme.colorScheme.onTertiaryContainer else Color.Transparent,

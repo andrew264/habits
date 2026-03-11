@@ -1,8 +1,7 @@
 <resources>
     <!-- General & Navigation -->
     <string name="app_name">Habits</string>
-    <string name="app_nav_display_home_screen_text">Hello World from Home Screen!</string>
-    <string name="app_route_home">Home</string>
+    <string name="app_route_counters">Counters</string>
     <string name="app_route_water">Water</string>
     <string name="app_route_usage">Usage</string>
     <string name="app_route_settings">Settings</string>
@@ -286,4 +285,56 @@
     <string name="permission_activity_recognition_rationale">Activity recognition is needed for accurate sleep detection.</string>
     <string name="permission_post_notifications_rationale">Notifications permission is needed for reminders and for the service to run reliably.</string>
 
+    <!--  Counter  -->
+    <string name="counters_screen_title">Counters</string>
+    <string name="counters_empty_state_title">No Counters Yet</string>
+    <string name="counters_empty_state_description">Tap the + button to start tracking pushups, reading time, running distance, or anything else.</string>
+    <string name="counters_list_item_target">Target: %1$s</string>
+
+    <string name="counter_editor_new_counter_title">New Counter</string>
+    <string name="counter_editor_edit_counter_title">Edit Counter</string>
+    <string name="counter_editor_save">Save</string>
+    <string name="counter_editor_name_label">Name</string>
+    <string name="counter_editor_name_placeholder">e.g., Pushups, Reading Time</string>
+    <string name="counter_editor_name_error_blank">Name cannot be empty</string>
+    <string name="counter_editor_display_color">Display Color</string>
+    <string name="counter_editor_section_type">Type</string>
+    <string name="counter_editor_section_aggregation">Aggregation</string>
+    <string name="counter_editor_section_target">Daily Target (Optional)</string>
+    <string name="counter_editor_target_label">Target</string>
+    <string name="counter_editor_target_error_invalid">Invalid number</string>
+    <string name="counter_editor_target_description_number">e.g., 50 for 50 pushups</string>
+    <string name="counter_editor_target_description_decimal">e.g., 8.5 for 8.5 hours of sleep</string>
+    <string name="counter_editor_target_description_duration">e.g., 30 for 30 minutes</string>
+    <string name="counter_editor_delete_counter">Delete Counter</string>
+    <string name="counter_editor_delete_confirmation_title">Delete Counter?</string>
+    <string name="counter_editor_delete_confirmation_text">Are you sure you want to delete this counter? All of its logged history will be permanently removed.</string>
+    <string name="counter_editor_delete_confirmation_confirm">Delete</string>
+    <string name="counter_saved_message">Counter saved</string>
+    <string name="counter_deleted_message">Counter deleted</string>
+
+    <string name="counter_type_number">Number</string>
+    <string name="counter_type_decimal">Decimal</string>
+    <string name="counter_type_duration">Duration</string>
+
+    <string name="aggregation_type_sum">Sum</string>
+    <string name="aggregation_type_max">Max</string>
+    <string name="aggregation_type_min">Min</string>
+    <string name="aggregation_type_average">Average</string>
+
+    <string name="counter_detail_edit_counter">Edit Counter</string>
+    <string name="counter_detail_add_entry">Add Entry</string>
+    <string name="counter_detail_new_value_label">New Value</string>
+    <string name="counter_detail_add_button">Add</string>
+    <string name="counter_detail_history_chart_title">History</string>
+    <string name="counter_detail_recent_history_title">Recent History</string>
+    <string name="counter_detail_no_history_title">No History Yet</string>
+    <string name="counter_detail_no_history_description">Add your first entry to start seeing your progress here.</string>
+    <string name="counter_detail_log_deleted">Log deleted</string>
+    <string name="counter_detail_undo">Undo</string>
+    <string name="time_range_7_days">7 Days</string>
+    <string name="time_range_30_days">30 Days</string>
+
+    <string name="data_management_counters_history">Counters History</string>
+    <string name="data_management_counters_history_description">Logs and entries from your custom counters.</string>
 </resources>

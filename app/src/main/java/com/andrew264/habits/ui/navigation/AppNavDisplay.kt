@@ -1,24 +1,19 @@
 package com.andrew264.habits.ui.navigation
 
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
-import com.andrew264.habits.R
 import com.andrew264.habits.ui.bedtime.BedtimeScreen
 import com.andrew264.habits.ui.bedtime.BedtimeSettingsScreen
+import com.andrew264.habits.ui.counters.CountersScreen
+import com.andrew264.habits.ui.counters.detail.CounterDetailScreen
+import com.andrew264.habits.ui.counters.editor.CounterEditorScreen
 import com.andrew264.habits.ui.privacy.DataManagementScreen
 import com.andrew264.habits.ui.schedule.SchedulesListDetailScreen
 import com.andrew264.habits.ui.settings.SettingsScreen
@@ -28,6 +23,7 @@ import com.andrew264.habits.ui.usage.whitelist.WhitelistScreen
 import com.andrew264.habits.ui.water.WaterScreen
 import com.andrew264.habits.ui.water.WaterSettingsScreen
 import com.andrew264.habits.ui.water.WaterStatsScreen
+import java.util.UUID
 import kotlin.math.roundToInt
 
 @Composable
@@ -49,10 +45,11 @@ fun AppNavDisplay(
         onBack = onBack,
         entryDecorators = entryDecorators,
         entryProvider = entryProvider {
-            entry<Home> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(stringResource(id = R.string.app_nav_display_home_screen_text), textAlign = TextAlign.Center, modifier = Modifier.clickable {})
-                }
+            entry<Counters> {
+                CountersScreen(
+                    onNavigateToCreateCounter = { onNavigate(CounterEditor(counterId = UUID.randomUUID().toString())) },
+                    onNavigateToCounterDetail = { id -> onNavigate(CounterDetail(id)) }
+                )
             }
             entry<Water> {
                 WaterScreen(
@@ -91,6 +88,12 @@ fun AppNavDisplay(
                 DataManagementScreen(
                     onNavigateUp = { onBack() }
                 )
+            }
+            entry<CounterEditor> { args ->
+                CounterEditorScreen(counterId = args.counterId, onNavigateUp = { onBack() })
+            }
+            entry<CounterDetail> { args ->
+                CounterDetailScreen(counterId = args.counterId, onNavigate = onNavigate, onNavigateUp = { onBack() })
             }
         },
         transitionSpec = { sharedAxisXEnter(forward = true, slideDistance = slideDistance) togetherWith sharedAxisXExit(forward = true, slideDistance = slideDistance) },

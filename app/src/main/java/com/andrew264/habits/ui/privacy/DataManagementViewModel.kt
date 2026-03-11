@@ -21,7 +21,8 @@ data class DataManagementUiState(
     val selectedDataTypes: Set<DeletableDataType> = setOf(
         DeletableDataType.SLEEP,
         DeletableDataType.WATER,
-        DeletableDataType.USAGE
+        DeletableDataType.USAGE,
+        DeletableDataType.COUNTERS
     ),
     val isDeleting: Boolean = false,
     val showConfirmationDialog: Boolean = false,

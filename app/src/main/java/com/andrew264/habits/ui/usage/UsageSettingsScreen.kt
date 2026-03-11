@@ -136,7 +136,7 @@ private fun UsageSettingsScreen(
                     ListSectionHeader(stringResource(R.string.usage_limits))
                     Column(modifier = Modifier.clip(MaterialTheme.shapes.large)) {
                         NavigationListItem(
-                            icon = Icons.Outlined.Timer,
+                            icon = { Icon(Icons.Outlined.Timer, contentDescription = null) },
                             title = stringResource(R.string.usage_shared_daily_limit),
                             onClick = { showSharedLimitDialog = true },
                             position = ListItemPosition.TOP,
@@ -176,7 +176,7 @@ private fun UsageSettingsScreen(
                 Column {
                     ListSectionHeader(stringResource(R.string.usage_apps))
                     NavigationListItem(
-                        icon = Icons.AutoMirrored.Filled.PlaylistAddCheck,
+                        icon = { Icon(Icons.AutoMirrored.Filled.PlaylistAddCheck, contentDescription = null) },
                         title = stringResource(R.string.usage_manage_whitelisted_apps),
                         onClick = { onNavigate(Whitelist) },
                         enabled = uiState.isAppUsageTrackingEnabled,

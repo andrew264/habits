@@ -11,7 +11,8 @@
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
 
     <!-- For starting foreground service -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"
+    <uses-permission
+        android:name="android.permission.FOREGROUND_SERVICE"
         tools:ignore="ForegroundServicesPolicy" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
@@ -23,7 +24,8 @@
     <!-- For full compliance on Android 14+, you may need to declare a USE_EXACT_ALARM permission -->
     <!-- or use a non-exact alarm type if precision is not critical. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM"
+    <uses-permission
+        android:name="android.permission.USE_EXACT_ALARM"
         tools:ignore="ExactAlarmPolicy" />
 
     <!-- Start service on boot -->

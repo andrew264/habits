@@ -39,7 +39,7 @@ data class BlockerUiState(
 
 sealed interface BlockerEvent {
     data class NavigateToAppDetails(val packageName: String) : BlockerEvent
-    object NavigateToHome : BlockerEvent
+    object NavigateToCounters : BlockerEvent
     object Finish : BlockerEvent
 }
 
@@ -132,7 +132,7 @@ class BlockerViewModel @Inject constructor(
 
     fun onImDoneClicked() {
         viewModelScope.launch {
-            _events.emit(BlockerEvent.NavigateToHome)
+            _events.emit(BlockerEvent.NavigateToCounters)
         }
     }
 

@@ -20,7 +20,7 @@ import androidx.navigation3.runtime.SaveableStateHolderNavEntryDecorator
 import com.andrew264.habits.ui.common.SnackbarHandler
 import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.navigation.AppNavDisplay
-import com.andrew264.habits.ui.navigation.Home
+import com.andrew264.habits.ui.navigation.Counters
 import com.andrew264.habits.ui.navigation.TopLevelBackStack
 import com.andrew264.habits.ui.navigation.railItems
 
@@ -80,7 +80,7 @@ fun MainScreen(
     viewModel: MainViewModel,
 ) {
     val topLevelBackStack = rememberSaveable(saver = TopLevelBackStack.Saver) {
-        TopLevelBackStack(Home)
+        TopLevelBackStack(Counters)
     }
     val uiState by viewModel.uiState.collectAsState()
 

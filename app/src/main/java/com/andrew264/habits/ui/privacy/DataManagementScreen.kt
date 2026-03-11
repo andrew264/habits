@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Bedtime
+import androidx.compose.material.icons.outlined.Numbers
 import androidx.compose.material.icons.outlined.Timeline
-import androidx.compose.material.icons.outlined.WaterDrop
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -133,7 +133,7 @@ private fun DataManagementScreen(
                 DataTypeItem(
                     title = stringResource(R.string.data_management_water_intake_history),
                     description = stringResource(R.string.data_management_water_intake_history_description),
-                    icon = Icons.Outlined.WaterDrop,
+                    icon = Icons.Outlined.Timeline,
                     checked = DeletableDataType.WATER in uiState.selectedDataTypes,
                     onToggle = { onToggleDataType(DeletableDataType.WATER) }
                 )
@@ -145,6 +145,15 @@ private fun DataManagementScreen(
                     icon = Icons.Outlined.Timeline,
                     checked = DeletableDataType.USAGE in uiState.selectedDataTypes,
                     onToggle = { onToggleDataType(DeletableDataType.USAGE) }
+                )
+            }
+            item {
+                DataTypeItem(
+                    title = stringResource(R.string.data_management_counters_history),
+                    description = stringResource(R.string.data_management_counters_history_description),
+                    icon = Icons.Outlined.Numbers,
+                    checked = DeletableDataType.COUNTERS in uiState.selectedDataTypes,
+                    onToggle = { onToggleDataType(DeletableDataType.COUNTERS) }
                 )
             }
         }
@@ -164,22 +173,6 @@ private fun DataManagementScreenPreview() {
                 ),
                 isDeleting = false,
                 showConfirmationDialog = false
-            ),
-            onSelectTimeRange = {},
-            onToggleDataType = {},
-            onDeleteClicked = {},
-            onNavigateUp = {}
-        )
-    }
-}
-
-@Preview(showBackground = true, name = "Deleting State")
-@Composable
-private fun DataManagementScreenDeletingPreview() {
-    HabitsTheme {
-        DataManagementScreen(
-            uiState = DataManagementUiState(
-                isDeleting = true
             ),
             onSelectTimeRange = {},
             onToggleDataType = {},

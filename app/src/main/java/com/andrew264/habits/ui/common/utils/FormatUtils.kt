@@ -1,5 +1,6 @@
 package com.andrew264.habits.ui.common.utils
 
+import com.andrew264.habits.model.counter.CounterType
 import com.andrew264.habits.model.schedule.DayOfWeek
 import java.time.Instant
 import java.time.LocalTime
@@ -8,18 +9,10 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import kotlin.math.roundToInt
 
-/**
- * A centralized utility object for formatting dates, times, and durations.
- */
 object FormatUtils {
 
-    /**
-     * Formats a millisecond duration into a human-readable string like "4h 32m" or "15m".
-     *
-     * @param millis The duration in milliseconds.
-     * @return A formatted string representation of the duration.
-     */
     fun formatDuration(millis: Long): String {
         if (millis <= 0) return "0m"
         val totalMinutes = TimeUnit.MILLISECONDS.toMinutes(millis)
@@ -30,13 +23,21 @@ object FormatUtils {
         return if (minutes == 0L) "${hours}h" else "${hours}h ${minutes}m"
     }
 
-    /**
-     * Formats a minute-of-day integer into a 12-hour time string like "9:30 AM" or "8 PM".
-     * This version is independent of Context.
-     *
-     * @param minuteOfDay The time to format, as minutes from midnight (0-1439).
-     * @return A formatted time string.
-     */
+    fun formatCounterValue(value: Double, type: CounterType): String {
+        return when (type) {
+            CounterType.NUMBER -> value.roundToInt().toString()
+            CounterType.DECIMAL -> {
+                val rounded = (value * 10.0).roundToInt() / 10.0
+                if (rounded % 1.0 == 0.0) rounded.roundToInt().toString() else rounded.toString()
+            }
+
+            CounterType.DURATION -> {
+                val millis = (value * 60_000).toLong()
+                formatDuration(millis)
+            }
+        }
+    }
+
     fun formatTimeFromMinute(minuteOfDay: Int): String {
         if (minuteOfDay < 0 || minuteOfDay >= 24 * 60) return "Invalid Time"
         val time = LocalTime.ofSecondOfDay(minuteOfDay * 60L)
@@ -44,46 +45,21 @@ object FormatUtils {
         return time.format(DateTimeFormatter.ofPattern(pattern, Locale.getDefault()))
     }
 
-    /**
-     * Formats a timestamp using a specific pattern.
-     *
-     * @param millis The timestamp in milliseconds.
-     * @param pattern The pattern to use for formatting (e.g., "ha", "d MMM").
-     * @return A formatted string.
-     */
     fun formatTimestamp(millis: Long, pattern: String): String {
         val dateTime = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
         return dateTime.format(DateTimeFormatter.ofPattern(pattern, Locale.getDefault()))
     }
 
-    /**
-     * Gets a 3-letter, title-cased name for a DayOfWeek, e.g., "Sun".
-     *
-     * @param day The DayOfWeek to format.
-     * @return The short name of the day.
-     */
     fun formatDayOfWeekShort(day: DayOfWeek): String {
         return java.time.DayOfWeek.valueOf(day.name)
             .getDisplayName(TextStyle.SHORT, Locale.getDefault())
     }
 
-    /**
-     * Formats a timestamp into a full day name (e.g., "Monday").
-     *
-     * @param millis The timestamp in milliseconds.
-     * @return The full name of the day.
-     */
     fun formatDayFullName(millis: Long): String {
         val dateTime = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
         return dateTime.format(DateTimeFormatter.ofPattern("EEEE", Locale.getDefault()))
     }
 
-    /**
-     * Formats a timestamp into a short, lowercase hour label for use in charts (e.g., "12a", "8p").
-     *
-     * @param millis The timestamp in milliseconds.
-     * @return A short, formatted hour string.
-     */
     fun formatChartHourLabel(millis: Long): String {
         val dateTime = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
         val hour = dateTime.hour
@@ -95,12 +71,6 @@ object FormatUtils {
         }
     }
 
-    /**
-     * Formats a timestamp into a short day-of-the-week label for use in charts (e.g., "Mon", "Tue").
-     *
-     * @param millis The timestamp in milliseconds.
-     * @return A short, formatted day string.
-     */
     fun formatChartDayLabel(millis: Long): String {
         val dateTime = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
         return dateTime.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())

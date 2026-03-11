@@ -187,7 +187,7 @@ fun UsageDetailScreen(
                 }
 
                 NavigationListItem(
-                    icon = Icons.Outlined.Timer,
+                    icon = { Icon(Icons.Outlined.Timer, contentDescription = null) },
                     title = stringResource(R.string.usage_detail_session_limit),
                     onClick = { showSessionLimitDialog = true },
                     position = ListItemPosition.TOP,
@@ -217,7 +217,7 @@ fun UsageDetailScreen(
                 }
 
                 NavigationListItem(
-                    icon = Icons.Outlined.Palette,
+                    icon = { Icon(Icons.Outlined.Palette, contentDescription = null) },
                     title = stringResource(R.string.usage_detail_display_color),
                     onClick = { showColorDialog = true },
                     position = ListItemPosition.BOTTOM,

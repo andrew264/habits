@@ -53,4 +53,10 @@ abstract class RepositoryModule {
     abstract fun bindWhitelistRepository(
         whitelistRepositoryImpl: WhitelistRepositoryImpl
     ): WhitelistRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCounterRepository(
+        counterRepositoryImpl: CounterRepositoryImpl
+    ): CounterRepository
 }

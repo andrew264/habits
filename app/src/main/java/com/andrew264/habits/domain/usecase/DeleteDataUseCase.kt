@@ -1,9 +1,6 @@
 package com.andrew264.habits.domain.usecase
 
-import com.andrew264.habits.data.dao.AppUsageEventDao
-import com.andrew264.habits.data.dao.ScreenEventDao
-import com.andrew264.habits.data.dao.UserPresenceEventDao
-import com.andrew264.habits.data.dao.WaterIntakeDao
+import com.andrew264.habits.data.dao.*
 import com.andrew264.habits.domain.repository.AppUsageRepository
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -11,7 +8,8 @@ import javax.inject.Inject
 enum class DeletableDataType {
     SLEEP,
     WATER,
-    USAGE
+    USAGE,
+    COUNTERS
 }
 
 enum class TimeRangeOption(val durationMillis: Long?) {
@@ -27,6 +25,7 @@ class DeleteDataUseCase @Inject constructor(
     private val screenEventDao: ScreenEventDao,
     private val userPresenceEventDao: UserPresenceEventDao,
     private val waterIntakeDao: WaterIntakeDao,
+    private val counterDao: CounterDao,
     private val appUsageRepository: AppUsageRepository
 ) {
     suspend fun execute(
@@ -60,6 +59,14 @@ class DeleteDataUseCase @Inject constructor(
                 waterIntakeDao.deleteEntriesFrom(startTime)
             } else {
                 waterIntakeDao.deleteAllEntries()
+            }
+        }
+
+        if (DeletableDataType.COUNTERS in dataTypes) {
+            if (startTime != null) {
+                counterDao.deleteLogsFrom(startTime)
+            } else {
+                counterDao.deleteAllLogs()
             }
         }
     }

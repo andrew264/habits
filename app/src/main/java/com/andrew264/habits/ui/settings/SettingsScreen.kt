@@ -163,7 +163,7 @@ private fun SettingsScreen(
 
             item {
                 NavigationListItem(
-                    icon = Icons.Outlined.Schedule,
+                    icon = { Icon(Icons.Outlined.Schedule, contentDescription = null) },
                     title = stringResource(R.string.settings_create_and_manage_schedules),
                     onClick = { onNavigate(Schedules) },
                     position = ListItemPosition.SEPARATE
@@ -180,7 +180,7 @@ private fun SettingsScreen(
 
             item {
                 NavigationListItem(
-                    icon = Icons.Outlined.DeleteForever,
+                    icon = { Icon(Icons.Outlined.DeleteForever, contentDescription = null) },
                     title = stringResource(R.string.data_management_delete_data),
                     onClick = { onNavigate(Privacy) },
                     position = ListItemPosition.TOP
@@ -189,7 +189,7 @@ private fun SettingsScreen(
 
             item {
                 NavigationListItem(
-                    icon = Icons.Outlined.Info,
+                    icon = { Icon(Icons.Outlined.Info, contentDescription = null) },
                     title = stringResource(R.string.settings_app_permissions_and_info),
                     onClick = onOpenAppSettings,
                     position = ListItemPosition.BOTTOM

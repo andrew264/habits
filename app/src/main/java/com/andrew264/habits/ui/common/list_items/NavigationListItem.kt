@@ -7,7 +7,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
@@ -16,15 +15,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.ui.theme.Dimens
 
 @Composable
 fun NavigationListItem(
-    icon: ImageVector,
+    icon: @Composable () -> Unit,
     title: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -53,11 +50,9 @@ fun NavigationListItem(
                 .padding(horizontal = Dimens.PaddingLarge, vertical = 18.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-            )
+            Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+                icon()
+            }
             Spacer(modifier = Modifier.width(Dimens.PaddingLarge))
             Text(
                 text = title,
@@ -86,18 +81,4 @@ fun NavigationListItem(
             }
         }
     }
-}
-
-@Preview
-@Composable
-fun NavigationListItemPreview() {
-    NavigationListItem(
-        icon = Icons.Filled.Info,
-        title = "Sample Navigation Item",
-        onClick = {},
-        position = ListItemPosition.SEPARATE,
-        valueContent = {
-            Text("Value", color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    )
 }

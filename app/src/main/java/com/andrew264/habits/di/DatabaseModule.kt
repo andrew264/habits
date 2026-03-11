@@ -52,7 +52,7 @@ object DatabaseModule {
             AppDatabase.DATABASE_NAME
         )
             .addCallback(callback)
-            .fallbackToDestructiveMigration(false)
+            .fallbackToDestructiveMigration(true)
             .build()
     }
 
@@ -90,5 +90,11 @@ object DatabaseModule {
     @Singleton
     fun provideWhitelistDao(appDatabase: AppDatabase): WhitelistDao {
         return appDatabase.whitelistDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideCounterDao(appDatabase: AppDatabase): CounterDao {
+        return appDatabase.counterDao()
     }
 }
