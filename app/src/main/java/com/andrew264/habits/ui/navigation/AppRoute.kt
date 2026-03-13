@@ -29,10 +29,10 @@ data object Counters : TopLevelRoute {
     override val title = R.string.app_route_counters
 
     @IgnoredOnParcel
-    override val selectedIcon = Icons.Filled.Home
+    override val selectedIcon = Icons.Filled.Numbers
 
     @IgnoredOnParcel
-    override val unselectedIcon = Icons.Outlined.Home
+    override val unselectedIcon = Icons.Outlined.Numbers
 }
 
 @Parcelize

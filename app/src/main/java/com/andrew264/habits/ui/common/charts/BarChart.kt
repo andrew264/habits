@@ -35,7 +35,8 @@ import kotlin.math.roundToInt
 
 data class BarChartEntry(
     val value: Float,
-    val label: String
+    val label: String,
+    val timestamp: Long? = null
 )
 
 @OptIn(ExperimentalTextApi::class, ExperimentalMaterial3ExpressiveApi::class)

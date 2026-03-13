@@ -27,12 +27,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andrew264.habits.R
 import com.andrew264.habits.model.counter.AggregationType
 import com.andrew264.habits.model.counter.CounterType
-import com.andrew264.habits.ui.common.charts.BarChart
 import com.andrew264.habits.ui.common.charts.BarChartEntry
+import com.andrew264.habits.ui.common.charts.InteractiveLineGraph
 import com.andrew264.habits.ui.common.color_picker.utils.toColorOrNull
 import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
 import com.andrew264.habits.ui.common.components.EmptyState
-import com.andrew264.habits.ui.common.components.FilterButtonGroup
 import com.andrew264.habits.ui.common.components.SimpleTopAppBar
 import com.andrew264.habits.ui.common.duration_picker.DurationPickerDialog
 import com.andrew264.habits.ui.common.list_items.ListSectionHeader
@@ -53,14 +52,15 @@ fun CounterDetailScreen(
     viewModel: CounterDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
     LaunchedEffect(counterId) {
         viewModel.initialize(counterId)
     }
+
     CounterDetailScreen(
         uiState = uiState,
         onNavigateUp = onNavigateUp,
         onNavigateToEdit = { onNavigate(CounterEditor(counterId = counterId)) },
-        onSetTimeRange = viewModel::setTimeRange,
         onNewLogValueChange = viewModel::onNewLogValueChange,
         onAddLog = {
             val value = uiState.newLogValue.toDoubleOrNull()
@@ -79,7 +79,6 @@ private fun CounterDetailScreen(
     uiState: CounterDetailUiState,
     onNavigateUp: () -> Unit,
     onNavigateToEdit: () -> Unit,
-    onSetTimeRange: (ChartTimeRange) -> Unit,
     onNewLogValueChange: (String) -> Unit,
     onAddLog: () -> Unit,
     onAddDuration: (Int) -> Unit,
@@ -108,7 +107,10 @@ private fun CounterDetailScreen(
                 scrollBehavior = scrollBehavior,
                 actions = {
                     IconButton(onClick = onNavigateToEdit) {
-                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.counter_detail_edit_counter))
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = stringResource(R.string.counter_detail_edit_counter)
+                        )
                     }
                 }
             )
@@ -118,29 +120,73 @@ private fun CounterDetailScreen(
         if (uiState.isLoading) {
             ContainedLoadingIndicator(Modifier.padding(paddingValues))
         } else if (uiState.details == null) {
-            Text(stringResource(R.string.schedule_selector_none))
+            Box(Modifier
+                .padding(paddingValues)
+                .fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(stringResource(R.string.schedule_selector_none))
+            }
         } else {
             val details = uiState.details
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                contentPadding = PaddingValues(all = Dimens.PaddingLarge),
+                contentPadding = PaddingValues(vertical = Dimens.PaddingLarge),
                 verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
             ) {
-                item { AddEntryCard(uiState, onNewLogValueChange, onAddLog, onShowDurationPicker) }
+                item {
+                    AddEntryCard(
+                        uiState = uiState,
+                        onNewLogValueChange = onNewLogValueChange,
+                        onAddLog = onAddLog,
+                        onShowDurationPicker = onShowDurationPicker,
+                        modifier = Modifier.padding(horizontal = Dimens.PaddingLarge)
+                    )
+                }
 
                 if (details.recentLogs.isEmpty()) {
                     item {
                         EmptyState(
+                            modifier = Modifier.padding(horizontal = Dimens.PaddingLarge),
                             icon = Icons.Outlined.History,
                             title = stringResource(R.string.counter_detail_no_history_title),
                             description = stringResource(R.string.counter_detail_no_history_description)
                         )
                     }
                 } else {
-                    item { HistoryChartCard(uiState, onSetTimeRange) }
-                    item { ListSectionHeader(stringResource(R.string.counter_detail_recent_history_title)) }
+                    item {
+                        Column {
+                            Text(
+                                text = stringResource(R.string.counter_detail_history_chart_title),
+                                style = MaterialTheme.typography.titleLarge,
+                                modifier = Modifier.padding(
+                                    horizontal = Dimens.PaddingLarge,
+                                    vertical = Dimens.PaddingSmall
+                                )
+                            )
+                            InteractiveLineGraph(
+                                entries = details.chartEntries,
+                                lineColor = details.counter.colorHex.toColorOrNull()
+                                    ?: MaterialTheme.colorScheme.primary,
+                                yAxisLabelFormatter = {
+                                    FormatUtils.formatCounterValue(
+                                        it.toDouble(),
+                                        details.counter.type
+                                    )
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(260.dp)
+                            )
+                        }
+                    }
+
+                    item {
+                        Box(modifier = Modifier.padding(horizontal = Dimens.PaddingLarge)) {
+                            ListSectionHeader(stringResource(R.string.counter_detail_recent_history_title))
+                        }
+                    }
+
                     items(details.recentLogs, key = { it.id }) { log ->
                         val dismissState = rememberSwipeToDismissBoxState()
                         SwipeToDismissBox(
@@ -162,16 +208,34 @@ private fun CounterDetailScreen(
                                         .padding(horizontal = Dimens.PaddingLarge),
                                     contentAlignment = Alignment.CenterEnd
                                 ) {
-                                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.schedule_list_item_delete))
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = stringResource(R.string.schedule_list_item_delete)
+                                    )
                                 }
-                            }) {
+                            }
+                        ) {
                             val date = Instant.ofEpochMilli(log.timestamp).atZone(ZoneId.systemDefault())
                             ListItem(
-                                headlineContent = { Text(FormatUtils.formatCounterValue(log.value, details.counter.type)) },
-                                supportingContent = { Text(date.format(DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a"))) }
+                                modifier = Modifier.padding(horizontal = Dimens.PaddingLarge),
+                                headlineContent = {
+                                    Text(
+                                        FormatUtils.formatCounterValue(
+                                            log.value,
+                                            details.counter.type
+                                        )
+                                    )
+                                },
+                                supportingContent = {
+                                    Text(
+                                        date.format(
+                                            DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a")
+                                        )
+                                    )
+                                }
                             )
                         }
-                        HorizontalDivider()
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = Dimens.PaddingLarge))
                     }
                 }
             }
@@ -185,13 +249,17 @@ private fun AddEntryCard(
     onNewLogValueChange: (String) -> Unit,
     onAddLog: () -> Unit,
     onShowDurationPicker: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Card(Modifier.fillMaxWidth()) {
+    Card(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(Dimens.PaddingLarge),
             verticalArrangement = Arrangement.spacedBy(Dimens.PaddingMedium)
         ) {
-            Text(stringResource(R.string.counter_detail_add_entry), style = MaterialTheme.typography.titleLarge)
+            Text(
+                text = stringResource(R.string.counter_detail_add_entry),
+                style = MaterialTheme.typography.titleLarge
+            )
 
             if (uiState.details?.counter?.type == CounterType.DURATION) {
                 Button(onClick = onShowDurationPicker, modifier = Modifier.fillMaxWidth()) {
@@ -212,41 +280,13 @@ private fun AddEntryCard(
                         singleLine = true
                     )
                     IconButton(onClick = onAddLog, enabled = uiState.newLogValue.isNotBlank()) {
-                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.counter_detail_add_button))
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = stringResource(R.string.counter_detail_add_button)
+                        )
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun HistoryChartCard(
-    uiState: CounterDetailUiState,
-    onSetTimeRange: (ChartTimeRange) -> Unit
-) {
-    Card(Modifier.fillMaxWidth()) {
-        Column(
-            Modifier.padding(Dimens.PaddingLarge),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(stringResource(R.string.counter_detail_history_chart_title), style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(Dimens.PaddingMedium))
-            FilterButtonGroup(
-                options = ChartTimeRange.entries,
-                selectedOption = uiState.selectedRange,
-                onOptionSelected = onSetTimeRange,
-                label = { Text(stringResource(it.label)) }
-            )
-            Spacer(Modifier.height(Dimens.PaddingLarge))
-            BarChart(
-                entries = uiState.details?.chartEntries ?: emptyList(),
-                barColor = uiState.details?.counter?.colorHex?.toColorOrNull() ?: MaterialTheme.colorScheme.primary,
-                yAxisLabelFormatter = { FormatUtils.formatCounterValue(it.toDouble(), uiState.details!!.counter.type) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-            )
         }
     }
 }
@@ -255,7 +295,14 @@ private fun HistoryChartCard(
 @Composable
 private fun CounterDetailScreenPreview() {
     HabitsTheme {
-        val counter = com.andrew264.habits.domain.model.Counter("1", "Pushups", CounterType.NUMBER, AggregationType.MAX, 50.0, "#F44336")
+        val counter = com.andrew264.habits.domain.model.Counter(
+            "1",
+            "Pushups",
+            CounterType.NUMBER,
+            AggregationType.MAX,
+            50.0,
+            "#F44336"
+        )
         val logs = listOf(
             com.andrew264.habits.domain.model.CounterLog(1, "1", System.currentTimeMillis() - 86400000, 45.0),
             com.andrew264.habits.domain.model.CounterLog(2, "1", System.currentTimeMillis(), 48.0)
@@ -269,11 +316,14 @@ private fun CounterDetailScreenPreview() {
         CounterDetailScreen(
             uiState = CounterDetailUiState(
                 isLoading = false,
-                details = com.andrew264.habits.domain.usecase.counter.CounterDetailsModel(counter, logs, chartEntries)
+                details = com.andrew264.habits.domain.usecase.counter.CounterDetailsModel(
+                    counter,
+                    logs,
+                    chartEntries
+                )
             ),
             onNavigateUp = {},
             onNavigateToEdit = {},
-            onSetTimeRange = {},
             onNewLogValueChange = {},
             onAddLog = {},
             onDeleteLog = {},

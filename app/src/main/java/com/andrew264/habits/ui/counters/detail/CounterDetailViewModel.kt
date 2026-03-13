@@ -1,6 +1,5 @@
 package com.andrew264.habits.ui.counters.detail
 
-import androidx.annotation.StringRes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -18,15 +17,9 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-enum class ChartTimeRange(@param:StringRes val label: Int) {
-    WEEK(R.string.time_range_7_days),
-    MONTH(R.string.time_range_30_days)
-}
-
 data class CounterDetailUiState(
     val isLoading: Boolean = true,
     val details: CounterDetailsModel? = null,
-    val selectedRange: ChartTimeRange = ChartTimeRange.WEEK,
     val newLogValue: String = "",
     val showDurationPicker: Boolean = false
 )
@@ -46,21 +39,17 @@ class CounterDetailViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _counterId = MutableStateFlow<String?>(null)
-    private val _selectedRange = MutableStateFlow(ChartTimeRange.WEEK)
     private val _localUiState = MutableStateFlow(LocalUiState())
 
     val uiState: StateFlow<CounterDetailUiState> = combine(
         _counterId.filterNotNull().flatMapLatest { id ->
-            _selectedRange.flatMapLatest { range ->
-                getCounterDetailsUseCase.execute(id, range).map { it to range }
-            }
+            getCounterDetailsUseCase.execute(id)
         },
         _localUiState
-    ) { (details, range), local ->
+    ) { details, local ->
         CounterDetailUiState(
             isLoading = false,
             details = details,
-            selectedRange = range,
             newLogValue = local.newLogValue,
             showDurationPicker = local.showDurationPicker
         )
@@ -73,10 +62,6 @@ class CounterDetailViewModel @Inject constructor(
     fun initialize(id: String) {
         if (_counterId.value == id) return
         _counterId.value = id
-    }
-
-    fun setTimeRange(range: ChartTimeRange) {
-        _selectedRange.value = range
     }
 
     fun onNewLogValueChange(value: String) {

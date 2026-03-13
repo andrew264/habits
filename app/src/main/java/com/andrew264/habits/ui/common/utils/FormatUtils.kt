@@ -75,4 +75,11 @@ object FormatUtils {
         val dateTime = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
         return dateTime.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
     }
+
+
+    fun formatShortDateLocaleAware(millis: Long): String {
+        val dateTime = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
+        val pattern = android.text.format.DateFormat.getBestDateTimePattern(Locale.getDefault(), "Md")
+        return dateTime.format(DateTimeFormatter.ofPattern(pattern))
+    }
 }

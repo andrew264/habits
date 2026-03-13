@@ -6,7 +6,6 @@ import com.andrew264.habits.domain.repository.CounterRepository
 import com.andrew264.habits.model.counter.AggregationType
 import com.andrew264.habits.ui.common.charts.BarChartEntry
 import com.andrew264.habits.ui.common.utils.FormatUtils
-import com.andrew264.habits.ui.counters.detail.ChartTimeRange
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import java.time.Instant
@@ -24,11 +23,8 @@ data class CounterDetailsModel(
 class GetCounterDetailsUseCase @Inject constructor(
     private val counterRepository: CounterRepository
 ) {
-    fun execute(counterId: String, range: ChartTimeRange): Flow<CounterDetailsModel?> {
-        val days = when (range) {
-            ChartTimeRange.WEEK -> 7
-            ChartTimeRange.MONTH -> 30
-        }
+    fun execute(counterId: String): Flow<CounterDetailsModel?> {
+        val days = 30
 
         return combine(
             counterRepository.getCounterById(counterId),
@@ -47,8 +43,10 @@ class GetCounterDetailsUseCase @Inject constructor(
                 val date = LocalDate.now(ZoneId.systemDefault()).minusDays((days - 1 - i).toLong())
                 val logsForDay = groupedByDay[date] ?: emptyList()
                 val aggregatedValue = calculateAggregation(logsForDay, counter.aggregationType)
-                val label = FormatUtils.formatChartDayLabel(date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli())
-                BarChartEntry(value = aggregatedValue.toFloat(), label = label)
+                val timestamp = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                val label = FormatUtils.formatChartDayLabel(timestamp)
+                BarChartEntry(value = aggregatedValue.toFloat(), label = label, timestamp = timestamp)
+
             }
 
             CounterDetailsModel(
