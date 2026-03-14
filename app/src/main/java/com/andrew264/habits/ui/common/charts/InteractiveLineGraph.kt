@@ -1,5 +1,6 @@
 package com.andrew264.habits.ui.common.charts
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -17,6 +18,7 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.drawText
@@ -41,6 +43,7 @@ fun InteractiveLineGraph(
     if (entries.isEmpty()) return
 
     val textMeasurer = rememberTextMeasurer()
+    val view = LocalView.current
     val gridColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
     val textColor = MaterialTheme.colorScheme.onSurfaceVariant
     val dotColor = MaterialTheme.colorScheme.surfaceContainer
@@ -110,6 +113,7 @@ fun InteractiveLineGraph(
                     }
                     if (selectedIndex != newSelection) {
                         onSelectionChanged(newSelection)
+                        view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_TICK)
                     }
                 }
             }

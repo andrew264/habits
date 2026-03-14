@@ -1,5 +1,6 @@
 package com.andrew264.habits.ui.counters.detail
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,10 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,6 +30,7 @@ import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
 import com.andrew264.habits.ui.common.components.EmptyState
 import com.andrew264.habits.ui.common.components.SimpleTopAppBar
 import com.andrew264.habits.ui.common.duration_picker.DurationPickerDialog
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.common.list_items.ListSectionHeader
 import com.andrew264.habits.ui.common.utils.FormatUtils
 import com.andrew264.habits.ui.counters.components.TimelineItem
@@ -115,7 +114,9 @@ private fun CounterDetailScreen(
                 onNavigateUp = onNavigateUp,
                 scrollBehavior = scrollBehavior,
                 actions = {
-                    IconButton(onClick = onNavigateToEdit) {
+                    val editInteractionSource = remember { MutableInteractionSource() }
+                    HapticInteractionEffect(editInteractionSource)
+                    IconButton(onClick = onNavigateToEdit, interactionSource = editInteractionSource) {
                         Icon(
                             imageVector = Icons.Default.Edit,
                             contentDescription = stringResource(R.string.counter_detail_edit_counter)
@@ -253,12 +254,15 @@ private fun BottomAddEntryBar(
             horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingMedium)
         ) {
             if (uiState.details?.counter?.type == CounterType.DURATION) {
+                val addInteractionSource = remember { MutableInteractionSource() }
+                HapticInteractionEffect(addInteractionSource)
                 Button(
                     onClick = onShowDurationPicker,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    shape = MaterialTheme.shapes.large
+                    shape = MaterialTheme.shapes.large,
+                    interactionSource = addInteractionSource
                 ) {
                     Text(stringResource(R.string.counter_detail_add_entry))
                 }
@@ -278,11 +282,14 @@ private fun BottomAddEntryBar(
                         unfocusedIndicatorColor = Color.Transparent
                     )
                 )
+                val addInteractionSource = remember { MutableInteractionSource() }
+                HapticInteractionEffect(addInteractionSource)
                 Button(
                     onClick = { onAddLog() },
                     enabled = uiState.newLogValue.isNotBlank(),
                     modifier = Modifier.height(56.dp),
-                    shape = MaterialTheme.shapes.large
+                    shape = MaterialTheme.shapes.large,
+                    interactionSource = addInteractionSource
                 ) {
                     Text(stringResource(R.string.counter_detail_add_button))
                 }

@@ -90,7 +90,7 @@ private fun ScheduleSelectionDialog(
                                 .fillMaxWidth()
                                 .clickable {
                                     onScheduleSelected(schedule)
-                                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                                    view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_TICK)
                                 }
                                 .padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingMedium),
                             verticalAlignment = Alignment.CenterVertically
@@ -99,7 +99,7 @@ private fun ScheduleSelectionDialog(
                                 selected = isSelected,
                                 onClick = {
                                     onScheduleSelected(schedule)
-                                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                                    view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_TICK)
                                 }
                             )
                             Spacer(Modifier.width(Dimens.PaddingMedium))

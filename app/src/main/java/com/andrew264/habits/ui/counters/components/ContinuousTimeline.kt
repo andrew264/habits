@@ -1,6 +1,7 @@
 package com.andrew264.habits.ui.counters.components
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -19,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.andrew264.habits.domain.model.CounterLog
 import com.andrew264.habits.model.counter.CounterType
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.common.utils.FormatUtils
 import com.andrew264.habits.ui.theme.Dimens
 import java.time.Instant
@@ -116,7 +118,9 @@ fun TimelineLogItem(
                 Text(valueString, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text(timeString, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            IconButton(onClick = onDelete) {
+            val deleteInteractionSource = remember { MutableInteractionSource() }
+            HapticInteractionEffect(deleteInteractionSource)
+            IconButton(onClick = onDelete, interactionSource = deleteInteractionSource) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Delete log",

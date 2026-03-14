@@ -1,6 +1,8 @@
 package com.andrew264.habits.ui.counters.editor
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -13,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,6 +28,7 @@ import com.andrew264.habits.ui.common.color_picker.ColorPickerDialog
 import com.andrew264.habits.ui.common.color_picker.utils.toColorOrNull
 import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
 import com.andrew264.habits.ui.common.components.SimpleTopAppBar
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.common.list_items.ListItemPosition
 import com.andrew264.habits.ui.common.list_items.ListSectionHeader
 import com.andrew264.habits.ui.common.list_items.NavigationListItem
@@ -38,6 +42,7 @@ fun CounterEditorScreen(
     onNavigateUp: () -> Unit,
     viewModel: CounterEditorViewModel = hiltViewModel()
 ) {
+    val view = LocalView.current
     val uiState by viewModel.uiState.collectAsState()
     LaunchedEffect(counterId) {
         viewModel.initialize(counterId)
@@ -57,14 +62,20 @@ fun CounterEditorScreen(
             text = { Text(stringResource(R.string.counter_editor_delete_confirmation_text)) },
             confirmButton = {
                 TextButton(
-                    onClick = viewModel::onDelete,
+                    onClick = {
+                        view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                        viewModel.onDelete()
+                    },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 ) {
                     Text(stringResource(R.string.counter_editor_delete_confirmation_confirm))
                 }
             },
             dismissButton = {
-                TextButton(onClick = viewModel::onDismissDeleteConfirmation) {
+                TextButton(onClick = {
+                    view.performHapticFeedback(HapticFeedbackConstants.REJECT)
+                    viewModel.onDismissDeleteConfirmation()
+                }) {
                     Text(stringResource(R.string.data_management_cancel))
                 }
             }
@@ -120,12 +131,15 @@ private fun CounterEditorScreen(
             )
         },
         floatingActionButton = {
+            val saveInteractionSource = remember { MutableInteractionSource() }
+            HapticInteractionEffect(saveInteractionSource)
             ExtendedFloatingActionButton(
                 text = { Text(stringResource(R.string.counter_editor_save)) },
                 icon = { Icon(Icons.Filled.Check, contentDescription = null) },
                 onClick = onSave,
                 containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                interactionSource = saveInteractionSource
             )
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -207,9 +221,12 @@ private fun CounterEditorScreen(
                 }
 
                 if (!uiState.isNewCounter) {
+                    val deleteInteractionSource = remember { MutableInteractionSource() }
+                    HapticInteractionEffect(deleteInteractionSource)
                     OutlinedButton(
                         onClick = onDelete,
                         modifier = Modifier.fillMaxWidth(),
+                        interactionSource = deleteInteractionSource,
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
                     ) {
                         Icon(Icons.Default.Delete, contentDescription = null)
@@ -233,13 +250,17 @@ private fun <T> OptionGroup(
     onOptionSelected: (T) -> Unit,
     optionLabel: @Composable (T) -> String
 ) {
+    val view = LocalView.current
     Column {
         ListSectionHeader(title)
         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
             options.forEach { option ->
                 SegmentedButton(
                     selected = option == selectedOption,
-                    onClick = { onOptionSelected(option) },
+                    onClick = {
+                        onOptionSelected(option)
+                        view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_TICK)
+                    },
                     shape = SegmentedButtonDefaults.itemShape(options.indexOf(option), options.size)
                 ) {
                     Text(optionLabel(option))

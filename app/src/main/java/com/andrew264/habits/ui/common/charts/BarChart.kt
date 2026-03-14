@@ -1,5 +1,6 @@
 package com.andrew264.habits.ui.common.charts
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.foundation.Canvas
@@ -18,6 +19,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.drawText
@@ -50,6 +52,7 @@ fun BarChart(
     yAxisLabelFormatter: (Float) -> String = { it.roundToInt().toString() }
 ) {
     val textMeasurer = rememberTextMeasurer()
+    val view = LocalView.current
     var selectedIndex by rememberSaveable { mutableStateOf<Int?>(null) }
 
     val animationProgress = remember(entries) {
@@ -105,6 +108,9 @@ fun BarChart(
                             val clickedIndex = ((offset.x - yAxisWidth) / barAreaWidth)
                                 .toInt()
                                 .coerceIn(0, entries.size - 1)
+                            if (selectedIndex != clickedIndex) {
+                                view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_TICK)
+                            }
                             selectedIndex = if (selectedIndex == clickedIndex) null else clickedIndex
                         } else {
                             selectedIndex = null

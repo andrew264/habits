@@ -82,11 +82,14 @@ fun WhitelistTopAppBar(
                     )
                 },
                 navigationIcon = {
+                    val backInteractionSource = remember { MutableInteractionSource() }
+                    HapticInteractionEffect(backInteractionSource)
                     IconButton(
                         onClick = {
                             isSearchActive = false
                             onSearchTextChanged("")
                         },
+                        interactionSource = backInteractionSource,
                         colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                     ) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.whitelist_top_app_bar_exit_search))

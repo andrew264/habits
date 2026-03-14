@@ -1,5 +1,6 @@
 package com.andrew264.habits.ui.counters
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -10,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
@@ -17,6 +19,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
 import com.andrew264.habits.ui.common.components.EmptyState
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.common.list_items.ContainedLazyColumn
 import com.andrew264.habits.ui.counters.components.CounterListItem
 import com.andrew264.habits.ui.theme.Dimens
@@ -44,10 +47,13 @@ fun CountersScreen(
             )
         },
         floatingActionButton = {
+            val interactionSource = remember { MutableInteractionSource() }
+            HapticInteractionEffect(interactionSource)
             FloatingActionButton(
                 onClick = onNavigateToCreateCounter,
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                interactionSource = interactionSource
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Create Counter")
             }

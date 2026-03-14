@@ -39,7 +39,7 @@ internal fun TimeRangeRow(
                 modifier = Modifier
                     .clickable {
                         expanded = true
-                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                        view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_TICK)
                     }
                     .padding(vertical = Dimens.PaddingSmall),
                 verticalAlignment = Alignment.CenterVertically,
@@ -66,7 +66,7 @@ internal fun TimeRangeRow(
                         onClick = {
                             onSelected(option)
                             expanded = false
-                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                            view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_TICK)
                         }
                     )
                 }

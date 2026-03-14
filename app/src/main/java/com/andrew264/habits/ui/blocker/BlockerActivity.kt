@@ -7,6 +7,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -14,10 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,6 +29,7 @@ import androidx.core.view.WindowCompat
 import com.andrew264.habits.MainActivity
 import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.components.DrawableImage
+import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
 import com.andrew264.habits.ui.navigation.Usage
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
@@ -101,13 +100,13 @@ fun BlockerScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = Color.Black.copy(alpha = 0.3f) // Dimming effect
+        containerColor = Color.Black.copy(alpha = 0.3f)
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(Dimens.PaddingLarge), // Margin around the dialog
+                .padding(Dimens.PaddingLarge),
             contentAlignment = Alignment.Center
         ) {
             Surface(
@@ -115,9 +114,8 @@ fun BlockerScreen(
                 tonalElevation = 6.dp
             ) {
                 Column(
-                    modifier = Modifier.widthIn(max = 400.dp) // Constrain max width on large screens
+                    modifier = Modifier.widthIn(max = 400.dp)
                 ) {
-                    // Scrollable content area
                     Column(
                         modifier = Modifier
                             .weight(1f, fill = false)
@@ -125,7 +123,6 @@ fun BlockerScreen(
                             .padding(Dimens.PaddingExtraLarge),
                         verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
                     ) {
-                        // Header
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -151,7 +148,6 @@ fun BlockerScreen(
 
                         Spacer(Modifier.height(Dimens.PaddingMedium))
 
-                        // Informational sections
                         uiState.infoItems.forEach { item ->
                             PermissionInfoRow(
                                 icon = item.icon,
@@ -161,7 +157,6 @@ fun BlockerScreen(
                         }
                     }
 
-                    // Button bar at the bottom
                     HorizontalDivider()
                     Row(
                         modifier = Modifier
@@ -170,15 +165,23 @@ fun BlockerScreen(
                         horizontalArrangement = Arrangement.End,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        TextButton(onClick = onChangeLimitClicked) {
+                        val changeInteractionSource = remember { MutableInteractionSource() }
+                        HapticInteractionEffect(changeInteractionSource)
+                        TextButton(onClick = onChangeLimitClicked, interactionSource = changeInteractionSource) {
                             Text(stringResource(id = R.string.blocker_change_limit))
                         }
                         Spacer(Modifier.width(Dimens.PaddingSmall))
-                        TextButton(onClick = onImDoneClicked) {
+
+                        val doneInteractionSource = remember { MutableInteractionSource() }
+                        HapticInteractionEffect(doneInteractionSource)
+                        TextButton(onClick = onImDoneClicked, interactionSource = doneInteractionSource) {
                             Text(stringResource(id = R.string.blocker_im_done))
                         }
                         Spacer(Modifier.width(Dimens.PaddingSmall))
-                        Button(onClick = onSnoozeClicked) {
+
+                        val snoozeInteractionSource = remember { MutableInteractionSource() }
+                        HapticInteractionEffect(snoozeInteractionSource)
+                        Button(onClick = onSnoozeClicked, interactionSource = snoozeInteractionSource) {
                             Text(stringResource(id = R.string.blocker_snooze_5_min))
                         }
                     }
