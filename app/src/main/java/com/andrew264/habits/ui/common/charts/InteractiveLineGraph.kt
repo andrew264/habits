@@ -70,7 +70,7 @@ fun InteractiveLineGraph(
         (startIdx..endIdx).maxOfOrNull { entries[it].value } ?: 1f
     }
 
-    val targetMaxY = max(visibleMax * 1.2f, 1f)
+    val targetMaxY = remember(visibleMax) { calculateNiceMax(visibleMax) }
 
     val animatedMaxY by animateFloatAsState(
         targetValue = targetMaxY,
@@ -85,9 +85,10 @@ fun InteractiveLineGraph(
                 detectTapGestures { tapOffset ->
                     val yAxisWidth = 50.dp.toPx()
                     val rightPadding = 24.dp.toPx()
+                    val verticalPadding = 24.dp.toPx()
                     val chartAreaWidth = size.width - yAxisWidth - rightPadding
                     val xAxisHeight = 30.dp.toPx()
-                    val chartAreaHeight = size.height - xAxisHeight
+                    val chartAreaHeight = size.height - xAxisHeight - verticalPadding * 2
                     val itemSpacing = chartAreaWidth / max(1f, visibleItems - 1)
 
                     val clickedContinuousIndex = (tapOffset.x - yAxisWidth) / itemSpacing + offset
@@ -95,7 +96,7 @@ fun InteractiveLineGraph(
 
                     val newSelection = if (closestIndex in entries.indices) {
                         val pointX = yAxisWidth + (closestIndex - offset) * itemSpacing
-                        val pointY = chartAreaHeight - (entries[closestIndex].value / animatedMaxY) * chartAreaHeight
+                        val pointY = verticalPadding + chartAreaHeight - (entries[closestIndex].value / animatedMaxY) * chartAreaHeight
 
                         val dx = tapOffset.x - pointX
                         val dy = tapOffset.y - pointY
@@ -134,9 +135,10 @@ fun InteractiveLineGraph(
     ) {
         val yAxisWidth = 50.dp.toPx()
         val rightPadding = 24.dp.toPx()
+        val verticalPadding = 24.dp.toPx()
         val xAxisHeight = 30.dp.toPx()
         val chartAreaWidth = size.width - yAxisWidth - rightPadding
-        val chartAreaHeight = size.height - xAxisHeight
+        val chartAreaHeight = size.height - xAxisHeight - verticalPadding * 2
 
         if (chartAreaWidth <= 0 || chartAreaHeight <= 0) return@Canvas
 
@@ -146,7 +148,7 @@ fun InteractiveLineGraph(
         for (i in 0..yAxisLabelCount) {
             val fraction = i.toFloat() / yAxisLabelCount
             val value = animatedMaxY * fraction
-            val yPos = chartAreaHeight - (chartAreaHeight * fraction)
+            val yPos = verticalPadding + chartAreaHeight - (chartAreaHeight * fraction)
 
             if (i > 0) {
                 drawLine(
@@ -169,18 +171,18 @@ fun InteractiveLineGraph(
 
         drawLine(
             color = gridColor,
-            start = Offset(yAxisWidth, chartAreaHeight),
-            end = Offset(size.width - rightPadding, chartAreaHeight),
+            start = Offset(yAxisWidth, verticalPadding + chartAreaHeight),
+            end = Offset(size.width - rightPadding, verticalPadding + chartAreaHeight),
             strokeWidth = 1.dp.toPx()
         )
 
         val points = entries.mapIndexed { index, entry ->
             val x = yAxisWidth + (index - offset) * itemSpacing
-            val y = chartAreaHeight - (entry.value / animatedMaxY) * chartAreaHeight
+            val y = verticalPadding + chartAreaHeight - (entry.value / animatedMaxY) * chartAreaHeight
             Offset(x, y)
         }
 
-        clipRect(left = yAxisWidth, top = 0f, right = size.width - rightPadding, bottom = chartAreaHeight) {
+        clipRect(left = yAxisWidth, top = 0f, right = size.width - rightPadding, bottom = verticalPadding + chartAreaHeight + 4.dp.toPx()) {
             if (points.size > 1) {
                 val linePath = Path()
                 points.forEachIndexed { i, point ->
@@ -189,8 +191,8 @@ fun InteractiveLineGraph(
 
                 val fillPath = Path().apply {
                     addPath(linePath)
-                    lineTo(points.last().x, chartAreaHeight)
-                    lineTo(points.first().x, chartAreaHeight)
+                    lineTo(points.last().x, verticalPadding + chartAreaHeight)
+                    lineTo(points.first().x, verticalPadding + chartAreaHeight)
                     close()
                 }
 
@@ -198,8 +200,8 @@ fun InteractiveLineGraph(
                     path = fillPath,
                     brush = Brush.verticalGradient(
                         colors = listOf(lineColor.copy(alpha = 0.4f), Color.Transparent),
-                        startY = 0f,
-                        endY = chartAreaHeight
+                        startY = verticalPadding,
+                        endY = verticalPadding + chartAreaHeight
                     )
                 )
 
@@ -239,7 +241,7 @@ fun InteractiveLineGraph(
                     val textLayoutResult = textMeasurer.measure(labelText, style = xAxisTextStyle)
                     drawText(
                         textLayoutResult = textLayoutResult,
-                        topLeft = Offset(x - textLayoutResult.size.width / 2, chartAreaHeight + Dimens.PaddingSmall.toPx())
+                        topLeft = Offset(x - textLayoutResult.size.width / 2, verticalPadding + chartAreaHeight + Dimens.PaddingSmall.toPx())
                     )
                 }
             }
@@ -278,4 +280,22 @@ fun InteractiveLineGraph(
             }
         }
     }
+}
+
+private fun calculateNiceMax(maxVal: Float): Float {
+    if (maxVal <= 0) return 4f
+    val ticks = 4
+    val rawSpacing = maxVal / ticks
+    val magnitude = 10.0.pow(floor(log10(rawSpacing.toDouble()))).toFloat()
+    val residual = rawSpacing / magnitude
+
+    val niceResidual = when {
+        residual < 1.5f -> 1f
+        residual < 3.0f -> 2f
+        residual < 7.0f -> 5f
+        else -> 10f
+    }
+
+    val niceSpacing = niceResidual * magnitude
+    return niceSpacing * ticks
 }

@@ -65,7 +65,7 @@ fun CounterDetailScreen(
             val value = uiState.newLogValue.toDoubleOrNull()
             if (value != null) viewModel.addLog(value)
         },
-        onAddDuration = { viewModel.addLog(it.toDouble()) },
+        onAddDuration = { viewModel.addLog(it) },
         onDeleteLog = { viewModel.deleteLog(it) },
         onShowDurationPicker = viewModel::onShowDurationPicker,
         onDismissDurationPicker = viewModel::onDismissDurationPicker,
@@ -81,7 +81,7 @@ private fun CounterDetailScreen(
     onNavigateToEdit: () -> Unit,
     onNewLogValueChange: (String) -> Unit,
     onAddLog: () -> Unit,
-    onAddDuration: (Int) -> Unit,
+    onAddDuration: (Double) -> Unit,
     onDeleteLog: (com.andrew264.habits.domain.model.CounterLog) -> Unit,
     onShowDurationPicker: () -> Unit,
     onDismissDurationPicker: () -> Unit,
@@ -93,9 +93,17 @@ private fun CounterDetailScreen(
         DurationPickerDialog(
             title = stringResource(R.string.counter_detail_add_entry),
             description = "",
-            initialTotalMinutes = 0,
+            initialHours = 0,
+            initialMinutes = 0,
+            initialSeconds = 0,
+            showSeconds = true,
+            minuteInterval = 1,
             onDismissRequest = onDismissDurationPicker,
-            onConfirm = onAddDuration
+            onConfirm = { h, m, s ->
+                val totalMinutes = h * 60 + m + (s / 60.0)
+                onAddDuration(totalMinutes)
+                onDismissDurationPicker()
+            }
         )
     }
 

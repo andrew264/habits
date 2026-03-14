@@ -2,7 +2,6 @@ package com.andrew264.habits.ui.counters.editor
 
 import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.Color
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andrew264.habits.R
@@ -39,7 +38,6 @@ sealed interface CounterEditorUiEvent {
 
 @HiltViewModel
 class CounterEditorViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
     private val counterRepository: CounterRepository,
     private val snackbarManager: SnackbarManager
 ) : ViewModel() {
@@ -58,23 +56,24 @@ class CounterEditorViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            if (counterId == null) {
-                _uiState.update {
-                    it.copy(isLoading = false, isNewCounter = true)
-                }
-            } else {
-                counterRepository.getCounterById(counterId).first()?.let { counter ->
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            isNewCounter = false,
-                            name = counter.name,
-                            colorHex = counter.colorHex,
-                            type = counter.type,
-                            aggregationType = counter.aggregationType,
-                            target = counter.target?.toString() ?: ""
-                        )
-                    }
+            val counter = counterId?.let { counterRepository.getCounterById(it).first() }
+
+            _uiState.update { state ->
+                if (counter != null) {
+                    state.copy(
+                        isLoading = false,
+                        isNewCounter = false,
+                        name = counter.name,
+                        colorHex = counter.colorHex,
+                        type = counter.type,
+                        aggregationType = counter.aggregationType,
+                        target = counter.target?.toString() ?: ""
+                    )
+                } else {
+                    state.copy(
+                        isLoading = false,
+                        isNewCounter = true
+                    )
                 }
             }
         }

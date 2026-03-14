@@ -177,9 +177,12 @@ fun UsageDetailScreen(
                     DurationPickerDialog(
                         title = stringResource(R.string.usage_detail_set_session_limit_title),
                         description = stringResource(R.string.usage_detail_set_session_limit_description),
-                        initialTotalMinutes = app.sessionLimitMinutes ?: 0,
+                        initialHours = (app.sessionLimitMinutes ?: 0) / 60,
+                        initialMinutes = (app.sessionLimitMinutes ?: 0) % 60,
+                        minuteInterval = 5,
                         onDismissRequest = { showSessionLimitDialog = false },
-                        onConfirm = { totalMinutes ->
+                        onConfirm = { h, m, _ ->
+                            val totalMinutes = h * 60 + m
                             onSaveLimits(if (totalMinutes > 0) totalMinutes else null)
                             showSessionLimitDialog = false
                         }

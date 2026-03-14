@@ -101,9 +101,12 @@ private fun UsageSettingsScreen(
         DurationPickerDialog(
             title = stringResource(R.string.usage_set_shared_daily_limit_title),
             description = stringResource(R.string.usage_set_shared_daily_limit_description),
-            initialTotalMinutes = uiState.sharedDailyUsageLimitMinutes ?: 0,
+            initialHours = (uiState.sharedDailyUsageLimitMinutes ?: 0) / 60,
+            initialMinutes = (uiState.sharedDailyUsageLimitMinutes ?: 0) % 60,
+            minuteInterval = 5,
             onDismissRequest = { showSharedLimitDialog = false },
-            onConfirm = { totalMinutes ->
+            onConfirm = { h, m, _ ->
+                val totalMinutes = h * 60 + m
                 onSetSharedDailyLimit(if (totalMinutes > 0) totalMinutes else null)
                 showSharedLimitDialog = false
             }

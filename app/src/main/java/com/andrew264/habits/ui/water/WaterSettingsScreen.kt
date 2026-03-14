@@ -85,9 +85,12 @@ private fun WaterSettingsScreen(
         DurationPickerDialog(
             title = stringResource(R.string.water_settings_reminder_interval),
             description = stringResource(R.string.water_settings_reminder_interval_description),
-            initialTotalMinutes = uiState.settings.waterReminderIntervalMinutes,
+            initialHours = uiState.settings.waterReminderIntervalMinutes / 60,
+            initialMinutes = uiState.settings.waterReminderIntervalMinutes % 60,
+            minuteInterval = 5,
             onDismissRequest = { showIntervalDialog = false },
-            onConfirm = { totalMinutes ->
+            onConfirm = { h, m, _ ->
+                val totalMinutes = h * 60 + m
                 onIntervalChanged(totalMinutes.toString())
                 showIntervalDialog = false
             }
@@ -98,9 +101,12 @@ private fun WaterSettingsScreen(
         DurationPickerDialog(
             title = stringResource(R.string.water_settings_snooze_time),
             description = stringResource(R.string.water_settings_snooze_time_description),
-            initialTotalMinutes = uiState.settings.waterReminderSnoozeMinutes,
+            initialHours = uiState.settings.waterReminderSnoozeMinutes / 60,
+            initialMinutes = uiState.settings.waterReminderSnoozeMinutes % 60,
+            minuteInterval = 5,
             onDismissRequest = { showSnoozeDialog = false },
-            onConfirm = { totalMinutes ->
+            onConfirm = { h, m, _ ->
+                val totalMinutes = h * 60 + m
                 onSnoozeChanged(totalMinutes.toString())
                 showSnoozeDialog = false
             }

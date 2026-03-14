@@ -20,20 +20,23 @@ import com.andrew264.habits.ui.theme.HabitsTheme
 @Composable
 fun DurationPickerDialog(
     title: String,
-    description: String,
-    initialTotalMinutes: Int,
+    description: String = "",
+    initialHours: Int = 0,
+    initialMinutes: Int = 0,
+    initialSeconds: Int = 0,
+    showSeconds: Boolean = false,
+    minuteInterval: Int = 5,
     onDismissRequest: () -> Unit,
-    onConfirm: (totalMinutes: Int) -> Unit
+    onConfirm: (hours: Int, minutes: Int, seconds: Int) -> Unit
 ) {
-    val initialHours = initialTotalMinutes / 60
-    val initialMinutes = initialTotalMinutes % 60
     var selectedHour by remember { mutableStateOf("%02d".format(initialHours)) }
-    // Ensure initial minute is a multiple of 5
-    val initialMinuteCleaned = initialMinutes - initialMinutes % 5
+    val initialMinuteCleaned = initialMinutes - (initialMinutes % minuteInterval)
     var selectedMinute by remember { mutableStateOf("%02d".format(initialMinuteCleaned)) }
+    var selectedSecond by remember { mutableStateOf("%02d".format(initialSeconds)) }
 
     val hourItems = remember { (0..23).map { "%02d".format(it) } }
-    val minuteItems = remember { (0..55 step 5).map { "%02d".format(it) } }
+    val minuteItems = remember(minuteInterval) { (0..59 step minuteInterval).map { "%02d".format(it) } }
+    val secondItems = remember { (0..59).map { "%02d".format(it) } }
 
     val view = LocalView.current
 
@@ -41,30 +44,36 @@ fun DurationPickerDialog(
         Surface(
             shape = MaterialTheme.shapes.extraLargeIncreased,
             tonalElevation = 6.dp,
-            modifier = Modifier.width(300.dp)
+            modifier = Modifier.widthIn(min = 300.dp, max = 340.dp)
         ) {
             Column(
                 modifier = Modifier.padding(Dimens.PaddingExtraLarge),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = title, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(Dimens.PaddingSmall))
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Text(text = title, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+
+                if (description.isNotBlank()) {
+                    Spacer(Modifier.height(Dimens.PaddingSmall))
+                    Text(
+                        text = description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
                 Spacer(Modifier.height(Dimens.PaddingLarge))
 
-                // the meat
                 DurationPicker(
                     hours = hourItems,
                     minutes = minuteItems,
+                    seconds = if (showSeconds) secondItems else null,
                     selectedHour = selectedHour,
                     selectedMinute = selectedMinute,
+                    selectedSecond = selectedSecond,
                     onHourChange = { selectedHour = it },
-                    onMinuteChange = { selectedMinute = it }
+                    onMinuteChange = { selectedMinute = it },
+                    onSecondChange = { selectedSecond = it }
                 )
 
                 Spacer(Modifier.height(Dimens.PaddingExtraLarge))
@@ -86,16 +95,16 @@ fun DurationPickerDialog(
                     TextButton(
                         onClick = {
                             view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-                            val totalMinutes = selectedHour.toInt() * 60 + selectedMinute.toInt()
-                            onConfirm(totalMinutes)
+                            val h = selectedHour.toInt()
+                            val m = selectedMinute.toInt()
+                            val s = selectedSecond.toInt()
+                            onConfirm(h, m, s)
                         }
                     ) {
                         Text(stringResource(id = R.string.duration_picker_dialog_ok))
                     }
                 }
             }
-
-
         }
     }
 }
@@ -104,10 +113,13 @@ fun DurationPickerDialog(
 private fun DurationPicker(
     hours: List<String>,
     minutes: List<String>,
+    seconds: List<String>?,
     selectedHour: String,
     selectedMinute: String,
+    selectedSecond: String,
     onHourChange: (String) -> Unit,
-    onMinuteChange: (String) -> Unit
+    onMinuteChange: (String) -> Unit,
+    onSecondChange: (String) -> Unit
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -118,17 +130,28 @@ private fun DurationPicker(
             items = hours,
             selectedItem = selectedHour,
             onValueChange = onHourChange,
-            modifier = Modifier.width(80.dp)
+            modifier = Modifier.width(64.dp)
         )
-        Text(stringResource(id = R.string.duration_picker_dialog_hour), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(horizontal = 8.dp))
+        Text("hr", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(horizontal = 4.dp))
         NumberPicker(
             items = minutes,
             selectedItem = selectedMinute,
             onValueChange = onMinuteChange,
             loop = true,
-            modifier = Modifier.width(80.dp)
+            modifier = Modifier.width(64.dp)
         )
-        Text(stringResource(id = R.string.duration_picker_dialog_minute), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(horizontal = 8.dp))
+        Text("min", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(horizontal = 4.dp))
+
+        if (seconds != null) {
+            NumberPicker(
+                items = seconds,
+                selectedItem = selectedSecond,
+                onValueChange = onSecondChange,
+                loop = true,
+                modifier = Modifier.width(64.dp)
+            )
+            Text("sec", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(start = 4.dp))
+        }
     }
 }
 
@@ -137,13 +160,15 @@ private fun DurationPicker(
 private fun DurationPickerDialogPreview() {
     HabitsTheme {
         DurationPickerDialog(
-            title = "Set daily limit",
-            description = "This app limit for Chrome will reset at midnight",
-            initialTotalMinutes = 90,
+            title = "Set duration",
+            description = "",
+            initialHours = 1,
+            initialMinutes = 30,
+            initialSeconds = 15,
+            showSeconds = true,
+            minuteInterval = 1,
             onDismissRequest = {},
-            onConfirm = { totalMinutes ->
-                println("Confirmed total minutes: $totalMinutes")
-            }
+            onConfirm = { _, _, _ -> }
         )
     }
 }

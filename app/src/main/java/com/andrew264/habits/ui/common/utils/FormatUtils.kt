@@ -13,14 +13,30 @@ import kotlin.math.roundToInt
 
 object FormatUtils {
 
-    fun formatDuration(millis: Long): String {
-        if (millis <= 0) return "0m"
-        val totalMinutes = TimeUnit.MILLISECONDS.toMinutes(millis)
-        if (totalMinutes < 1) return "<1m"
-        if (totalMinutes < 60) return "${totalMinutes}m"
-        val hours = totalMinutes / 60
-        val minutes = totalMinutes % 60
-        return if (minutes == 0L) "${hours}h" else "${hours}h ${minutes}m"
+    fun formatDuration(millis: Long, showSeconds: Boolean = false): String {
+        if (millis <= 0) return if (showSeconds) "0s" else "0m"
+        val totalSeconds = TimeUnit.MILLISECONDS.toSeconds(millis)
+
+        if (!showSeconds) {
+            val totalMinutes = TimeUnit.MILLISECONDS.toMinutes(millis)
+            if (totalMinutes < 1) return "<1m"
+            if (totalMinutes < 60) return "${totalMinutes}m"
+            val hours = totalMinutes / 60
+            val minutes = totalMinutes % 60
+            return if (minutes == 0L) "${hours}h" else "${hours}h ${minutes}m"
+        } else {
+            if (totalSeconds < 60) return "${totalSeconds}s"
+            val hours = totalSeconds / 3600
+            val minutes = (totalSeconds % 3600) / 60
+            val seconds = totalSeconds % 60
+
+            val parts = mutableListOf<String>()
+            if (hours > 0) parts.add("${hours}h")
+            if (minutes > 0 || (hours > 0 && seconds > 0)) parts.add("${minutes}m")
+            if (seconds > 0) parts.add("${seconds}s")
+
+            return parts.joinToString(" ")
+        }
     }
 
     fun formatCounterValue(value: Double, type: CounterType): String {
@@ -33,7 +49,7 @@ object FormatUtils {
 
             CounterType.DURATION -> {
                 val millis = (value * 60_000).toLong()
-                formatDuration(millis)
+                formatDuration(millis, showSeconds = true)
             }
         }
     }

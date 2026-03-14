@@ -73,13 +73,9 @@ fun CountersScreen(
                         .fillMaxSize()
                         .padding(horizontal = Dimens.PaddingLarge),
                     items = uiState.counters,
-                    key = { it.counter.id }
-                ) { item ->
-                    CounterListItem(
-                        item = item,
-                        onClick = { onNavigateToCounterDetail(item.counter.id) },
-                    )
-                }
+                    key = { it.counter.id },
+                    onItemClick = { item -> onNavigateToCounterDetail(item.counter.id) }
+                ) { item -> CounterListItem(item = item) }
             }
         }
     }
