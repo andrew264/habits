@@ -16,7 +16,7 @@ import javax.inject.Inject
 
 data class CounterDetailsModel(
     val counter: Counter,
-    val recentLogs: List<CounterLog>,
+    val allLogs: List<CounterLog>,
     val chartEntries: List<BarChartEntry>
 )
 
@@ -51,7 +51,7 @@ class GetCounterDetailsUseCase @Inject constructor(
 
             CounterDetailsModel(
                 counter = counter,
-                recentLogs = allLogs.take(50),
+                allLogs = allLogs,
                 chartEntries = chartEntries
             )
         }

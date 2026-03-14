@@ -34,6 +34,8 @@ fun InteractiveLineGraph(
     entries: List<BarChartEntry>,
     lineColor: Color,
     modifier: Modifier = Modifier,
+    selectedIndex: Int? = null,
+    onSelectionChanged: (Int?) -> Unit = {},
     yAxisLabelFormatter: (Float) -> String = { it.toInt().toString() }
 ) {
     if (entries.isEmpty()) return
@@ -60,7 +62,6 @@ fun InteractiveLineGraph(
 
     var visibleItems by remember { mutableFloatStateOf(min(7f, maxVisibleItems)) }
     var offset by remember { mutableFloatStateOf(max(0f, entries.size - visibleItems)) }
-    var selectedIndex by remember { mutableStateOf<Int?>(null) }
 
     val startIdx = max(0, floor(offset).toInt())
     val endIdx = min(entries.size - 1, ceil(offset + visibleItems - 1).toInt())
@@ -92,7 +93,7 @@ fun InteractiveLineGraph(
                     val clickedContinuousIndex = (tapOffset.x - yAxisWidth) / itemSpacing + offset
                     val closestIndex = clickedContinuousIndex.roundToInt()
 
-                    selectedIndex = if (closestIndex in entries.indices) {
+                    val newSelection = if (closestIndex in entries.indices) {
                         val pointX = yAxisWidth + (closestIndex - offset) * itemSpacing
                         val pointY = chartAreaHeight - (entries[closestIndex].value / animatedMaxY) * chartAreaHeight
 
@@ -106,12 +107,15 @@ fun InteractiveLineGraph(
                     } else {
                         null
                     }
+                    if (selectedIndex != newSelection) {
+                        onSelectionChanged(newSelection)
+                    }
                 }
             }
             .pointerInput(entries) {
                 detectTransformGestures { centroid, pan, zoom, _ ->
                     if (entries.size <= 1) return@detectTransformGestures
-                    selectedIndex = null
+                    onSelectionChanged(null)
 
                     val oldVisibleItems = visibleItems
                     visibleItems = (visibleItems / zoom).coerceIn(minVisibleItems, maxVisibleItems)
@@ -148,7 +152,7 @@ fun InteractiveLineGraph(
                 drawLine(
                     color = gridColor,
                     start = Offset(yAxisWidth, yPos),
-                    end = Offset(size.width, yPos),
+                    end = Offset(size.width - rightPadding, yPos),
                     strokeWidth = 1.dp.toPx()
                 )
             }
@@ -166,7 +170,7 @@ fun InteractiveLineGraph(
         drawLine(
             color = gridColor,
             start = Offset(yAxisWidth, chartAreaHeight),
-            end = Offset(size.width, chartAreaHeight),
+            end = Offset(size.width - rightPadding, chartAreaHeight),
             strokeWidth = 1.dp.toPx()
         )
 
@@ -176,7 +180,7 @@ fun InteractiveLineGraph(
             Offset(x, y)
         }
 
-        clipRect(left = yAxisWidth, top = 0f, right = size.width, bottom = chartAreaHeight) {
+        clipRect(left = yAxisWidth, top = 0f, right = size.width - rightPadding, bottom = chartAreaHeight) {
             if (points.size > 1) {
                 val linePath = Path()
                 points.forEachIndexed { i, point ->
@@ -223,7 +227,7 @@ fun InteractiveLineGraph(
         entries.forEachIndexed { index, entry ->
             if (index % labelInterval == 0) {
                 val x = yAxisWidth + (index - offset) * itemSpacing
-                if (x in (yAxisWidth - sampleLabelWidth)..(size.width + sampleLabelWidth)) {
+                if (x in (yAxisWidth - sampleLabelWidth)..(size.width)) {
                     val labelText = if (visibleItems < 7f && entry.timestamp != null) {
                         FormatUtils.formatChartDayLabel(entry.timestamp)
                     } else if (entry.timestamp != null) {

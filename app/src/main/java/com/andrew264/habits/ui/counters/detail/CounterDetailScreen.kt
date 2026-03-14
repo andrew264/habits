@@ -1,13 +1,11 @@
 package com.andrew264.habits.ui.counters.detail
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material3.*
@@ -36,13 +34,14 @@ import com.andrew264.habits.ui.common.components.SimpleTopAppBar
 import com.andrew264.habits.ui.common.duration_picker.DurationPickerDialog
 import com.andrew264.habits.ui.common.list_items.ListSectionHeader
 import com.andrew264.habits.ui.common.utils.FormatUtils
+import com.andrew264.habits.ui.counters.components.TimelineItem
+import com.andrew264.habits.ui.counters.components.TimelineLogItem
+import com.andrew264.habits.ui.counters.components.TimelineSkipItem
+import com.andrew264.habits.ui.counters.components.rememberTimelineItems
 import com.andrew264.habits.ui.navigation.AppRoute
 import com.andrew264.habits.ui.navigation.CounterEditor
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 @Composable
 fun CounterDetailScreen(
@@ -69,7 +68,8 @@ fun CounterDetailScreen(
         onAddDuration = { viewModel.addLog(it.toDouble()) },
         onDeleteLog = { viewModel.deleteLog(it) },
         onShowDurationPicker = viewModel::onShowDurationPicker,
-        onDismissDurationPicker = viewModel::onDismissDurationPicker
+        onDismissDurationPicker = viewModel::onDismissDurationPicker,
+        onChartEntrySelected = viewModel::onChartEntrySelected
     )
 }
 
@@ -84,7 +84,8 @@ private fun CounterDetailScreen(
     onAddDuration: (Int) -> Unit,
     onDeleteLog: (com.andrew264.habits.domain.model.CounterLog) -> Unit,
     onShowDurationPicker: () -> Unit,
-    onDismissDurationPicker: () -> Unit
+    onDismissDurationPicker: () -> Unit,
+    onChartEntrySelected: (Int?) -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -115,59 +116,47 @@ private fun CounterDetailScreen(
                 }
             )
         },
+        bottomBar = {
+            if (uiState.details != null && !uiState.isLoading) {
+                BottomAddEntryBar(
+                    uiState = uiState,
+                    onNewLogValueChange = onNewLogValueChange,
+                    onAddLog = onAddLog,
+                    onShowDurationPicker = onShowDurationPicker
+                )
+            }
+        },
         containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
         if (uiState.isLoading) {
             ContainedLoadingIndicator(Modifier.padding(paddingValues))
         } else if (uiState.details == null) {
-            Box(Modifier
-                .padding(paddingValues)
-                .fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(
+                Modifier
+                    .padding(paddingValues)
+                    .fillMaxSize(), contentAlignment = Alignment.Center
+            ) {
                 Text(stringResource(R.string.schedule_selector_none))
             }
         } else {
             val details = uiState.details
+            val timelineItems = rememberTimelineItems(uiState.displayedLogs)
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                contentPadding = PaddingValues(vertical = Dimens.PaddingLarge),
-                verticalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge)
+                contentPadding = PaddingValues(bottom = 100.dp),
             ) {
-                item {
-                    AddEntryCard(
-                        uiState = uiState,
-                        onNewLogValueChange = onNewLogValueChange,
-                        onAddLog = onAddLog,
-                        onShowDurationPicker = onShowDurationPicker,
-                        modifier = Modifier.padding(horizontal = Dimens.PaddingLarge)
-                    )
-                }
-
-                if (details.recentLogs.isEmpty()) {
-                    item {
-                        EmptyState(
-                            modifier = Modifier.padding(horizontal = Dimens.PaddingLarge),
-                            icon = Icons.Outlined.History,
-                            title = stringResource(R.string.counter_detail_no_history_title),
-                            description = stringResource(R.string.counter_detail_no_history_description)
-                        )
-                    }
-                } else {
+                if (details.allLogs.isNotEmpty()) {
                     item {
                         Column {
-                            Text(
-                                text = stringResource(R.string.counter_detail_history_chart_title),
-                                style = MaterialTheme.typography.titleLarge,
-                                modifier = Modifier.padding(
-                                    horizontal = Dimens.PaddingLarge,
-                                    vertical = Dimens.PaddingSmall
-                                )
-                            )
                             InteractiveLineGraph(
                                 entries = details.chartEntries,
                                 lineColor = details.counter.colorHex.toColorOrNull()
                                     ?: MaterialTheme.colorScheme.primary,
+                                selectedIndex = uiState.selectedChartIndex,
+                                onSelectionChanged = onChartEntrySelected,
                                 yAxisLabelFormatter = {
                                     FormatUtils.formatCounterValue(
                                         it.toDouble(),
@@ -176,66 +165,57 @@ private fun CounterDetailScreen(
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(260.dp)
+                                    .height(280.dp)
                             )
                         }
                     }
 
                     item {
                         Box(modifier = Modifier.padding(horizontal = Dimens.PaddingLarge)) {
-                            ListSectionHeader(stringResource(R.string.counter_detail_recent_history_title))
+                            ListSectionHeader(
+                                title = if (uiState.selectedDateLabel.isNotEmpty())
+                                    "Logs for ${uiState.selectedDateLabel}"
+                                else
+                                    stringResource(R.string.counter_detail_recent_history_title)
+                            )
                         }
                     }
 
-                    items(details.recentLogs, key = { it.id }) { log ->
-                        val dismissState = rememberSwipeToDismissBoxState()
-                        SwipeToDismissBox(
-                            state = dismissState,
-                            onDismiss = { direction ->
-                                if (direction == SwipeToDismissBoxValue.EndToStart) {
-                                    onDeleteLog(log)
-                                }
-                            },
-                            backgroundContent = {
-                                val color = when (dismissState.targetValue) {
-                                    SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
-                                    else -> Color.Transparent
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(color)
-                                        .padding(horizontal = Dimens.PaddingLarge),
-                                    contentAlignment = Alignment.CenterEnd
-                                ) {
-                                    Icon(
-                                        Icons.Default.Delete,
-                                        contentDescription = stringResource(R.string.schedule_list_item_delete)
-                                    )
-                                }
-                            }
-                        ) {
-                            val date = Instant.ofEpochMilli(log.timestamp).atZone(ZoneId.systemDefault())
-                            ListItem(
-                                modifier = Modifier.padding(horizontal = Dimens.PaddingLarge),
-                                headlineContent = {
-                                    Text(
-                                        FormatUtils.formatCounterValue(
-                                            log.value,
-                                            details.counter.type
-                                        )
-                                    )
-                                },
-                                supportingContent = {
-                                    Text(
-                                        date.format(
-                                            DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a")
-                                        )
-                                    )
-                                }
+                    if (uiState.displayedLogs.isEmpty()) {
+                        item {
+                            Text(
+                                text = "No logs recorded on this day.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = Dimens.PaddingExtraLarge)
                             )
                         }
-                        HorizontalDivider(modifier = Modifier.padding(horizontal = Dimens.PaddingLarge))
+                    } else {
+                        items(timelineItems, key = { it.key }) { item ->
+                            when (item) {
+                                is TimelineItem.LogEntry -> {
+                                    TimelineLogItem(
+                                        entry = item,
+                                        counterType = details.counter.type,
+                                        color = details.counter.colorHex.toColorOrNull() ?: MaterialTheme.colorScheme.primary,
+                                        onDelete = { onDeleteLog(item.log) }
+                                    )
+                                }
+
+                                is TimelineItem.TimeSkip -> {
+                                    TimelineSkipItem(color = details.counter.colorHex.toColorOrNull() ?: MaterialTheme.colorScheme.primary)
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    item {
+                        EmptyState(
+                            modifier = Modifier.padding(horizontal = Dimens.PaddingLarge, vertical = 64.dp),
+                            icon = Icons.Outlined.History,
+                            title = stringResource(R.string.counter_detail_no_history_title),
+                            description = stringResource(R.string.counter_detail_no_history_description)
+                        )
                     }
                 }
             }
@@ -244,47 +224,59 @@ private fun CounterDetailScreen(
 }
 
 @Composable
-private fun AddEntryCard(
+private fun BottomAddEntryBar(
     uiState: CounterDetailUiState,
     onNewLogValueChange: (String) -> Unit,
     onAddLog: () -> Unit,
-    onShowDurationPicker: () -> Unit,
-    modifier: Modifier = Modifier
+    onShowDurationPicker: () -> Unit
 ) {
-    Card(modifier = modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(Dimens.PaddingLarge),
-            verticalArrangement = Arrangement.spacedBy(Dimens.PaddingMedium)
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        tonalElevation = 2.dp,
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .imePadding()
+                .padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingMedium),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingMedium)
         ) {
-            Text(
-                text = stringResource(R.string.counter_detail_add_entry),
-                style = MaterialTheme.typography.titleLarge
-            )
-
             if (uiState.details?.counter?.type == CounterType.DURATION) {
-                Button(onClick = onShowDurationPicker, modifier = Modifier.fillMaxWidth()) {
+                Button(
+                    onClick = onShowDurationPicker,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = MaterialTheme.shapes.large
+                ) {
                     Text(stringResource(R.string.counter_detail_add_entry))
                 }
             } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)
-                ) {
-                    OutlinedTextField(
-                        value = uiState.newLogValue,
-                        onValueChange = onNewLogValueChange,
-                        label = { Text(stringResource(R.string.counter_detail_new_value_label)) },
-                        modifier = Modifier.weight(1f),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true
+                OutlinedTextField(
+                    value = uiState.newLogValue,
+                    onValueChange = onNewLogValueChange,
+                    placeholder = { Text(stringResource(R.string.counter_detail_new_value_label)) },
+                    modifier = Modifier.weight(1f),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    shape = MaterialTheme.shapes.large,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent
                     )
-                    IconButton(onClick = onAddLog, enabled = uiState.newLogValue.isNotBlank()) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = stringResource(R.string.counter_detail_add_button)
-                        )
-                    }
+                )
+                Button(
+                    onClick = { onAddLog() },
+                    enabled = uiState.newLogValue.isNotBlank(),
+                    modifier = Modifier.height(56.dp),
+                    shape = MaterialTheme.shapes.large
+                ) {
+                    Text(stringResource(R.string.counter_detail_add_button))
                 }
             }
         }
@@ -318,9 +310,11 @@ private fun CounterDetailScreenPreview() {
                 isLoading = false,
                 details = com.andrew264.habits.domain.usecase.counter.CounterDetailsModel(
                     counter,
-                    logs,
+                    allLogs = logs,
                     chartEntries
-                )
+                ),
+                displayedLogs = logs,
+                selectedDateLabel = "Mar 14"
             ),
             onNavigateUp = {},
             onNavigateToEdit = {},
@@ -329,7 +323,8 @@ private fun CounterDetailScreenPreview() {
             onDeleteLog = {},
             onAddDuration = {},
             onShowDurationPicker = {},
-            onDismissDurationPicker = {}
+            onDismissDurationPicker = {},
+            onChartEntrySelected = {}
         )
     }
 }
