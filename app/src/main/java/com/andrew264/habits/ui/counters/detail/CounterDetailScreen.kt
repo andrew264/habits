@@ -68,7 +68,8 @@ fun CounterDetailScreen(
         onDeleteLog = { viewModel.deleteLog(it) },
         onShowDurationPicker = viewModel::onShowDurationPicker,
         onDismissDurationPicker = viewModel::onDismissDurationPicker,
-        onChartEntrySelected = viewModel::onChartEntrySelected
+        onChartEntrySelected = viewModel::onChartEntrySelected,
+        onLoadMoreData = viewModel::loadMoreHistoricalData
     )
 }
 
@@ -84,7 +85,8 @@ private fun CounterDetailScreen(
     onDeleteLog: (com.andrew264.habits.domain.model.CounterLog) -> Unit,
     onShowDurationPicker: () -> Unit,
     onDismissDurationPicker: () -> Unit,
-    onChartEntrySelected: (Int?) -> Unit
+    onChartEntrySelected: (Int?) -> Unit,
+    onLoadMoreData: () -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -166,6 +168,7 @@ private fun CounterDetailScreen(
                                     ?: MaterialTheme.colorScheme.primary,
                                 selectedIndex = uiState.selectedChartIndex,
                                 onSelectionChanged = onChartEntrySelected,
+                                onLoadMore = onLoadMoreData,
                                 yAxisLabelFormatter = {
                                     FormatUtils.formatCounterValue(
                                         it.toDouble(),
@@ -339,7 +342,8 @@ private fun CounterDetailScreenPreview() {
             onAddDuration = {},
             onShowDurationPicker = {},
             onDismissDurationPicker = {},
-            onChartEntrySelected = {}
+            onChartEntrySelected = {},
+            onLoadMoreData = {}
         )
     }
 }

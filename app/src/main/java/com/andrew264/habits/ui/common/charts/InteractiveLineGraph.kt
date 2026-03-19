@@ -38,6 +38,7 @@ fun InteractiveLineGraph(
     modifier: Modifier = Modifier,
     selectedIndex: Int? = null,
     onSelectionChanged: (Int?) -> Unit = {},
+    onLoadMore: () -> Unit = {},
     yAxisLabelFormatter: (Float) -> String = { it.toInt().toString() }
 ) {
     if (entries.isEmpty()) return
@@ -65,6 +66,21 @@ fun InteractiveLineGraph(
 
     var visibleItems by remember { mutableFloatStateOf(min(7f, maxVisibleItems)) }
     var offset by remember { mutableFloatStateOf(max(0f, entries.size - visibleItems)) }
+    var previousSize by remember { mutableIntStateOf(entries.size) }
+
+    LaunchedEffect(entries.size) {
+        if (entries.size > previousSize) {
+            val itemsAdded = entries.size - previousSize
+            offset += itemsAdded
+        }
+        previousSize = entries.size
+    }
+
+    LaunchedEffect(offset) {
+        if (offset < 10f) {
+            onLoadMore()
+        }
+    }
 
     val startIdx = max(0, floor(offset).toInt())
     val endIdx = min(entries.size - 1, ceil(offset + visibleItems - 1).toInt())

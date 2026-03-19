@@ -45,11 +45,13 @@ class CounterDetailViewModel @Inject constructor(
 
     private val _counterId = MutableStateFlow<String?>(null)
     private val _localUiState = MutableStateFlow(LocalUiState())
+    private val _daysLoaded = MutableStateFlow(30)
+    private var isLoadingMore = false
 
     val uiState: StateFlow<CounterDetailUiState> = combine(
         _counterId.filterNotNull().flatMapLatest { id ->
-            getCounterDetailsUseCase.execute(id)
-        },
+            getCounterDetailsUseCase.execute(id, _daysLoaded)
+        }.onEach { isLoadingMore = false },
         _localUiState
     ) { details, local ->
 
@@ -132,5 +134,11 @@ class CounterDetailViewModel @Inject constructor(
 
     fun onDismissDurationPicker() {
         _localUiState.update { it.copy(showDurationPicker = false) }
+    }
+
+    fun loadMoreHistoricalData() {
+        if (isLoadingMore) return
+        isLoadingMore = true
+        _daysLoaded.value += 30
     }
 }

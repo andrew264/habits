@@ -62,7 +62,7 @@ fun SchedulesListPane(
                             onClick = onNewSchedule,
                             shapes = ButtonDefaults.shapes(),
                             modifier = Modifier.padding(end = Dimens.PaddingSmall),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer, contentColor = MaterialTheme.colorScheme.tertiary),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary, contentColor = MaterialTheme.colorScheme.onTertiary),
                             interactionSource = interactionSource,
                         ) {
                             Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.schedule_editor_new_schedule), tint = MaterialTheme.colorScheme.onTertiary)
