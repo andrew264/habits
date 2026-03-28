@@ -14,5 +14,6 @@ interface CounterRepository {
     suspend fun deleteLog(log: CounterLog)
     fun getLogsForCounter(counterId: String): Flow<List<CounterLog>>
     fun getLogsForCounterInRange(counterId: String, startTime: Long, endTime: Long): Flow<List<CounterLog>>
+    fun getLogsForCounterFrom(counterId: String, startTime: Long): Flow<List<CounterLog>>
     fun getAllLogsInRange(startTime: Long, endTime: Long): Flow<List<CounterLog>>
 }

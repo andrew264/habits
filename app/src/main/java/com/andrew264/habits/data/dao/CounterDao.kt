@@ -34,6 +34,9 @@ interface CounterDao {
     @Query("SELECT * FROM counter_logs WHERE counter_id_fk = :counterId AND timestamp >= :startTime AND timestamp < :endTime ORDER BY timestamp ASC")
     fun getLogsForCounterInRange(counterId: String, startTime: Long, endTime: Long): Flow<List<CounterLogEntity>>
 
+    @Query("SELECT * FROM counter_logs WHERE counter_id_fk = :counterId AND timestamp >= :startTime ORDER BY timestamp ASC")
+    fun getLogsForCounterFrom(counterId: String, startTime: Long): Flow<List<CounterLogEntity>>
+
     @Query("SELECT * FROM counter_logs WHERE timestamp >= :startTime AND timestamp < :endTime ORDER BY timestamp ASC")
     fun getAllLogsInRange(startTime: Long, endTime: Long): Flow<List<CounterLogEntity>>
 

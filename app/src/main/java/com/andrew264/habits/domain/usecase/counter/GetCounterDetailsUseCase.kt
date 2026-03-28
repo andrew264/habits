@@ -35,7 +35,7 @@ class GetCounterDetailsUseCase @Inject constructor(
                 val now = System.currentTimeMillis()
                 val startTime = now - TimeUnit.DAYS.toMillis(days.toLong())
 
-                counterRepository.getLogsForCounterInRange(counter.id, startTime, now).map { logsInRange ->
+                counterRepository.getLogsForCounterFrom(counter.id, startTime).map { logsInRange ->
                     val groupedByDay = logsInRange.groupBy {
                         Instant.ofEpochMilli(it.timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
                     }

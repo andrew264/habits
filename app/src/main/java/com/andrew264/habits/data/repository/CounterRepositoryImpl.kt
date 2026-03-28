@@ -58,6 +58,12 @@ class CounterRepositoryImpl @Inject constructor(
         }
     }
 
+    override fun getLogsForCounterFrom(counterId: String, startTime: Long): Flow<List<CounterLog>> {
+        return counterDao.getLogsForCounterFrom(counterId, startTime).map { entities ->
+            entities.map { it.toDomainModel() }
+        }
+    }
+
     override fun getAllLogsInRange(
         startTime: Long,
         endTime: Long
