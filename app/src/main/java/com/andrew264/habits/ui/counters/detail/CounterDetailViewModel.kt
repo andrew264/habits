@@ -138,6 +138,10 @@ class CounterDetailViewModel @Inject constructor(
 
     fun loadMoreHistoricalData() {
         if (isLoadingMore) return
+        val currentDetails = uiState.value.details
+        if (currentDetails != null && currentDetails.chartEntries.size < _daysLoaded.value) {
+            return
+        }
         isLoadingMore = true
         _daysLoaded.value += 30
     }

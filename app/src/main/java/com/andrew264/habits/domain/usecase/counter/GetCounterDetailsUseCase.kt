@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.*
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -32,16 +33,29 @@ class GetCounterDetailsUseCase @Inject constructor(
             .flatMapLatest { (counter, days) ->
                 if (counter == null) return@flatMapLatest flowOf(null)
 
-                val now = System.currentTimeMillis()
-                val startTime = now - TimeUnit.DAYS.toMillis(days.toLong())
+                counterRepository.getLogsForCounter(counter.id).map { allLogs ->
+                    val oldestLog = allLogs.lastOrNull()
+                    val today = LocalDate.now(ZoneId.systemDefault())
 
-                counterRepository.getLogsForCounterFrom(counter.id, startTime).map { logsInRange ->
+                    val maxDaysBack = if (oldestLog != null) {
+                        val oldestDate = Instant.ofEpochMilli(oldestLog.timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
+                        ChronoUnit.DAYS.between(oldestDate, today).toInt() + 1
+                    } else {
+                        1
+                    }
+
+                    val actualDays = minOf(days, maxDaysBack.coerceAtLeast(1))
+
+                    val now = System.currentTimeMillis()
+                    val startTime = now - TimeUnit.DAYS.toMillis(actualDays.toLong())
+                    val logsInRange = allLogs.filter { it.timestamp >= startTime }
+
                     val groupedByDay = logsInRange.groupBy {
                         Instant.ofEpochMilli(it.timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
                     }
 
-                    val chartEntries = (0 until days).map { i ->
-                        val date = LocalDate.now(ZoneId.systemDefault()).minusDays((days - 1 - i).toLong())
+                    val chartEntries = (0 until actualDays).map { i ->
+                        val date = today.minusDays((actualDays - 1 - i).toLong())
                         val logsForDay = groupedByDay[date] ?: emptyList()
                         val aggregatedValue = calculateAggregation(logsForDay, counter.aggregationType)
                         val timestamp = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
