@@ -12,7 +12,7 @@ plugins {
 
 android {
     namespace = "com.andrew264.habits"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.andrew264.habits"
@@ -40,10 +40,10 @@ android {
     buildFeatures {
         compose = true
     }
+}
 
-    room {
-        schemaDirectory("$projectDir/schemas")
-    }
+room {
+    schemaDirectory("$projectDir/schemas")
 }
 
 kotlin {
@@ -72,7 +72,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.androidx.graphics.shapes)
 
-    testImplementation(libs.koltinx.coroutines.test)
+    testImplementation(libs.kotlinx.coroutines.test)
 
     // icons
     implementation(libs.androidx.material.icons.core)
@@ -101,7 +101,6 @@ dependencies {
     // Room
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.runtime)
-    annotationProcessor(libs.androidx.room.compiler)
     ksp(libs.androidx.room.compiler)
 
     // Serialization

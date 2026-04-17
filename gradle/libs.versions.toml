@@ -21,7 +21,7 @@ roomKtx = "2.8.4"
 nav3Core = "1.1.0"
 lifecycleViewmodelNav3 = "2.10.0"
 kotlinSerialization = "2.3.20"
-kotlinxCorotinesTestVersion = "1.10.2"
+kotlinxCoroutinesTestVersion = "1.10.2"
 graphicsShapes = "1.1.0"
 kotlinxSerializationJson = "1.11.0"
 
@@ -44,7 +44,7 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3",
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 androidx-graphics-shapes = { group = "androidx.graphics", name = "graphics-shapes", version.ref = "graphicsShapes" }
 
-koltinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCorotinesTestVersion" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTestVersion" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 
 # navigation
