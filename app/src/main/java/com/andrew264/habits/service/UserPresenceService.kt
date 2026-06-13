@@ -50,6 +50,10 @@ class UserPresenceService : Service() {
         private const val TAG = "UserPresenceService"
         private const val NOTIFICATION_CHANNEL_ID = "UserPresenceServiceChannel"
         private const val NOTIFICATION_ID = 1
+
+        private const val SESSION_PROGRESS_CHANNEL_ID = "SessionProgressChannel"
+        private const val SESSION_PROGRESS_NOTIFICATION_ID = 3
+
         private const val SLEEP_API_PENDING_INTENT_REQUEST_CODE = 1001
 
         const val ACTION_START_SERVICE = "com.andrew264.habits.action.START_PRESENCE_SERVICE"
@@ -111,11 +115,14 @@ class UserPresenceService : Service() {
                 currentPresenceState = state
                 val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
+                if (settings.isBedtimeTrackingEnabled || settings.isAppUsageTrackingEnabled) {
+                    notificationManager.notify(NOTIFICATION_ID, createDefaultNotification(settings))
+                }
                 tickerJob?.cancel()
 
                 if (activeSession != null && settings.isAppUsageTrackingEnabled) {
                     val limitMillis = TimeUnit.MINUTES.toMillis(activeSession.sessionLimitMinutes.toLong())
-                    val updateIntervalMillis = (limitMillis * 0.05).toLong().coerceAtLeast(1000L)
+                    val updateIntervalMillis = (limitMillis * 0.05).toLong().coerceAtLeast(1000L) // 5% of the total limit
 
                     tickerJob = launch {
                         while (isActive) {
@@ -123,8 +130,8 @@ class UserPresenceService : Service() {
                             delay(updateIntervalMillis)
                         }
                     }
-                } else if (settings.isBedtimeTrackingEnabled || settings.isAppUsageTrackingEnabled) {
-                    notificationManager.notify(NOTIFICATION_ID, createDefaultNotification(settings))
+                } else {
+                    notificationManager.cancel(SESSION_PROGRESS_NOTIFICATION_ID)
                 }
             }
         }
@@ -212,6 +219,10 @@ class UserPresenceService : Service() {
     private fun stopMonitoringAndSelf() {
         Log.i(TAG, "Stopping all monitoring.")
         tickerJob?.cancel()
+
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancel(SESSION_PROGRESS_NOTIFICATION_ID)
+
         unsubscribeFromSleepUpdates()
         unregisterDeviceStateReceiver()
         unregisterForegroundAppReceiver()
@@ -266,7 +277,7 @@ class UserPresenceService : Service() {
         val cautionSegment = Notification.ProgressStyle.Segment(15)
         val dangerSegment = Notification.ProgressStyle.Segment(10)
 
-        if (Build.VERSION.SDK_INT >= 37) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN) {
             safeSegment.semanticStyle = Notification.SEMANTIC_STYLE_SAFE
             cautionSegment.semanticStyle = Notification.SEMANTIC_STYLE_CAUTION
             dangerSegment.semanticStyle = Notification.SEMANTIC_STYLE_DANGER
@@ -317,7 +328,7 @@ class UserPresenceService : Service() {
             snoozePendingIntent
         ).build()
 
-        val notification = Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
+        val builder = Notification.Builder(this, SESSION_PROGRESS_CHANNEL_ID)
             .setContentTitle("$appName Session")
             .setContentText("Time remaining")
             .setSmallIcon(R.mipmap.ic_launcher)
@@ -326,12 +337,16 @@ class UserPresenceService : Service() {
             .setOnlyAlertOnce(true)
             .setUsesChronometer(true)
             .setChronometerCountDown(true)
+            .setShowWhen(true)
             .setWhen(effectiveEndTime)
             .setStyle(progressStyle)
+            .setCategory(Notification.CATEGORY_STOPWATCH)
             .addAction(snoozeAction)
-            .build()
 
-        notificationManager.notify(NOTIFICATION_ID, notification)
+        if (Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.BAKLAVA_1) {
+            builder.setRequestPromotedOngoing(true)
+        }
+        notificationManager.notify(SESSION_PROGRESS_NOTIFICATION_ID, builder.build())
     }
 
     private fun subscribeToSleepUpdates() {
@@ -450,11 +465,27 @@ class UserPresenceService : Service() {
     }
 
     private fun createNotificationChannel() {
-        val serviceChannel =
-            NotificationChannel(NOTIFICATION_CHANNEL_ID, "Monitoring Service", NotificationManager.IMPORTANCE_LOW)
-        serviceChannel.description = "Channel for habit tracker monitoring service"
         val manager = getSystemService(NotificationManager::class.java)
+
+        val serviceChannel = NotificationChannel(
+            NOTIFICATION_CHANNEL_ID,
+            "Monitoring Service",
+            NotificationManager.IMPORTANCE_LOW
+        ).apply {
+            description = "Channel for habit tracker monitoring service"
+        }
         manager?.createNotificationChannel(serviceChannel)
+
+        val progressChannel = NotificationChannel(
+            SESSION_PROGRESS_CHANNEL_ID,
+            "App Usage Progress",
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply {
+            description = "Live progress for active app sessions"
+            setSound(null, null)
+            enableVibration(true)
+        }
+        manager?.createNotificationChannel(progressChannel)
     }
 
     private fun registerForegroundAppReceiver() {

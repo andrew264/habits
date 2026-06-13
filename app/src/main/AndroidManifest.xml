@@ -19,6 +19,7 @@
 
     <!-- For notifications (Android 13+ / API 33+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
 
     <!-- For scheduling exact alarms (Android 12+ / API 31+) -->
     <!-- For full compliance on Android 14+, you may need to declare a USE_EXACT_ALARM permission -->
@@ -39,6 +40,7 @@
         android:enableOnBackInvokedCallback="true"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
+        android:intentMatchingFlags="enforceIntentFilter"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
