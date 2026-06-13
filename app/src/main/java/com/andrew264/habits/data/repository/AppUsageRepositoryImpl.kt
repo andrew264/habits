@@ -5,14 +5,13 @@ import androidx.room.Transaction
 import com.andrew264.habits.data.dao.AppUsageEventDao
 import com.andrew264.habits.data.entity.AppUsageEventEntity
 import com.andrew264.habits.domain.manager.SnoozeManager
+import com.andrew264.habits.domain.model.ActiveSessionState
 import com.andrew264.habits.domain.model.AppUsageEvent
 import com.andrew264.habits.domain.repository.AppUsageRepository
 import com.andrew264.habits.domain.repository.WhitelistRepository
 import com.andrew264.habits.domain.scheduler.SessionAlarmScheduler
 import com.andrew264.habits.domain.usecase.CheckUsageLimitsUseCase
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -28,6 +27,9 @@ class AppUsageRepositoryImpl @Inject constructor(
     companion object {
         private const val TAG = "AppUsageRepository"
     }
+
+    private val _activeSessionFlow = MutableStateFlow<ActiveSessionState?>(null)
+    override val activeSessionFlow: StateFlow<ActiveSessionState?> = _activeSessionFlow.asStateFlow()
 
     @Transaction
     override suspend fun startUsageSession(
@@ -49,6 +51,7 @@ class AppUsageRepositoryImpl @Inject constructor(
         if (lastSession.packageName == packageName) {
             Log.d(TAG, "New package is same as last. Ensuring alarm is set.")
             scheduleSessionAlarm(packageName)
+            updateActiveSessionFlow(packageName, lastSession.startTimestamp)
             return
         }
 
@@ -69,6 +72,20 @@ class AppUsageRepositoryImpl @Inject constructor(
         if (whitelistedApps.any { it.packageName == packageName }) {
             checkUsageLimitsUseCase.checkSharedDailyLimit(packageName)
             scheduleSessionAlarm(packageName)
+        }
+        updateActiveSessionFlow(packageName, timestamp)
+    }
+
+    private suspend fun updateActiveSessionFlow(packageName: String, startTimestamp: Long) {
+        val app = whitelistRepository.getWhitelistedApps().first().find { it.packageName == packageName }
+        if (app?.sessionLimitMinutes != null) {
+            _activeSessionFlow.value = ActiveSessionState(
+                packageName = packageName,
+                startTimestamp = startTimestamp,
+                sessionLimitMinutes = app.sessionLimitMinutes
+            )
+        } else {
+            _activeSessionFlow.value = null
         }
     }
 
@@ -96,6 +113,7 @@ class AppUsageRepositoryImpl @Inject constructor(
             sessionAlarmScheduler.cancel()
             snoozeManager.clearSnooze(ongoingEvent.packageName)
         }
+        _activeSessionFlow.value = null
     }
 
     override fun getUsageEventsInRange(

@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -15,6 +16,7 @@ import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.andrew264.habits.MainActivity
 import com.andrew264.habits.R
+import com.andrew264.habits.domain.model.ActiveSessionState
 import com.andrew264.habits.domain.model.PersistentSettings
 import com.andrew264.habits.domain.repository.AppUsageRepository
 import com.andrew264.habits.domain.repository.ScreenHistoryRepository
@@ -23,6 +25,7 @@ import com.andrew264.habits.domain.repository.UserPresenceHistoryRepository
 import com.andrew264.habits.domain.usecase.EvaluateUserPresenceUseCase
 import com.andrew264.habits.domain.usecase.PresenceEvaluationInput
 import com.andrew264.habits.model.UserPresenceState
+import com.andrew264.habits.receiver.SessionLimitReceiver
 import com.andrew264.habits.receiver.SleepReceiver
 import com.andrew264.habits.ui.navigation.Bedtime
 import com.google.android.gms.location.ActivityRecognition
@@ -30,11 +33,10 @@ import com.google.android.gms.location.SleepClassifyEvent
 import com.google.android.gms.location.SleepSegmentEvent
 import com.google.android.gms.location.SleepSegmentRequest
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -42,6 +44,7 @@ class UserPresenceService : Service() {
 
     private var deviceStateReceiver: BroadcastReceiver? = null
     private var foregroundAppReceiver: BroadcastReceiver? = null
+    private var tickerJob: Job? = null
 
     companion object {
         private const val TAG = "UserPresenceService"
@@ -87,7 +90,6 @@ class UserPresenceService : Service() {
     private lateinit var ignoredPackages: Set<String>
     private var lastStartedPackageName: String? = null
 
-
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "Service Created")
@@ -96,16 +98,33 @@ class UserPresenceService : Service() {
         ignoredPackages = setOf(
             "com.android.systemui",
             this.packageName
-            // TODO: do we need to ignore all the launchers
         )
 
         serviceScope.launch {
-            userPresenceHistoryRepository.userPresenceState.collect { state ->
+            combine(
+                userPresenceHistoryRepository.userPresenceState,
+                settingsRepository.settingsFlow,
+                appUsageRepository.activeSessionFlow
+            ) { state, settings, activeSession ->
+                Triple(state, settings, activeSession)
+            }.collect { (state, settings, activeSession) ->
                 currentPresenceState = state
-                val settings = settingsRepository.settingsFlow.first()
-                if (settings.isBedtimeTrackingEnabled || settings.isAppUsageTrackingEnabled) {
-                    val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-                    notificationManager.notify(NOTIFICATION_ID, createNotification(settings))
+                val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+
+                tickerJob?.cancel()
+
+                if (activeSession != null && settings.isAppUsageTrackingEnabled) {
+                    val limitMillis = TimeUnit.MINUTES.toMillis(activeSession.sessionLimitMinutes.toLong())
+                    val updateIntervalMillis = (limitMillis * 0.05).toLong().coerceAtLeast(1000L)
+
+                    tickerJob = launch {
+                        while (isActive) {
+                            updateProgressNotification(notificationManager, activeSession, settings)
+                            delay(updateIntervalMillis)
+                        }
+                    }
+                } else if (settings.isBedtimeTrackingEnabled || settings.isAppUsageTrackingEnabled) {
+                    notificationManager.notify(NOTIFICATION_ID, createDefaultNotification(settings))
                 }
             }
         }
@@ -151,7 +170,6 @@ class UserPresenceService : Service() {
     }
 
     private suspend fun configureAndStartMonitoring() {
-        // Always clean up first to handle re-configuration
         unsubscribeFromSleepUpdates()
         unregisterDeviceStateReceiver()
         unregisterForegroundAppReceiver()
@@ -172,7 +190,6 @@ class UserPresenceService : Service() {
             evaluateUserPresenceUseCase.execute(PresenceEvaluationInput.InitialEvaluation)
         }
 
-        // Screen state is needed for both features
         registerDeviceStateReceiver()
         if (settings.isAppUsageTrackingEnabled) {
             registerForegroundAppReceiver()
@@ -187,13 +204,14 @@ class UserPresenceService : Service() {
         ServiceCompat.startForeground(
             this,
             NOTIFICATION_ID,
-            createNotification(settings),
+            createDefaultNotification(settings),
             serviceType
         )
     }
 
     private fun stopMonitoringAndSelf() {
         Log.i(TAG, "Stopping all monitoring.")
+        tickerJob?.cancel()
         unsubscribeFromSleepUpdates()
         unregisterDeviceStateReceiver()
         unregisterForegroundAppReceiver()
@@ -202,7 +220,7 @@ class UserPresenceService : Service() {
         stopSelf()
     }
 
-    private fun createNotification(settings: PersistentSettings): Notification {
+    private fun createDefaultNotification(settings: PersistentSettings): Notification {
         val notificationIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra("destination_route", Bedtime::class.java.simpleName)
@@ -226,6 +244,94 @@ class UserPresenceService : Service() {
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .build()
+    }
+
+    private fun updateProgressNotification(
+        notificationManager: NotificationManager,
+        session: ActiveSessionState,
+        settings: PersistentSettings
+    ) {
+        if (session.sessionLimitMinutes <= 0) return
+
+        val originalLimitMillis = TimeUnit.MINUTES.toMillis(session.sessionLimitMinutes.toLong())
+        val snoozeEndTime = settings.sessionSnoozeTimestamps[session.packageName] ?: 0L
+
+        val effectiveEndTime = maxOf(session.startTimestamp + originalLimitMillis, snoozeEndTime)
+        val effectiveLimitMillis = effectiveEndTime - session.startTimestamp
+
+        val elapsedMillis = System.currentTimeMillis() - session.startTimestamp
+        val progressPercent = ((elapsedMillis.toFloat() / effectiveLimitMillis.toFloat()) * 100).toInt().coerceIn(0, 100)
+
+        val safeSegment = Notification.ProgressStyle.Segment(75)
+        val cautionSegment = Notification.ProgressStyle.Segment(15)
+        val dangerSegment = Notification.ProgressStyle.Segment(10)
+
+        if (Build.VERSION.SDK_INT >= 37) {
+            safeSegment.semanticStyle = Notification.SEMANTIC_STYLE_SAFE
+            cautionSegment.semanticStyle = Notification.SEMANTIC_STYLE_CAUTION
+            dangerSegment.semanticStyle = Notification.SEMANTIC_STYLE_DANGER
+        }
+
+        var appIcon: android.graphics.drawable.Icon? = null
+        var appName = session.packageName
+        try {
+            val pm = packageManager
+            val appInfo = pm.getApplicationInfo(session.packageName, 0)
+            appName = pm.getApplicationLabel(appInfo).toString()
+            if (appInfo.icon != 0) {
+                appIcon = android.graphics.drawable.Icon.createWithResource(session.packageName, appInfo.icon)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to load icon/label for progress notification", e)
+        }
+
+        val progressStyle = Notification.ProgressStyle()
+            .setProgress(progressPercent)
+            .setProgressSegments(listOf(safeSegment, cautionSegment, dangerSegment))
+            .setStyledByProgress(true)
+
+        if (appIcon != null) {
+            progressStyle.progressTrackerIcon = appIcon
+        }
+
+        val notificationIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("destination_route", "Usage/${session.packageName}")
+        }
+        val pendingIntentFlags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        val pendingIntent = PendingIntent.getActivity(this, session.packageName.hashCode(), notificationIntent, pendingIntentFlags)
+
+        val snoozeIntent = Intent(this, SessionLimitReceiver::class.java).apply {
+            action = SessionLimitReceiver.ACTION_SNOOZE_SESSION
+            putExtra(SessionLimitReceiver.EXTRA_PACKAGE_NAME, session.packageName)
+        }
+        val snoozePendingIntent = PendingIntent.getBroadcast(
+            this,
+            session.packageName.hashCode(),
+            snoozeIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val snoozeAction = Notification.Action.Builder(
+            null,
+            "Snooze 5 Min",
+            snoozePendingIntent
+        ).build()
+
+        val notification = Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
+            .setContentTitle("$appName Session")
+            .setContentText("Time remaining")
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentIntent(pendingIntent)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setUsesChronometer(true)
+            .setChronometerCountDown(true)
+            .setWhen(effectiveEndTime)
+            .setStyle(progressStyle)
+            .addAction(snoozeAction)
+            .build()
+
+        notificationManager.notify(NOTIFICATION_ID, notification)
     }
 
     private fun subscribeToSleepUpdates() {
@@ -342,7 +448,6 @@ class UserPresenceService : Service() {
             }
         }
     }
-
 
     private fun createNotificationChannel() {
         val serviceChannel =

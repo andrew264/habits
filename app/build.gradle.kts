@@ -16,10 +16,10 @@ android {
 
     defaultConfig {
         applicationId = "com.andrew264.habits"
-        minSdk = 35
+        minSdk = 36
         targetSdk = 37
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -27,6 +27,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -39,6 +40,10 @@ android {
     }
     buildFeatures {
         compose = true
+        viewBinding = true
+    }
+    lint {
+        targetSdk = 37
     }
 }
 
@@ -97,6 +102,7 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     ksp(libs.androidx.hilt.compiler)
+    ksp(libs.kotlin.metadata.jvm)
 
     // Room
     implementation(libs.androidx.room.ktx)
