@@ -29,9 +29,9 @@ import com.andrew264.habits.ui.common.color_picker.utils.toHexCode
 import com.andrew264.habits.ui.common.components.DrawableImage
 import com.andrew264.habits.ui.common.components.FilterButtonGroup
 import com.andrew264.habits.ui.common.components.SimpleTopAppBar
+import com.andrew264.habits.ui.common.components.list.ListItemPosition
+import com.andrew264.habits.ui.common.components.list.NavigationListItem
 import com.andrew264.habits.ui.common.duration_picker.DurationPickerDialog
-import com.andrew264.habits.ui.common.list_items.ListItemPosition
-import com.andrew264.habits.ui.common.list_items.NavigationListItem
 import com.andrew264.habits.ui.common.utils.FormatUtils
 import com.andrew264.habits.ui.common.utils.rememberAppIcon
 import com.andrew264.habits.ui.theme.Dimens

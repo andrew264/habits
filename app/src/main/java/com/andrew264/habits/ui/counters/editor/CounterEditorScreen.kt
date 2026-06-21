@@ -28,10 +28,10 @@ import com.andrew264.habits.ui.common.color_picker.ColorPickerDialog
 import com.andrew264.habits.ui.common.color_picker.utils.toColorOrNull
 import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
 import com.andrew264.habits.ui.common.components.SimpleTopAppBar
+import com.andrew264.habits.ui.common.components.list.ListItemPosition
+import com.andrew264.habits.ui.common.components.list.ListSectionHeader
+import com.andrew264.habits.ui.common.components.list.NavigationListItem
 import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
-import com.andrew264.habits.ui.common.list_items.ListItemPosition
-import com.andrew264.habits.ui.common.list_items.ListSectionHeader
-import com.andrew264.habits.ui.common.list_items.NavigationListItem
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import kotlinx.coroutines.flow.collectLatest

@@ -20,13 +20,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andrew264.habits.R
-import com.andrew264.habits.ui.common.components.FeatureToggleListItem
 import com.andrew264.habits.ui.common.components.SimpleTopAppBar
+import com.andrew264.habits.ui.common.components.list.*
 import com.andrew264.habits.ui.common.duration_picker.DurationPickerDialog
-import com.andrew264.habits.ui.common.list_items.ListItemPosition
-import com.andrew264.habits.ui.common.list_items.ListSectionHeader
-import com.andrew264.habits.ui.common.list_items.NavigationListItem
-import com.andrew264.habits.ui.common.list_items.ToggleListItem
 import com.andrew264.habits.ui.common.utils.FormatUtils
 import com.andrew264.habits.ui.navigation.AppRoute
 import com.andrew264.habits.ui.navigation.Whitelist

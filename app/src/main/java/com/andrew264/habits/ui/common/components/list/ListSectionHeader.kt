@@ -1,8 +1,7 @@
-package com.andrew264.habits.ui.common.list_items
+package com.andrew264.habits.ui.common.components.list
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -11,14 +10,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import com.andrew264.habits.ui.theme.Dimens
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ListSectionHeader(title: String) {
     Text(
         text = title,
-        style = MaterialTheme.typography.bodyMediumEmphasized,
+        style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.primary,
-        fontWeight = FontWeight.Normal,
+        fontWeight = FontWeight.SemiBold,
         modifier = Modifier
             .fillMaxWidth()
             .padding(
@@ -29,8 +27,8 @@ fun ListSectionHeader(title: String) {
     )
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
-fun SectionHeaderPreview() {
+private fun SectionHeaderPreview() {
     ListSectionHeader(title = "Section Title")
 }

@@ -5,8 +5,6 @@ import android.provider.Settings
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.LocalIndication
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -31,9 +29,10 @@ import androidx.compose.ui.unit.dp
 import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.charts.StackedBarChart
 import com.andrew264.habits.ui.common.components.FilterButtonGroup
+import com.andrew264.habits.ui.common.components.list.ListItemPosition
+import com.andrew264.habits.ui.common.components.list.ListSectionHeader
+import com.andrew264.habits.ui.common.components.list.containedItems
 import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
-import com.andrew264.habits.ui.common.list_items.ListSectionHeader
-import com.andrew264.habits.ui.common.list_items.containedItems
 import com.andrew264.habits.ui.navigation.AppRoute
 import com.andrew264.habits.ui.navigation.UsageSettings
 import com.andrew264.habits.ui.navigation.Whitelist
@@ -223,17 +222,17 @@ fun UsageListContent(
                 containedItems(
                     items = uiState.appDetails,
                     key = { it.packageName }
-                ) { app ->
-                    val interactionSource = remember { MutableInteractionSource() }
-                    HapticInteractionEffect(interactionSource)
-                    AppListItem(
-                        appDetails = app,
-                        modifier = Modifier.clickable(
-                            interactionSource = interactionSource,
-                            indication = LocalIndication.current,
+                ) { app, position ->
+                    Column {
+                        AppListItem(
+                            appDetails = app,
+                            position = position,
                             onClick = { onAppSelected(app) }
                         )
-                    )
+                        if (position == ListItemPosition.TOP || position == ListItemPosition.MIDDLE) {
+                            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHighest, thickness = 2.dp)
+                        }
+                    }
                 }
 
                 item {

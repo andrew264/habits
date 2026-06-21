@@ -1,10 +1,7 @@
 package com.andrew264.habits.ui.usage.whitelist
 
 import android.view.HapticFeedbackConstants
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -20,7 +17,9 @@ import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
 import com.andrew264.habits.ui.common.components.DrawableImage
 import com.andrew264.habits.ui.common.components.IconSwitch
-import com.andrew264.habits.ui.common.list_items.ContainedLazyColumn
+import com.andrew264.habits.ui.common.components.list.ContainedLazyColumn
+import com.andrew264.habits.ui.common.components.list.ListItemPosition
+import com.andrew264.habits.ui.common.components.list.toShapes
 import com.andrew264.habits.ui.common.utils.rememberAppIcon
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
@@ -41,7 +40,7 @@ fun WhitelistScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun WhitelistScreen(
     uiState: WhitelistUiState,
@@ -81,30 +80,73 @@ private fun WhitelistScreen(
                         .padding(horizontal = Dimens.PaddingLarge),
                     items = uiState.apps,
                     key = { it.packageName }
-                ) { app ->
+                ) { app, position ->
                     val isWhitelisted = app.packageName in uiState.whitelistedPackageNames
-                    ListItem(
-                        headlineContent = { Text(app.friendlyName) },
-                        supportingContent = { Text(app.packageName, style = MaterialTheme.typography.bodySmall) },
-                        leadingContent = {
+
+                    Column {
+                        val toggleAction: (Boolean) -> Unit = { newChecked: Boolean ->
+                            onToggleWhitelist(app, isWhitelisted)
+                            val feedback = if (newChecked) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
+                            view.performHapticFeedback(feedback)
+                        }
+
+                        val colors = ListItemDefaults.colors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            selectedContainerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                            selectedContentColor = MaterialTheme.colorScheme.onSurface,
+                            leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            selectedLeadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            trailingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            selectedTrailingContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        val leadingNode: @Composable () -> Unit = {
                             val icon = rememberAppIcon(packageName = app.packageName)
                             DrawableImage(
                                 drawable = icon,
                                 contentDescription = stringResource(R.string.whitelist_icon_content_description, app.friendlyName),
                                 modifier = Modifier.size(40.dp)
                             )
-                        },
-                        trailingContent = {
+                        }
+                        val contentNode: @Composable () -> Unit = { Text(app.friendlyName) }
+                        val supportingNode: @Composable () -> Unit = { Text(app.packageName, style = MaterialTheme.typography.bodySmall) }
+                        val trailingNode: @Composable () -> Unit = {
                             IconSwitch(
                                 checked = isWhitelisted,
-                                onCheckedChange = { _ ->
-                                    onToggleWhitelist(app, isWhitelisted)
-                                    val feedback = if (!isWhitelisted) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.TOGGLE_OFF
-                                    view.performHapticFeedback(feedback)
-                                }
+                                onCheckedChange = null, // Row toggles the state natively
+                                enabled = true
                             )
                         }
-                    )
+
+                        // Because the action is purely a checkbox toggle, we use the toggleable overload
+                        if (position == ListItemPosition.SEPARATE) {
+                            ListItem(
+                                checked = isWhitelisted,
+                                onCheckedChange = toggleAction,
+                                shapes = position.toShapes(),
+                                colors = colors,
+                                leadingContent = leadingNode,
+                                content = contentNode,
+                                supportingContent = supportingNode,
+                                trailingContent = trailingNode
+                            )
+                        } else {
+                            SegmentedListItem(
+                                checked = isWhitelisted,
+                                onCheckedChange = toggleAction,
+                                shapes = position.toShapes(),
+                                colors = colors,
+                                leadingContent = leadingNode,
+                                content = contentNode,
+                                supportingContent = supportingNode,
+                                trailingContent = trailingNode
+                            )
+                        }
+
+                        if (position == ListItemPosition.TOP || position == ListItemPosition.MIDDLE) {
+                            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHighest, thickness = 2.dp)
+                        }
+                    }
                 }
             }
         }

@@ -19,10 +19,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.components.SimpleTopAppBar
-import com.andrew264.habits.ui.common.list_items.ListItemPosition
-import com.andrew264.habits.ui.common.list_items.ListSectionHeader
-import com.andrew264.habits.ui.common.list_items.NavigationListItem
-import com.andrew264.habits.ui.common.list_items.ToggleListItem
+import com.andrew264.habits.ui.common.components.list.ListItemPosition
+import com.andrew264.habits.ui.common.components.list.ListSectionHeader
+import com.andrew264.habits.ui.common.components.list.NavigationListItem
+import com.andrew264.habits.ui.common.components.list.ToggleListItem
 import com.andrew264.habits.ui.navigation.*
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme

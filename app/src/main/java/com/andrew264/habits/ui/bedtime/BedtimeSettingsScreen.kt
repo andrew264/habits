@@ -25,12 +25,12 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andrew264.habits.R
 import com.andrew264.habits.model.schedule.DefaultSchedules
 import com.andrew264.habits.model.schedule.Schedule
-import com.andrew264.habits.ui.common.components.FeatureToggleListItem
 import com.andrew264.habits.ui.common.components.ScheduleSelector
 import com.andrew264.habits.ui.common.components.SimpleTopAppBar
-import com.andrew264.habits.ui.common.list_items.InfoListItem
-import com.andrew264.habits.ui.common.list_items.ListItemPosition
-import com.andrew264.habits.ui.common.list_items.ListSectionHeader
+import com.andrew264.habits.ui.common.components.list.FeatureToggleListItem
+import com.andrew264.habits.ui.common.components.list.InfoListItem
+import com.andrew264.habits.ui.common.components.list.ListItemPosition
+import com.andrew264.habits.ui.common.components.list.ListSectionHeader
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.ui.theme.createPreviewPersistentSettings

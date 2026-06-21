@@ -2,6 +2,7 @@ package com.andrew264.habits.ui.counters
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -15,12 +16,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andrew264.habits.R
 import com.andrew264.habits.ui.common.components.ContainedLoadingIndicator
 import com.andrew264.habits.ui.common.components.EmptyState
+import com.andrew264.habits.ui.common.components.list.ContainedLazyColumn
+import com.andrew264.habits.ui.common.components.list.ListItemPosition
 import com.andrew264.habits.ui.common.haptics.HapticInteractionEffect
-import com.andrew264.habits.ui.common.list_items.ContainedLazyColumn
 import com.andrew264.habits.ui.counters.components.CounterListItem
 import com.andrew264.habits.ui.theme.Dimens
 
@@ -79,9 +82,19 @@ fun CountersScreen(
                         .fillMaxSize()
                         .padding(horizontal = Dimens.PaddingLarge),
                     items = uiState.counters,
-                    key = { it.counter.id },
-                    onItemClick = { item -> onNavigateToCounterDetail(item.counter.id) }
-                ) { item -> CounterListItem(item = item) }
+                    key = { it.counter.id }
+                ) { item, position ->
+                    Column {
+                        CounterListItem(
+                            item = item,
+                            position = position,
+                            onClick = { onNavigateToCounterDetail(item.counter.id) }
+                        )
+                        if (position == ListItemPosition.TOP || position == ListItemPosition.MIDDLE) {
+                            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHighest, thickness = 2.dp)
+                        }
+                    }
+                }
             }
         }
     }
