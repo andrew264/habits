@@ -9,17 +9,9 @@ import com.andrew264.habits.data.entity.WaterIntakeEntry
 import com.andrew264.habits.data.entity.WhitelistedAppEntity
 import com.andrew264.habits.data.entity.counter.CounterEntity
 import com.andrew264.habits.data.entity.counter.CounterLogEntity
-import com.andrew264.habits.data.entity.schedule.ScheduleEntity
-import com.andrew264.habits.data.entity.schedule.ScheduleGroupDayEntity
-import com.andrew264.habits.data.entity.schedule.ScheduleGroupEntity
-import com.andrew264.habits.data.entity.schedule.ScheduleTimeRangeEntity
 
 @Database(
     entities = [
-        ScheduleEntity::class,
-        ScheduleGroupEntity::class,
-        ScheduleGroupDayEntity::class,
-        ScheduleTimeRangeEntity::class,
         WaterIntakeEntry::class,
 
         ScreenEventEntity::class,
@@ -28,10 +20,9 @@ import com.andrew264.habits.data.entity.schedule.ScheduleTimeRangeEntity
         CounterEntity::class,
         CounterLogEntity::class
     ],
-    version = 3,
+    version = 4,
 )
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun scheduleDao(): ScheduleDao
     abstract fun waterIntakeDao(): WaterIntakeDao
 
     abstract fun screenEventDao(): ScreenEventDao

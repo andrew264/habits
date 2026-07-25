@@ -22,7 +22,9 @@ import javax.inject.Singleton
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "habits_settings")
 
 @Singleton
-class SettingsRepositoryImpl @Inject constructor(@param:ApplicationContext private val context: Context) : SettingsRepository {
+class SettingsRepositoryImpl @Inject constructor(
+    @param:ApplicationContext private val context: Context
+) : SettingsRepository {
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -61,8 +63,8 @@ class SettingsRepositoryImpl @Inject constructor(@param:ApplicationContext priva
             val isWaterReminderEnabled = preferences[DataStoreKeys.WATER_REMINDER_ENABLED] ?: false
             val waterReminderIntervalMinutes = preferences[DataStoreKeys.WATER_REMINDER_INTERVAL_MINUTES] ?: 60
             val waterReminderSnoozeMinutes = preferences[DataStoreKeys.WATER_REMINDER_SNOOZE_MINUTES] ?: 15
-            val waterReminderScheduleId = preferences[DataStoreKeys.WATER_REMINDER_SCHEDULE_ID]
-
+            val waterReminderStartMinuteOfDay = preferences[DataStoreKeys.WATER_REMINDER_START_MINUTE] ?: 480 // 8:00 AM
+            val waterReminderEndMinuteOfDay = preferences[DataStoreKeys.WATER_REMINDER_END_MINUTE] ?: 1200 // 10:00 PM
 
             PersistentSettings(
                 isAppUsageTrackingEnabled = isAppUsageTrackingEnabled,
@@ -77,7 +79,8 @@ class SettingsRepositoryImpl @Inject constructor(@param:ApplicationContext priva
                 isWaterReminderEnabled = isWaterReminderEnabled,
                 waterReminderIntervalMinutes = waterReminderIntervalMinutes,
                 waterReminderSnoozeMinutes = waterReminderSnoozeMinutes,
-                waterReminderScheduleId = waterReminderScheduleId
+                waterReminderStartMinuteOfDay = waterReminderStartMinuteOfDay,
+                waterReminderEndMinuteOfDay = waterReminderEndMinuteOfDay
             )
         }
 
@@ -160,9 +163,15 @@ class SettingsRepositoryImpl @Inject constructor(@param:ApplicationContext priva
         }
     }
 
-    override suspend fun updateWaterReminderSchedule(scheduleId: String) {
+    override suspend fun updateWaterReminderStartMinute(minuteOfDay: Int) {
         context.dataStore.edit { settings ->
-            settings[DataStoreKeys.WATER_REMINDER_SCHEDULE_ID] = scheduleId
+            settings[DataStoreKeys.WATER_REMINDER_START_MINUTE] = minuteOfDay
+        }
+    }
+
+    override suspend fun updateWaterReminderEndMinute(minuteOfDay: Int) {
+        context.dataStore.edit { settings ->
+            settings[DataStoreKeys.WATER_REMINDER_END_MINUTE] = minuteOfDay
         }
     }
 

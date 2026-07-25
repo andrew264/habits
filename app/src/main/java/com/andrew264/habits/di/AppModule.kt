@@ -8,7 +8,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-@Module(includes = [DatabaseModule::class, SchedulerModule::class])
+@Module(includes = [DatabaseModule::class])
 @InstallIn(SingletonComponent::class)
 object AppModule {
     @Provides

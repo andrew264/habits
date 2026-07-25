@@ -21,5 +21,6 @@ object DataStoreKeys {
     val WATER_REMINDER_ENABLED = booleanPreferencesKey("water_reminder_enabled")
     val WATER_REMINDER_INTERVAL_MINUTES = intPreferencesKey("water_reminder_interval_minutes")
     val WATER_REMINDER_SNOOZE_MINUTES = intPreferencesKey("water_reminder_snooze_minutes")
-    val WATER_REMINDER_SCHEDULE_ID = stringPreferencesKey("water_reminder_schedule_id")
+    val WATER_REMINDER_START_MINUTE = intPreferencesKey("water_reminder_start_minute")
+    val WATER_REMINDER_END_MINUTE = intPreferencesKey("water_reminder_end_minute")
 }

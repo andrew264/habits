@@ -159,7 +159,7 @@ private fun WaterScreenCompletePreview() {
             uiState = WaterScreenUiState(
                 settings = settings,
                 todaysIntakeMl = 2400,
-                progress = 1.0f // Progress caps at 1.0
+                progress = 1.0f
             ),
             onLogWater = {},
             onNavigateToStats = {},

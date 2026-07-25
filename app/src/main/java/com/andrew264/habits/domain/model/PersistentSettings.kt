@@ -16,5 +16,6 @@ data class PersistentSettings(
     val isWaterReminderEnabled: Boolean,
     val waterReminderIntervalMinutes: Int,
     val waterReminderSnoozeMinutes: Int,
-    val waterReminderScheduleId: String?
+    val waterReminderStartMinuteOfDay: Int,
+    val waterReminderEndMinuteOfDay: Int,
 )

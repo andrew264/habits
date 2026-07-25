@@ -11,7 +11,8 @@ data class WaterSettingsUpdate(
     val isReminderEnabled: Boolean? = null,
     val reminderIntervalMinutes: Int? = null,
     val snoozeMinutes: Int? = null,
-    val reminderScheduleId: String? = null
+    val reminderStartMinuteOfDay: Int? = null,
+    val reminderEndMinuteOfDay: Int? = null
 )
 
 /**
@@ -28,10 +29,11 @@ class UpdateWaterSettingsUseCase @Inject constructor(
         // Apply direct settings updates first
         update.isWaterTrackingEnabled?.let { settingsRepository.updateWaterTrackingEnabled(it) }
         update.dailyTargetMl?.let { settingsRepository.updateWaterDailyTarget(it) }
-        update.reminderScheduleId?.let { settingsRepository.updateWaterReminderSchedule(it) }
         update.snoozeMinutes?.let { settingsRepository.updateWaterReminderSnoozeTime(it) }
         update.reminderIntervalMinutes?.let { settingsRepository.updateWaterReminderInterval(it) }
         update.isReminderEnabled?.let { settingsRepository.updateWaterReminderEnabled(it) }
+        update.reminderStartMinuteOfDay?.let { settingsRepository.updateWaterReminderStartMinute(it) }
+        update.reminderEndMinuteOfDay?.let { settingsRepository.updateWaterReminderEndMinute(it) }
 
         // Determine the final state after all updates
         val newTrackingEnabled = update.isWaterTrackingEnabled ?: currentSettings.isWaterTrackingEnabled

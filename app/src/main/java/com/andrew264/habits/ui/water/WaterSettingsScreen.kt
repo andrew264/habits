@@ -7,10 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Snooze
-import androidx.compose.material.icons.outlined.Timer
-import androidx.compose.material.icons.outlined.TrackChanges
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -21,10 +18,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andrew264.habits.R
-import com.andrew264.habits.model.schedule.Schedule
-import com.andrew264.habits.ui.common.components.ScheduleSelector
 import com.andrew264.habits.ui.common.components.SimpleTopAppBar
 import com.andrew264.habits.ui.common.components.list.*
+import com.andrew264.habits.ui.common.dialogs.HabitsTimePickerDialog
 import com.andrew264.habits.ui.common.duration_picker.DurationPickerDialog
 import com.andrew264.habits.ui.common.utils.FormatUtils
 import com.andrew264.habits.ui.theme.Dimens
@@ -57,7 +53,8 @@ fun WaterSettingsScreen(
         onRemindersToggled = viewModel::onRemindersToggled,
         onIntervalChanged = viewModel::onIntervalChanged,
         onSnoozeChanged = viewModel::onSnoozeChanged,
-        onScheduleSelected = { viewModel.onScheduleSelected(it) }
+        onStartMinuteChanged = viewModel::onStartMinuteChanged,
+        onEndMinuteChanged = viewModel::onEndMinuteChanged
     )
 }
 
@@ -71,11 +68,14 @@ private fun WaterSettingsScreen(
     onRemindersToggled: (Boolean) -> Unit,
     onIntervalChanged: (String) -> Unit,
     onSnoozeChanged: (String) -> Unit,
-    onScheduleSelected: (Schedule) -> Unit
+    onStartMinuteChanged: (Int) -> Unit,
+    onEndMinuteChanged: (Int) -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var showIntervalDialog by rememberSaveable { mutableStateOf(false) }
     var showSnoozeDialog by rememberSaveable { mutableStateOf(false) }
+    var showStartTimePicker by rememberSaveable { mutableStateOf(false) }
+    var showEndTimePicker by rememberSaveable { mutableStateOf(false) }
 
     if (showIntervalDialog) {
         DurationPickerDialog(
@@ -105,6 +105,32 @@ private fun WaterSettingsScreen(
                 val totalMinutes = h * 60 + m
                 onSnoozeChanged(totalMinutes.toString())
                 showSnoozeDialog = false
+            }
+        )
+    }
+
+    if (showStartTimePicker) {
+        HabitsTimePickerDialog(
+            title = stringResource(R.string.water_settings_start_time),
+            initialHour = uiState.settings.waterReminderStartMinuteOfDay / 60,
+            initialMinute = uiState.settings.waterReminderStartMinuteOfDay % 60,
+            onDismissRequest = { showStartTimePicker = false },
+            onConfirm = { h, m ->
+                onStartMinuteChanged(h * 60 + m)
+                showStartTimePicker = false
+            }
+        )
+    }
+
+    if (showEndTimePicker) {
+        HabitsTimePickerDialog(
+            title = stringResource(R.string.water_settings_end_time),
+            initialHour = uiState.settings.waterReminderEndMinuteOfDay / 60,
+            initialMinute = uiState.settings.waterReminderEndMinuteOfDay % 60,
+            onDismissRequest = { showEndTimePicker = false },
+            onConfirm = { h, m ->
+                onEndMinuteChanged(h * 60 + m)
+                showEndTimePicker = false
             }
         )
     }
@@ -191,16 +217,33 @@ private fun WaterSettingsScreen(
                                 )
                             }
                         )
-                        val selectedSchedule = remember(uiState.settings.waterReminderScheduleId, uiState.allSchedules) {
-                            uiState.allSchedules.find { it.id == uiState.settings.waterReminderScheduleId }
-                        }
-                        ScheduleSelector(
-                            schedules = uiState.allSchedules,
-                            selectedSchedule = selectedSchedule,
-                            onScheduleSelected = onScheduleSelected,
-                            label = stringResource(R.string.water_settings_reminder_schedule),
+                        NavigationListItem(
+                            icon = { Icon(Icons.Outlined.Schedule, contentDescription = null) },
+                            title = stringResource(R.string.water_settings_start_time),
+                            onClick = { showStartTimePicker = true },
                             enabled = uiState.settings.isWaterTrackingEnabled && uiState.settings.isWaterReminderEnabled,
-                            position = ListItemPosition.BOTTOM
+                            position = ListItemPosition.MIDDLE,
+                            valueContent = {
+                                Text(
+                                    text = FormatUtils.formatTimeFromMinute(uiState.settings.waterReminderStartMinuteOfDay),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        )
+                        NavigationListItem(
+                            icon = { Icon(Icons.Outlined.AccessTime, contentDescription = null) },
+                            title = stringResource(R.string.water_settings_end_time),
+                            onClick = { showEndTimePicker = true },
+                            enabled = uiState.settings.isWaterTrackingEnabled && uiState.settings.isWaterReminderEnabled,
+                            position = ListItemPosition.BOTTOM,
+                            valueContent = {
+                                Text(
+                                    text = FormatUtils.formatTimeFromMinute(uiState.settings.waterReminderEndMinuteOfDay),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         )
                     }
                 }
@@ -208,7 +251,6 @@ private fun WaterSettingsScreen(
         }
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
@@ -222,7 +264,8 @@ private fun WaterSettingsScreenPreview() {
             onRemindersToggled = {},
             onIntervalChanged = {},
             onSnoozeChanged = {},
-            onScheduleSelected = {}
+            onStartMinuteChanged = {},
+            onEndMinuteChanged = {}
         )
     }
 }

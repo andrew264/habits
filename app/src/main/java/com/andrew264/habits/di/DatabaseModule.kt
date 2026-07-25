@@ -58,12 +58,6 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideScheduleDao(appDatabase: AppDatabase): ScheduleDao {
-        return appDatabase.scheduleDao()
-    }
-
-    @Provides
-    @Singleton
     fun provideWaterIntakeDao(appDatabase: AppDatabase): WaterIntakeDao {
         return appDatabase.waterIntakeDao()
     }

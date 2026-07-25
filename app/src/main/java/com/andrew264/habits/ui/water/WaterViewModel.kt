@@ -7,7 +7,6 @@ import com.andrew264.habits.domain.usecase.GetWaterUiStateUseCase
 import com.andrew264.habits.domain.usecase.LogWaterUseCase
 import com.andrew264.habits.domain.usecase.UpdateWaterSettingsUseCase
 import com.andrew264.habits.domain.usecase.WaterSettingsUpdate
-import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.ui.theme.createPreviewPersistentSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -17,7 +16,6 @@ import javax.inject.Inject
 
 data class WaterScreenUiState(
     val settings: PersistentSettings = createPreviewPersistentSettings(),
-    val allSchedules: List<Schedule> = emptyList(),
     val todaysIntakeMl: Int = 0,
     val progress: Float = 0f,
     val showTargetDialog: Boolean = false
@@ -40,7 +38,6 @@ class WaterViewModel @Inject constructor(
     ) { useCaseState, showDialog ->
         WaterScreenUiState(
             settings = useCaseState.settings,
-            allSchedules = useCaseState.allSchedules,
             todaysIntakeMl = useCaseState.todaysIntakeMl,
             progress = useCaseState.progress,
             showTargetDialog = showDialog
@@ -50,10 +47,6 @@ class WaterViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = WaterScreenUiState()
     )
-
-    fun refresh() {
-        refreshTrigger.value++
-    }
 
     fun logWater(amountMl: Int) {
         viewModelScope.launch {

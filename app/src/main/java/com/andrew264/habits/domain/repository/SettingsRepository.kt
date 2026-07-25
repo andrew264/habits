@@ -24,5 +24,6 @@ interface SettingsRepository {
     suspend fun updateWaterReminderEnabled(isEnabled: Boolean)
     suspend fun updateWaterReminderInterval(minutes: Int)
     suspend fun updateWaterReminderSnoozeTime(minutes: Int)
-    suspend fun updateWaterReminderSchedule(scheduleId: String)
+    suspend fun updateWaterReminderStartMinute(minuteOfDay: Int)
+    suspend fun updateWaterReminderEndMinute(minuteOfDay: Int)
 }

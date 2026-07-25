@@ -58,9 +58,7 @@
     <string name="blocker_intentional_usage_reminder">This screen is a reminder to take a break and use your time intentionally.</string>
 
     <!-- Schedule -->
-    <string name="schedule_selector_label">Schedule</string>
     <string name="schedule_selector_none">None</string>
-    <string name="schedule_info_card_coverage_text">%1$.1f hours/week (%2$.1f%%)</string>
 
     <!-- Data Management -->
     <string name="data_management_delete_data">Delete Data</string>
@@ -84,60 +82,6 @@
     <string name="data_management_delete">Delete</string>
     <string name="data_management_cancel">Cancel</string>
 
-    <!-- Schedule -->
-    <string name="schedule_editor_new_schedule">New Schedule</string>
-    <string name="schedule_editor_edit_schedule">Edit Schedule</string>
-    <string name="schedule_editor_hours_per_week">%1$.1f hours/week</string>
-    <string name="schedule_editor_save_schedule">Save Schedule</string>
-    <string name="schedule_editor_new_group">New Group</string>
-    <string name="schedule_editor_create_new_group">Create New Group</string>
-    <string name="schedule_editor_schedule_name">Schedule Name</string>
-    <string name="schedule_editor_enter_schedule_name">Enter schedule name</string>
-    <string name="schedule_editor_more_options">More options</string>
-    <string name="schedule_editor_grouped_view_emoji">📋 Grouped</string>
-    <string name="schedule_editor_per_day_view_emoji">📅 Per Day</string>
-    <string name="schedule_editor_grouped_view">Grouped</string>
-    <string name="schedule_editor_per_day_view">Per Day</string>
-    <string name="schedule_editor_view_mode_crossfade">ViewModeCrossfade</string>
-    <string name="schedules_list_detail_placeholder">Select a schedule to edit, or create a new one.</string>
-    <string name="schedule_view_model_schedule_saved">Schedule saved!</string>
-    <string name="schedules_view_model_default_schedule_delete_error">The default schedule cannot be deleted.</string>
-    <string name="schedules_view_model_schedule_deleted">\'%1$s\' deleted</string>
-    <string name="schedules_view_model_undo">Undo</string>
-    <string name="per_day_view_no_time_ranges">No time ranges</string>
-    <string name="per_day_view_one_time_range">1 time range</string>
-    <string name="per_day_view_time_ranges">%1$d time ranges</string>
-    <string name="per_day_view_arrow_rotation">arrow_rotation</string>
-    <string name="per_day_view_collapse">Collapse</string>
-    <string name="per_day_view_expand">Expand</string>
-    <string name="per_day_view_no_time_ranges_set">No time ranges set</string>
-    <string name="per_day_view_add_time_range">Add Time Range</string>
-    <string name="day_selector_days">Days</string>
-    <string name="day_selector_background_color">DaySelectorBackgroundColor</string>
-    <string name="day_selector_content_color">DaySelectorContentColor</string>
-    <string name="day_selector_border_color">DaySelectorBorderColor</string>
-    <string name="grouped_view_no_groups_yet">No Groups Yet</string>
-    <string name="grouped_view_no_groups_description">Groups allow you to apply the same time ranges to multiple days. Tap \'New Group\' in the editor to add one.</string>
-    <string name="grouped_view_group_name">Group Name</string>
-    <string name="grouped_view_delete_group">Delete Group</string>
-    <string name="grouped_view_time_ranges">Time Ranges</string>
-    <string name="schedule_time_range_row_arrow">→</string>
-    <string name="schedule_time_range_row_plus_one_day">+1d</string>
-    <string name="schedule_time_range_row_delete_time_range">Delete time range</string>
-    <string name="schedule_time_range_row_from_time">From Time</string>
-    <string name="schedule_time_range_row_to_time">To Time</string>
-    <string name="schedule_list_item_swipe_background_color">SwipeBackgroundColor</string>
-    <string name="schedule_list_item_edit">Edit</string>
-    <string name="schedule_list_item_delete">Delete</string>
-    <string name="schedule_list_item_no_schedule_set">No schedule set.</string>
-    <string name="schedule_list_item_empty_schedule">This schedule is empty. Edit to add times.</string>
-    <string name="schedule_list_item_total_hours">Total hours</string>
-    <string name="schedule_list_pane_schedules">Schedules</string>
-    <string name="schedule_list_pane_manage_routines">Manage your routines</string>
-    <string name="schedule_list_pane_create_schedule">Create Schedule</string>
-    <string name="schedule_list_pane_no_schedules_yet">No schedules yet</string>
-    <string name="schedule_list_pane_no_schedules_description">Tap the \'New Schedule\' button to create one.</string>
-
     <!-- Settings -->
     <string name="settings_features">Features</string>
     <string name="settings_app_usage_tracking">App Usage Tracking</string>
@@ -145,8 +89,6 @@
     <string name="settings_service_not_running">Service is not running. Tap to fix in accessibility settings.</string>
     <string name="settings_water_tracking">Water Tracking</string>
     <string name="settings_water_tracking_summary">Track daily water intake and set reminders.</string>
-    <string name="settings_management">Management</string>
-    <string name="settings_create_and_manage_schedules">Create and manage schedules</string>
     <string name="settings_data_and_privacy">Data &amp; Privacy</string>
     <string name="settings_app_permissions_and_info">App Permissions &amp; Info</string>
     <string name="settings_enable_service_title">Enable Service</string>
@@ -227,7 +169,8 @@
     <string name="water_settings_enable_reminders_summary">Get notifications to drink water.</string>
     <string name="water_settings_interval">Interval</string>
     <string name="water_settings_snooze">Snooze</string>
-    <string name="water_settings_reminder_schedule">Reminder Schedule</string>
+    <string name="water_settings_start_time">Start time</string>
+    <string name="water_settings_end_time">End time</string>
 
     <!-- Water Components -->
     <string name="water_input_section_ml">%1$d ml</string>
@@ -251,9 +194,6 @@
     <string name="water_target_settings_dialog_daily_target_ml">Daily Target (ml)</string>
     <string name="water_target_settings_dialog_cancel">Cancel</string>
     <string name="water_target_settings_dialog_save">Save</string>
-
-    <!-- Permissions -->
-    <string name="permission_post_notifications_rationale">Notifications permission is needed for reminders and for the service to run reliably.</string>
 
     <!--  Counter  -->
     <string name="counters_screen_title">Counters</string>

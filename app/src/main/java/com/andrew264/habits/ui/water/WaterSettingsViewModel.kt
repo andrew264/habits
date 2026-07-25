@@ -3,12 +3,9 @@ package com.andrew264.habits.ui.water
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andrew264.habits.domain.model.PersistentSettings
-import com.andrew264.habits.domain.repository.ScheduleRepository
 import com.andrew264.habits.domain.repository.SettingsRepository
 import com.andrew264.habits.domain.usecase.UpdateWaterSettingsUseCase
 import com.andrew264.habits.domain.usecase.WaterSettingsUpdate
-import com.andrew264.habits.model.schedule.DefaultSchedules
-import com.andrew264.habits.model.schedule.Schedule
 import com.andrew264.habits.ui.theme.createPreviewPersistentSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -16,38 +13,25 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class WaterSettingsUiState(
-    val settings: PersistentSettings = createPreviewPersistentSettings(),
-    val allSchedules: List<Schedule> = emptyList(),
+    val settings: PersistentSettings = createPreviewPersistentSettings()
 )
 
 @HiltViewModel
 class WaterSettingsViewModel @Inject constructor(
     settingsRepository: SettingsRepository,
-    scheduleRepository: ScheduleRepository,
     private val updateWaterSettingsUseCase: UpdateWaterSettingsUseCase
 ) : ViewModel() {
 
     private val _showTargetDialog = MutableStateFlow(false)
     val showTargetDialog = _showTargetDialog.asStateFlow()
 
-    private val allSchedulesFlow = scheduleRepository.getAllSchedules()
-        .map { dbSchedules ->
-            listOf(DefaultSchedules.defaultSleepSchedule) + dbSchedules
-        }
-
-    val uiState: StateFlow<WaterSettingsUiState> = combine(
-        settingsRepository.settingsFlow,
-        allSchedulesFlow
-    ) { settings, schedules ->
-        WaterSettingsUiState(
-            settings = settings,
-            allSchedules = schedules,
+    val uiState: StateFlow<WaterSettingsUiState> = settingsRepository.settingsFlow
+        .map { WaterSettingsUiState(settings = it) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = WaterSettingsUiState()
         )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = WaterSettingsUiState()
-    )
 
     fun onWaterTrackingToggled(isEnabled: Boolean) {
         viewModelScope.launch {
@@ -93,9 +77,15 @@ class WaterSettingsViewModel @Inject constructor(
         }
     }
 
-    fun onScheduleSelected(schedule: Schedule) {
+    fun onStartMinuteChanged(minuteOfDay: Int) {
         viewModelScope.launch {
-            updateWaterSettingsUseCase.execute(WaterSettingsUpdate(reminderScheduleId = schedule.id))
+            updateWaterSettingsUseCase.execute(WaterSettingsUpdate(reminderStartMinuteOfDay = minuteOfDay))
+        }
+    }
+
+    fun onEndMinuteChanged(minuteOfDay: Int) {
+        viewModelScope.launch {
+            updateWaterSettingsUseCase.execute(WaterSettingsUpdate(reminderEndMinuteOfDay = minuteOfDay))
         }
     }
 }

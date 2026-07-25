@@ -1,7 +1,6 @@
 package com.andrew264.habits.ui.common.utils
 
 import com.andrew264.habits.model.counter.CounterType
-import com.andrew264.habits.model.schedule.DayOfWeek
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
@@ -64,11 +63,6 @@ object FormatUtils {
     fun formatTimestamp(millis: Long, pattern: String): String {
         val dateTime = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
         return dateTime.format(DateTimeFormatter.ofPattern(pattern, Locale.getDefault()))
-    }
-
-    fun formatDayOfWeekShort(day: DayOfWeek): String {
-        return java.time.DayOfWeek.valueOf(day.name)
-            .getDisplayName(TextStyle.SHORT, Locale.getDefault())
     }
 
     fun formatDayFullName(millis: Long): String {

@@ -10,8 +10,6 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.andrew264.habits.MainActivity
 import com.andrew264.habits.R
-import com.andrew264.habits.domain.analyzer.ScheduleAnalyzer
-import com.andrew264.habits.domain.repository.ScheduleRepository
 import com.andrew264.habits.domain.repository.SettingsRepository
 import com.andrew264.habits.domain.repository.WaterRepository
 import com.andrew264.habits.domain.scheduler.WaterAlarmScheduler
@@ -21,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.time.LocalTime
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -31,9 +30,6 @@ class WaterReminderReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var waterRepository: WaterRepository
-
-    @Inject
-    lateinit var scheduleRepository: ScheduleRepository
 
     @Inject
     lateinit var waterAlarmScheduler: WaterAlarmScheduler
@@ -81,10 +77,20 @@ class WaterReminderReceiver : BroadcastReceiver() {
             return
         }
 
-        val schedule = settings.waterReminderScheduleId?.let { scheduleRepository.getSchedule(it).first() }
-        val analyzer = schedule?.let { ScheduleAnalyzer(it.groups) }
-        if (analyzer?.isCurrentTimeInSchedule() == false) {
-            Log.d(TAG, "Aborting reminder: Current time is outside the selected schedule.")
+        val now = LocalTime.now()
+        val currentMinuteOfDay = now.hour * 60 + now.minute
+        val start = settings.waterReminderStartMinuteOfDay
+        val end = settings.waterReminderEndMinuteOfDay
+
+        val isInTimeWindow = if (start <= end) {
+            currentMinuteOfDay in start..end
+        } else {
+            // Overnight window (e.g., 10 PM to 6 AM)
+            currentMinuteOfDay >= start || currentMinuteOfDay <= end
+        }
+
+        if (!isInTimeWindow) {
+            Log.d(TAG, "Aborting reminder: Current time ($currentMinuteOfDay min) is outside window [$start, $end].")
             waterAlarmScheduler.scheduleNextReminder(settings.waterReminderIntervalMinutes.toLong())
             return
         }

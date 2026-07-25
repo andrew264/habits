@@ -5,7 +5,10 @@ import android.provider.Settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.outlined.DeleteForever
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Timeline
+import androidx.compose.material.icons.outlined.WaterDrop
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -23,7 +26,10 @@ import com.andrew264.habits.ui.common.components.list.ListItemPosition
 import com.andrew264.habits.ui.common.components.list.ListSectionHeader
 import com.andrew264.habits.ui.common.components.list.NavigationListItem
 import com.andrew264.habits.ui.common.components.list.ToggleListItem
-import com.andrew264.habits.ui.navigation.*
+import com.andrew264.habits.ui.navigation.AppRoute
+import com.andrew264.habits.ui.navigation.Privacy
+import com.andrew264.habits.ui.navigation.UsageSettings
+import com.andrew264.habits.ui.navigation.WaterSettings
 import com.andrew264.habits.ui.theme.Dimens
 import com.andrew264.habits.ui.theme.HabitsTheme
 import com.andrew264.habits.ui.theme.createPreviewPersistentSettings
@@ -136,23 +142,6 @@ private fun SettingsScreen(
                     onCheckedChange = onWaterToggled,
                     onClick = { onNavigate(WaterSettings) },
                     position = ListItemPosition.BOTTOM
-                )
-            }
-
-            item {
-                Spacer(Modifier.height(Dimens.PaddingLarge))
-            }
-
-            item {
-                ListSectionHeader(stringResource(R.string.settings_management))
-            }
-
-            item {
-                NavigationListItem(
-                    icon = { Icon(Icons.Outlined.Schedule, contentDescription = null) },
-                    title = stringResource(R.string.settings_create_and_manage_schedules),
-                    onClick = { onNavigate(Schedules) },
-                    position = ListItemPosition.SEPARATE
                 )
             }
 

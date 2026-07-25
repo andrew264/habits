@@ -4,8 +4,6 @@ import com.andrew264.habits.domain.model.PersistentSettings
 
 /**
  * Creates a default [PersistentSettings] object for use in Composable Previews.
- * This provides a single source of truth for preview data, making previews
- * easier to maintain when the data class changes.
  *
  * @return A [PersistentSettings] object with sensible defaults.
  */
@@ -22,7 +20,8 @@ fun createPreviewPersistentSettings(
     isWaterReminderEnabled: Boolean = true,
     waterReminderIntervalMinutes: Int = 60,
     waterReminderSnoozeMinutes: Int = 15,
-    waterReminderScheduleId: String? = null
+    waterReminderStartMinuteOfDay: Int = 480,
+    waterReminderEndMinuteOfDay: Int = 1200
 ): PersistentSettings {
     return PersistentSettings(
         isAppUsageTrackingEnabled = isAppUsageTrackingEnabled,
@@ -37,6 +36,7 @@ fun createPreviewPersistentSettings(
         isWaterReminderEnabled = isWaterReminderEnabled,
         waterReminderIntervalMinutes = waterReminderIntervalMinutes,
         waterReminderSnoozeMinutes = waterReminderSnoozeMinutes,
-        waterReminderScheduleId = waterReminderScheduleId,
+        waterReminderStartMinuteOfDay = waterReminderStartMinuteOfDay,
+        waterReminderEndMinuteOfDay = waterReminderEndMinuteOfDay,
     )
 }

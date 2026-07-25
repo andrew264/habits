@@ -13,7 +13,6 @@ import com.andrew264.habits.ui.counters.CountersScreen
 import com.andrew264.habits.ui.counters.detail.CounterDetailScreen
 import com.andrew264.habits.ui.counters.editor.CounterEditorScreen
 import com.andrew264.habits.ui.privacy.DataManagementScreen
-import com.andrew264.habits.ui.schedule.SchedulesListDetailScreen
 import com.andrew264.habits.ui.settings.SettingsScreen
 import com.andrew264.habits.ui.usage.UsageSettingsScreen
 import com.andrew264.habits.ui.usage.UsageStatsScreen
@@ -60,9 +59,6 @@ fun AppNavDisplay(
             }
             entry<WaterSettings> {
                 WaterSettingsScreen(onNavigateUp = { onBack() })
-            }
-            entry<Schedules> {
-                SchedulesListDetailScreen(onNavigateUp = { onBack() })
             }
             entry<Settings> {
                 SettingsScreen(onNavigate = onNavigate)

@@ -82,10 +82,6 @@ data object Settings : TopLevelRoute {
 
 @Parcelize
 @Serializable
-data object Schedules : AppRoute
-
-@Parcelize
-@Serializable
 data object Privacy : AppRoute
 
 @Parcelize
@@ -95,10 +91,6 @@ data object WaterStats : AppRoute
 @Parcelize
 @Serializable
 data object WaterSettings : AppRoute
-
-@Parcelize
-@Serializable
-data class ScheduleEditor(val scheduleId: String?) : AppRoute
 
 @Parcelize
 @Serializable
