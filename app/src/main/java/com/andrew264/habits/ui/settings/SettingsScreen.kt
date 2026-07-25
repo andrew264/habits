@@ -67,7 +67,6 @@ fun SettingsScreen(
     SettingsScreen(
         modifier = modifier,
         uiState = uiState,
-        onBedtimeToggled = viewModel::onBedtimeTrackingToggled,
         onUsageToggled = viewModel::onAppUsageTrackingToggled,
         onWaterToggled = viewModel::onWaterTrackingToggled,
         onOpenAppSettings = {
@@ -89,7 +88,6 @@ fun SettingsScreen(
 private fun SettingsScreen(
     modifier: Modifier = Modifier,
     uiState: SettingsUiState,
-    onBedtimeToggled: (Boolean) -> Unit,
     onUsageToggled: (Boolean) -> Unit,
     onWaterToggled: (Boolean) -> Unit,
     onOpenAppSettings: () -> Unit,
@@ -116,25 +114,13 @@ private fun SettingsScreen(
 
             item {
                 ToggleListItem(
-                    icon = Icons.Outlined.Alarm,
-                    title = stringResource(R.string.settings_bedtime_tracking),
-                    summary = stringResource(R.string.settings_bedtime_tracking_summary),
-                    checked = uiState.settings.isBedtimeTrackingEnabled,
-                    onCheckedChange = onBedtimeToggled,
-                    onClick = { onNavigate(BedtimeSettings) },
-                    position = ListItemPosition.TOP
-                )
-            }
-
-            item {
-                ToggleListItem(
                     icon = Icons.Outlined.Timeline,
                     title = stringResource(R.string.settings_app_usage_tracking),
                     summary = stringResource(R.string.settings_app_usage_tracking_summary),
                     checked = uiState.settings.isAppUsageTrackingEnabled,
                     onCheckedChange = onUsageToggled,
                     onClick = { onNavigate(UsageSettings) },
-                    position = ListItemPosition.MIDDLE,
+                    position = ListItemPosition.TOP,
                     isWarningVisible = uiState.settings.isAppUsageTrackingEnabled && !uiState.isAccessibilityServiceEnabled,
                     warningText = stringResource(R.string.settings_service_not_running),
                     onWarningClick = onOpenAccessibilitySettings
@@ -209,7 +195,6 @@ private fun SettingsScreenAllEnabledPreview() {
                 settings = settings,
                 isAccessibilityServiceEnabled = true
             ),
-            onBedtimeToggled = {},
             onUsageToggled = {},
             onWaterToggled = {},
             onOpenAppSettings = {},
@@ -229,7 +214,6 @@ private fun SettingsScreenWarningPreview() {
                 settings = settings,
                 isAccessibilityServiceEnabled = false
             ),
-            onBedtimeToggled = {},
             onUsageToggled = {},
             onWaterToggled = {},
             onOpenAppSettings = {},

@@ -1,6 +1,5 @@
 package com.andrew264.habits.ui.settings
 
-import android.Manifest
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,7 +9,6 @@ import com.andrew264.habits.domain.usecase.StartPresenceMonitoringUseCase
 import com.andrew264.habits.domain.usecase.StopPresenceMonitoringUseCase
 import com.andrew264.habits.ui.theme.createPreviewPersistentSettings
 import com.andrew264.habits.util.AccessibilityUtils
-import com.andrew264.habits.util.PermissionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
@@ -32,7 +30,6 @@ class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     startPresenceMonitoringUseCase: StartPresenceMonitoringUseCase,
     stopPresenceMonitoringUseCase: StopPresenceMonitoringUseCase,
-    private val permissionManager: PermissionManager
 ) : ViewModel() {
 
     private val _isAccessibilityEnabled = MutableStateFlow(false)
@@ -59,7 +56,7 @@ class SettingsViewModel @Inject constructor(
         // This collector reacts to the source of truth (the settings repository).
         viewModelScope.launch {
             settingsRepository.settingsFlow
-                .map { it.isBedtimeTrackingEnabled || it.isAppUsageTrackingEnabled }
+                .map { it.isAppUsageTrackingEnabled }
                 .distinctUntilChanged()
                 .collect { isEnabled ->
                     if (isEnabled) {
@@ -68,20 +65,6 @@ class SettingsViewModel @Inject constructor(
                         stopPresenceMonitoringUseCase.execute()
                     }
                 }
-        }
-    }
-
-    fun onBedtimeTrackingToggled(enable: Boolean) {
-        viewModelScope.launch {
-            if (enable) {
-                // We don't have the permission yet. Signal the manager to request it.
-                // The actual setting will be updated in MainViewModel after the user responds.
-                permissionManager.request(Manifest.permission.ACTIVITY_RECOGNITION)
-            } else {
-                // Turning it off requires no permission. Just update the setting.
-                // The collector in init() will handle stopping the service.
-                settingsRepository.updateBedtimeTrackingEnabled(false)
-            }
         }
     }
 

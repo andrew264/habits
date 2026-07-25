@@ -98,7 +98,6 @@ internal fun InputSection(
                             drawContent()
 
                             val activeTrackEnd = size.width * currentSliderState.coercedValueAsFraction
-                            val activeTrackWidth = activeTrackEnd
                             val inactiveTrackWidth = size.width - activeTrackEnd
 
                             val textPadding = Dimens.PaddingExtraExtraLarge.toPx()
@@ -125,7 +124,7 @@ internal fun InputSection(
                                 val textWidthOnActive =
                                     measuredTextOnActive.size.width.toFloat()
                                 val canFitOnActiveSide =
-                                    textWidthOnActive + textPadding * 2 < activeTrackWidth - halfThumbWidth
+                                    textWidthOnActive + textPadding * 2 < activeTrackEnd - halfThumbWidth
 
                                 if (canFitOnActiveSide) {
                                     val y =

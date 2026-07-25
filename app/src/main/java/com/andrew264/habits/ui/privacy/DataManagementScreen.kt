@@ -4,7 +4,6 @@ import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Bedtime
 import androidx.compose.material.icons.outlined.Numbers
 import androidx.compose.material.icons.outlined.Timeline
 import androidx.compose.material3.*
@@ -122,15 +121,6 @@ private fun DataManagementScreen(
             }
             item {
                 DataTypeItem(
-                    title = stringResource(R.string.data_management_sleep_history),
-                    description = stringResource(R.string.data_management_sleep_history_description),
-                    icon = Icons.Outlined.Bedtime,
-                    checked = DeletableDataType.SLEEP in uiState.selectedDataTypes,
-                    onToggle = { onToggleDataType(DeletableDataType.SLEEP) }
-                )
-            }
-            item {
-                DataTypeItem(
                     title = stringResource(R.string.data_management_water_intake_history),
                     description = stringResource(R.string.data_management_water_intake_history_description),
                     icon = Icons.Outlined.Timeline,
@@ -168,7 +158,6 @@ private fun DataManagementScreenPreview() {
             uiState = DataManagementUiState(
                 selectedTimeRange = TimeRangeOption.LAST_7_DAYS,
                 selectedDataTypes = setOf(
-                    DeletableDataType.SLEEP,
                     DeletableDataType.USAGE
                 ),
                 isDeleting = false,

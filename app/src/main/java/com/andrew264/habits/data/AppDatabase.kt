@@ -3,7 +3,10 @@ package com.andrew264.habits.data
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.andrew264.habits.data.dao.*
-import com.andrew264.habits.data.entity.*
+import com.andrew264.habits.data.entity.AppUsageEventEntity
+import com.andrew264.habits.data.entity.ScreenEventEntity
+import com.andrew264.habits.data.entity.WaterIntakeEntry
+import com.andrew264.habits.data.entity.WhitelistedAppEntity
 import com.andrew264.habits.data.entity.counter.CounterEntity
 import com.andrew264.habits.data.entity.counter.CounterLogEntity
 import com.andrew264.habits.data.entity.schedule.ScheduleEntity
@@ -13,7 +16,6 @@ import com.andrew264.habits.data.entity.schedule.ScheduleTimeRangeEntity
 
 @Database(
     entities = [
-        UserPresenceEvent::class,
         ScheduleEntity::class,
         ScheduleGroupEntity::class,
         ScheduleGroupDayEntity::class,
@@ -26,10 +28,9 @@ import com.andrew264.habits.data.entity.schedule.ScheduleTimeRangeEntity
         CounterEntity::class,
         CounterLogEntity::class
     ],
-    version = 2,
+    version = 3,
 )
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun userPresenceEventDao(): UserPresenceEventDao
     abstract fun scheduleDao(): ScheduleDao
     abstract fun waterIntakeDao(): WaterIntakeDao
 

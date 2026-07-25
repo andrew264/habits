@@ -13,10 +13,8 @@ import com.andrew264.habits.R
 import com.andrew264.habits.domain.analyzer.ScheduleAnalyzer
 import com.andrew264.habits.domain.repository.ScheduleRepository
 import com.andrew264.habits.domain.repository.SettingsRepository
-import com.andrew264.habits.domain.repository.UserPresenceHistoryRepository
 import com.andrew264.habits.domain.repository.WaterRepository
 import com.andrew264.habits.domain.scheduler.WaterAlarmScheduler
-import com.andrew264.habits.model.UserPresenceState
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,9 +37,6 @@ class WaterReminderReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var waterAlarmScheduler: WaterAlarmScheduler
-
-    @Inject
-    lateinit var userPresenceHistoryRepository: UserPresenceHistoryRepository
 
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
@@ -80,18 +75,9 @@ class WaterReminderReceiver : BroadcastReceiver() {
     private suspend fun handleReminderAlarm(context: Context) {
         val settings = settingsRepository.settingsFlow.first()
 
-        // --- Condition Checks ---
         if (!settings.isWaterTrackingEnabled || !settings.isWaterReminderEnabled) {
             Log.d(TAG, "Aborting reminder: Feature disabled in settings.")
-            waterAlarmScheduler.cancelReminders() // Clean up alarms if feature is off
-            return
-        }
-
-        val currentUserState = userPresenceHistoryRepository.userPresenceState.value
-        if (currentUserState != UserPresenceState.AWAKE) {
-            Log.d(TAG, "Aborting reminder: User is not AWAKE. Current state: $currentUserState")
-            // Reschedule for later, so we don't miss reminders completely
-            waterAlarmScheduler.scheduleNextReminder(settings.waterReminderIntervalMinutes.toLong())
+            waterAlarmScheduler.cancelReminders()
             return
         }
 
@@ -103,11 +89,9 @@ class WaterReminderReceiver : BroadcastReceiver() {
             return
         }
 
-        // --- Show Notification ---
         Log.d(TAG, "All conditions met. Showing reminder notification.")
         showReminderNotification(context, settings.waterReminderSnoozeMinutes)
 
-        // --- Reschedule ---
         waterAlarmScheduler.scheduleNextReminder(settings.waterReminderIntervalMinutes.toLong())
     }
 
@@ -116,7 +100,7 @@ class WaterReminderReceiver : BroadcastReceiver() {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancel(NOTIFICATION_ID)
         Log.d(TAG, "Logged $QUICK_ADD_AMOUNT_ML ml from notification action.")
-        // Re-schedule next reminder based on settings
+
         val settings = settingsRepository.settingsFlow.first()
         if (settings.isWaterReminderEnabled) {
             waterAlarmScheduler.scheduleNextReminder(settings.waterReminderIntervalMinutes.toLong())
@@ -138,7 +122,6 @@ class WaterReminderReceiver : BroadcastReceiver() {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         createNotificationChannel(notificationManager)
 
-        // Content Intent to open the app to the water screen
         val openAppIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra("destination_route", "Water")
@@ -150,7 +133,6 @@ class WaterReminderReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Log Action
         val logIntent = Intent(context, WaterReminderReceiver::class.java).apply {
             action = ACTION_LOG_WATER_QUICK
         }
@@ -161,7 +143,6 @@ class WaterReminderReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Snooze Action
         val snoozeIntent = Intent(context, WaterReminderReceiver::class.java).apply {
             action = ACTION_SNOOZE_WATER_REMINDER
         }

@@ -5,7 +5,9 @@ import com.andrew264.habits.model.schedule.DefaultSchedules
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
-class CheckScheduleInUseUseCase @Inject constructor(private val settingsRepository: SettingsRepository) {
+class CheckScheduleInUseUseCase @Inject constructor(
+    private val settingsRepository: SettingsRepository
+) {
     sealed class Result {
         object NotInUse : Result()
         data class InUse(val usageMessage: String) : Result()
@@ -18,16 +20,10 @@ class CheckScheduleInUseUseCase @Inject constructor(private val settingsReposito
         }
 
         val currentSettings = settingsRepository.settingsFlow.first()
-        val isSleepSchedule = currentSettings.selectedScheduleId == scheduleId
         val isWaterSchedule = currentSettings.waterReminderScheduleId == scheduleId
 
-        if (isSleepSchedule || isWaterSchedule) {
-            val usage = when {
-                isSleepSchedule && isWaterSchedule -> "sleep tracking and water reminders"
-                isSleepSchedule -> "sleep tracking"
-                else -> "water reminders"
-            }
-            return Result.InUse("Cannot delete schedule. It's assigned to $usage.")
+        if (isWaterSchedule) {
+            return Result.InUse("Cannot delete schedule. It's assigned to water reminders.")
         }
 
         return Result.NotInUse

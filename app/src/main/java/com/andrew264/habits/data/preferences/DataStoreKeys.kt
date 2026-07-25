@@ -6,9 +6,6 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 
 object DataStoreKeys {
-    val SELECTED_SCHEDULE_ID = stringPreferencesKey("selected_schedule_id")
-    val BEDTIME_TRACKING_ENABLED = booleanPreferencesKey("bedtime_tracking_enabled")
-
     // App Usage Tracking Feature
     val APP_USAGE_TRACKING_ENABLED = booleanPreferencesKey("app_usage_tracking_enabled")
     val USAGE_LIMIT_NOTIFICATIONS_ENABLED = booleanPreferencesKey("usage_limit_notifications_enabled")

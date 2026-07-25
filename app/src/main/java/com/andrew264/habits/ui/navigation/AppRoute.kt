@@ -3,8 +3,14 @@ package com.andrew264.habits.ui.navigation
 import android.os.Parcelable
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.filled.Numbers
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Timeline
+import androidx.compose.material.icons.filled.WaterDrop
+import androidx.compose.material.icons.outlined.Numbers
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Timeline
+import androidx.compose.material.icons.outlined.WaterDrop
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation3.runtime.NavKey
 import com.andrew264.habits.R
@@ -76,23 +82,6 @@ data object Settings : TopLevelRoute {
 
 @Parcelize
 @Serializable
-data object Bedtime : TopLevelRoute {
-    @IgnoredOnParcel
-    override val title = R.string.app_route_bedtime
-
-    @IgnoredOnParcel
-    override val selectedIcon = Icons.Filled.Alarm
-
-    @IgnoredOnParcel
-    override val unselectedIcon = Icons.Outlined.Alarm
-}
-
-@Parcelize
-@Serializable
-data object BedtimeSettings : AppRoute
-
-@Parcelize
-@Serializable
 data object Schedules : AppRoute
 
 @Parcelize
@@ -131,6 +120,5 @@ val railItems: List<TopLevelRoute> = listOf(
     Counters,
     Water,
     Usage,
-    Bedtime,
     Settings
 )

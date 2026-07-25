@@ -42,13 +42,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             permissionManager.results.collect { permissions ->
                 val notificationsGranted = permissions[Manifest.permission.POST_NOTIFICATIONS] ?: false
-                val activityRecognitionGranted = permissions[Manifest.permission.ACTIVITY_RECOGNITION] ?: false
-
                 handlePermissionResultUseCase.execute(notificationsGranted)
-
-                if (activityRecognitionGranted) {
-                    settingsRepository.updateBedtimeTrackingEnabled(true)
-                }
             }
         }
     }

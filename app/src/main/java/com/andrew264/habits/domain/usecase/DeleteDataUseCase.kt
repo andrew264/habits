@@ -1,12 +1,14 @@
 package com.andrew264.habits.domain.usecase
 
-import com.andrew264.habits.data.dao.*
+import com.andrew264.habits.data.dao.AppUsageEventDao
+import com.andrew264.habits.data.dao.CounterDao
+import com.andrew264.habits.data.dao.ScreenEventDao
+import com.andrew264.habits.data.dao.WaterIntakeDao
 import com.andrew264.habits.domain.repository.AppUsageRepository
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 enum class DeletableDataType {
-    SLEEP,
     WATER,
     USAGE,
     COUNTERS
@@ -23,7 +25,6 @@ enum class TimeRangeOption(val durationMillis: Long?) {
 class DeleteDataUseCase @Inject constructor(
     private val appUsageEventDao: AppUsageEventDao,
     private val screenEventDao: ScreenEventDao,
-    private val userPresenceEventDao: UserPresenceEventDao,
     private val waterIntakeDao: WaterIntakeDao,
     private val counterDao: CounterDao,
     private val appUsageRepository: AppUsageRepository
@@ -35,7 +36,6 @@ class DeleteDataUseCase @Inject constructor(
         val startTime = timeRange.durationMillis?.let { System.currentTimeMillis() - it }
 
         if (DeletableDataType.USAGE in dataTypes) {
-            // End the current session to ensure it has an end time before deletion logic runs
             appUsageRepository.endCurrentUsageSession(System.currentTimeMillis())
             if (startTime != null) {
                 appUsageEventDao.deleteEventsFrom(startTime)
@@ -43,14 +43,6 @@ class DeleteDataUseCase @Inject constructor(
             } else {
                 appUsageEventDao.deleteAllEvents()
                 screenEventDao.deleteAllEvents()
-            }
-        }
-
-        if (DeletableDataType.SLEEP in dataTypes) {
-            if (startTime != null) {
-                userPresenceEventDao.deleteEventsFrom(startTime)
-            } else {
-                userPresenceEventDao.deleteAllEvents()
             }
         }
 

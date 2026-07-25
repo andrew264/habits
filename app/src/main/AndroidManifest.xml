@@ -7,14 +7,10 @@
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="PackageVisibilityPolicy,QueryAllPackagesPermission" />
 
-    <!-- For Sleep API -->
-    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
-
     <!-- For starting foreground service -->
     <uses-permission
         android:name="android.permission.FOREGROUND_SERVICE"
         tools:ignore="ForegroundServicesPolicy" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <!-- For notifications (Android 13+ / API 33+) -->
@@ -22,8 +18,6 @@
     <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
 
     <!-- For scheduling exact alarms (Android 12+ / API 31+) -->
-    <!-- For full compliance on Android 14+, you may need to declare a USE_EXACT_ALARM permission -->
-    <!-- or use a non-exact alarm type if precision is not critical. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission
         android:name="android.permission.USE_EXACT_ALARM"
@@ -68,13 +62,9 @@
             android:name=".service.UserPresenceService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="health|dataSync"
+            android:foregroundServiceType="dataSync"
             android:permission="android.permission.BIND_JOB_SERVICE"
             tools:ignore="ExportedService" />
-
-        <receiver
-            android:name=".receiver.SleepReceiver"
-            android:exported="false" />
 
         <receiver
             android:name=".receiver.WaterReminderReceiver"

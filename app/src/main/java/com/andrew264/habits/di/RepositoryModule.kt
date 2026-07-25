@@ -26,12 +26,6 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindUserPresenceHistoryRepository(
-        userPresenceHistoryRepositoryImpl: UserPresenceHistoryRepositoryImpl
-    ): UserPresenceHistoryRepository
-
-    @Binds
-    @Singleton
     abstract fun bindWaterRepository(
         waterRepositoryImpl: WaterRepositoryImpl
     ): WaterRepository

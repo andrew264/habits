@@ -10,8 +10,6 @@ import com.andrew264.habits.domain.model.PersistentSettings
  * @return A [PersistentSettings] object with sensible defaults.
  */
 fun createPreviewPersistentSettings(
-    selectedScheduleId: String? = null,
-    isBedtimeTrackingEnabled: Boolean = true,
     isAppUsageTrackingEnabled: Boolean = true,
     usageLimitNotificationsEnabled: Boolean = true,
     isAppBlockingEnabled: Boolean = false,
@@ -27,8 +25,6 @@ fun createPreviewPersistentSettings(
     waterReminderScheduleId: String? = null
 ): PersistentSettings {
     return PersistentSettings(
-        selectedScheduleId = selectedScheduleId,
-        isBedtimeTrackingEnabled = isBedtimeTrackingEnabled,
         isAppUsageTrackingEnabled = isAppUsageTrackingEnabled,
         usageLimitNotificationsEnabled = usageLimitNotificationsEnabled,
         isAppBlockingEnabled = isAppBlockingEnabled,

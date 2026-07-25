@@ -33,6 +33,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import kotlin.math.min
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalTextApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -63,7 +64,7 @@ fun StackedBarChart(
     LaunchedEffect(bins) {
         animationProgress.forEachIndexed { index, animatable ->
             launch {
-                delay(index * 20L)
+                delay((index * 20L).milliseconds)
                 animatable.animateTo(
                     targetValue = 1f,
                     animationSpec = animationSpec

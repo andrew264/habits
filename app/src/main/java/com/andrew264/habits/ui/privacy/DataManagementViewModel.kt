@@ -19,7 +19,6 @@ import javax.inject.Inject
 data class DataManagementUiState(
     val selectedTimeRange: TimeRangeOption = TimeRangeOption.LAST_HOUR,
     val selectedDataTypes: Set<DeletableDataType> = setOf(
-        DeletableDataType.SLEEP,
         DeletableDataType.WATER,
         DeletableDataType.USAGE,
         DeletableDataType.COUNTERS

@@ -34,6 +34,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.ceil
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
 
 data class BarChartEntry(
     val value: Float,
@@ -75,7 +76,7 @@ fun BarChart(
     LaunchedEffect(entries) {
         animationProgress.forEachIndexed { index, animatable ->
             launch {
-                delay(index * 50L)
+                delay((index * 50L).milliseconds)
                 animatable.animateTo(
                     targetValue = 1f,
                     animationSpec = animationSpec

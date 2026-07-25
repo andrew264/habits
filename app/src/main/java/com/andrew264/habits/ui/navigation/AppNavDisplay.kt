@@ -9,8 +9,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
-import com.andrew264.habits.ui.bedtime.BedtimeScreen
-import com.andrew264.habits.ui.bedtime.BedtimeSettingsScreen
 import com.andrew264.habits.ui.counters.CountersScreen
 import com.andrew264.habits.ui.counters.detail.CounterDetailScreen
 import com.andrew264.habits.ui.counters.editor.CounterEditorScreen
@@ -74,12 +72,6 @@ fun AppNavDisplay(
             }
             entry<UsageSettings> {
                 UsageSettingsScreen(onNavigateUp = { onBack() }, onNavigate = onNavigate)
-            }
-            entry<Bedtime> {
-                BedtimeScreen(onNavigate = onNavigate)
-            }
-            entry<BedtimeSettings> {
-                BedtimeSettingsScreen(onNavigateUp = { onBack() })
             }
             entry<Whitelist> {
                 WhitelistScreen(onNavigateUp = { onBack() })

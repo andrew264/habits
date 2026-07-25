@@ -58,12 +58,6 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideUserPresenceEventDao(appDatabase: AppDatabase): UserPresenceEventDao {
-        return appDatabase.userPresenceEventDao()
-    }
-
-    @Provides
-    @Singleton
     fun provideScheduleDao(appDatabase: AppDatabase): ScheduleDao {
         return appDatabase.scheduleDao()
     }

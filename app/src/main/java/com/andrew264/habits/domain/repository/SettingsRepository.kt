@@ -5,8 +5,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface SettingsRepository {
     val settingsFlow: Flow<PersistentSettings>
-    suspend fun updateSelectedScheduleId(scheduleId: String?)
-    suspend fun updateBedtimeTrackingEnabled(isEnabled: Boolean)
 
     // Usage Tracking Feature
     suspend fun updateAppUsageTrackingEnabled(isEnabled: Boolean)

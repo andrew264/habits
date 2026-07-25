@@ -41,9 +41,6 @@ class PermissionHandler(
 
     private fun getRationaleForPermission(permission: String): String {
         return when (permission) {
-            android.Manifest.permission.ACTIVITY_RECOGNITION ->
-                activity.getString(R.string.permission_activity_recognition_rationale)
-
             android.Manifest.permission.POST_NOTIFICATIONS ->
                 activity.getString(R.string.permission_post_notifications_rationale)
 
